@@ -30,3 +30,7 @@
 
 #tag-weight media format 0.5
 #tag-weight catalogue num 1.2
+
+# addons add external metadata to tracks after a musicbrainz match. can be used when importing for web, sync cli, or normal cli
+#addon lyrics
+#addon replaygain

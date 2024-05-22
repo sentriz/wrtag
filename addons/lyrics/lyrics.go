@@ -12,8 +12,24 @@ import (
 
 	"github.com/andybalholm/cascadia"
 	"go.senan.xyz/wrtag/clientutil"
+	"go.senan.xyz/wrtag/musicbrainz"
+	"go.senan.xyz/wrtag/tags"
 	"golang.org/x/net/html"
 )
+
+type Addon struct {
+	Source
+}
+
+func (a Addon) ProcessTrack(ctx context.Context, _ *musicbrainz.Release, track *musicbrainz.Track, f *tags.File) error {
+	rec := track.Recording
+	lyricData, err := a.Search(ctx, musicbrainz.ArtistsCreditString(rec.Artists), rec.Title)
+	if err != nil && !errors.Is(err, ErrLyricsNotFound) {
+		return err
+	}
+	f.Write(tags.Lyrics, lyricData)
+	return nil
+}
 
 var ErrLyricsNotFound = errors.New("lyrics not found")
 
@@ -21,11 +37,10 @@ type Source interface {
 	Search(ctx context.Context, artist, song string) (string, error)
 }
 
-// TODO: maybe we should search both at once and return whichever finishes earlier
-type ChainSource []Source
+type MultiSource []Source
 
-func (cs ChainSource) Search(ctx context.Context, artist, song string) (string, error) {
-	for _, src := range cs {
+func (ms MultiSource) Search(ctx context.Context, artist, song string) (string, error) {
+	for _, src := range ms {
 		lyricData, err := src.Search(ctx, artist, song)
 		if err != nil && !errors.Is(err, ErrLyricsNotFound) {
 			return "", err
@@ -58,7 +73,7 @@ type Musixmatch struct {
 func (mm *Musixmatch) Search(ctx context.Context, artist, song string) (string, error) {
 	mm.initOnce.Do(func() {
 		mm.HTTPClient = clientutil.Wrap(mm.HTTPClient, clientutil.Chain(
-			clientutil.WithRateLimit(mm.RateLimit),
+			clientutil.WithRateLimit(mm.RateLimit, "MUSIBR"),
 		))
 	})
 
@@ -114,7 +129,7 @@ type Genius struct {
 func (g *Genius) Search(ctx context.Context, artist, song string) (string, error) {
 	g.initOnce.Do(func() {
 		g.HTTPClient = clientutil.Wrap(g.HTTPClient, clientutil.Chain(
-			clientutil.WithRateLimit(g.RateLimit),
+			clientutil.WithRateLimit(g.RateLimit, "GENIUS"),
 		))
 	})
 

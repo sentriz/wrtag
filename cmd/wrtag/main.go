@@ -47,6 +47,7 @@ func main() {
 		pathFormat          = flags.PathFormat()
 		researchLinkQuerier = flags.Querier()
 		tagWeights          = flags.TagWeights()
+		addons              = flags.Addons()
 	)
 	flags.Parse()
 
@@ -79,7 +80,7 @@ func main() {
 		defer cancel()
 
 		dir := flag.Arg(0)
-		if err := run(ctx, mb, pathFormat, tagWeights, researchLinkQuerier, keepFiles, operation(command, *dryRun), dir, *useMBID, importCondition); err != nil {
+		if err := run(ctx, mb, pathFormat, tagWeights, researchLinkQuerier, keepFiles, *addons, operation(command, *dryRun), dir, *useMBID, importCondition); err != nil {
 			slog.Error("running", "command", command, "err", err)
 			return
 		}
@@ -101,11 +102,11 @@ func operation(name string, dryRun bool) wrtag.FileSystemOperation {
 
 func run(
 	ctx context.Context, mb wrtag.MusicbrainzClient,
-	pathFormat *pathformat.Format, tagWeights tagmap.TagWeights, researchLinkQuerier *researchlink.Querier, keepFiles map[string]struct{},
+	pathFormat *pathformat.Format, tagWeights tagmap.TagWeights, researchLinkQuerier *researchlink.Querier, keepFiles map[string]struct{}, addons []wrtag.Addon,
 	op wrtag.FileSystemOperation, srcDir string,
 	useMBID string, importCondition wrtag.ImportCondition,
 ) error {
-	r, err := wrtag.ProcessDir(ctx, mb, pathFormat, tagWeights, researchLinkQuerier, keepFiles, op, srcDir, useMBID, importCondition)
+	r, err := wrtag.ProcessDir(ctx, mb, pathFormat, tagWeights, researchLinkQuerier, keepFiles, addons, op, srcDir, useMBID, importCondition)
 	if err != nil && !errors.Is(err, wrtag.ErrScoreTooLow) {
 		return fmt.Errorf("processing: %w", err)
 	}

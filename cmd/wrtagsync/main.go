@@ -44,6 +44,7 @@ func main() {
 		notifs     = flags.Notifications()
 		pathFormat = flags.PathFormat()
 		tagWeights = flags.TagWeights()
+		addons     = flags.Addons()
 		interval   = flag.Duration("interval", 0, "max duration a release should be left unsynced")
 		dryRun     = flag.Bool("dry-run", false, "dry run")
 	)
@@ -86,7 +87,7 @@ func main() {
 		go func() {
 			defer wg.Done()
 			ctxConsume(ctx, leaves, func(dir string) {
-				if err := processDir(ctx, &knownDests, mb, pathFormat, tagWeights, keepFiles, operation, dir, *interval); err != nil {
+				if err := processDir(ctx, &knownDests, mb, pathFormat, tagWeights, keepFiles, *addons, operation, dir, *interval); err != nil {
 					slog.ErrorContext(ctx, "processing dir", "dir", dir, "err", err)
 					errN.Add(1)
 					return
@@ -111,7 +112,7 @@ func main() {
 func processDir(
 	ctx context.Context,
 	knownDests *sync.Map,
-	mb wrtag.MusicbrainzClient, pathFormat *pathformat.Format, tagWeights tagmap.TagWeights, keepFiles map[string]struct{},
+	mb wrtag.MusicbrainzClient, pathFormat *pathformat.Format, tagWeights tagmap.TagWeights, keepFiles map[string]struct{}, addons []wrtag.Addon,
 	op wrtag.FileSystemOperation, srcDir string,
 	interval time.Duration,
 ) error {
@@ -133,7 +134,7 @@ func processDir(
 		}
 	}
 
-	r, err := wrtag.ProcessDir(ctx, mb, pathFormat, tagWeights, nil, keepFiles, op, srcDir, "", wrtag.HighScoreOrMBID)
+	r, err := wrtag.ProcessDir(ctx, mb, pathFormat, tagWeights, nil, keepFiles, addons, op, srcDir, "", wrtag.HighScoreOrMBID)
 	if err != nil {
 		return err
 	}

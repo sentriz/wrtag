@@ -3,14 +3,12 @@ package flags
 import (
 	"flag"
 	"fmt"
-	"net/http"
 	"os"
 	"path/filepath"
 	"time"
 
 	"go.senan.xyz/flagconf"
 	"go.senan.xyz/wrtag"
-	"go.senan.xyz/wrtag/lyrics"
 	"go.senan.xyz/wrtag/musicbrainz"
 	"go.senan.xyz/wrtag/notifications"
 	"go.senan.xyz/wrtag/pathformat"
@@ -87,26 +85,20 @@ type MusicBrainzClient struct {
 
 func MusicBrainz() MusicBrainzClient {
 	var mb musicbrainz.MBClient
-	mb.HTTPClient = http.DefaultClient
+	mb.HTTPClient = httpClient
 	flag.StringVar(&mb.BaseURL, "mb-base-url", `https://musicbrainz.org/ws/2/`, "musicbrainz base url")
 	flag.DurationVar(&mb.RateLimit, "mb-rate-limit", 1*time.Second, "musicbrainz rate limit duration")
 
 	var caa musicbrainz.CAAClient
-	caa.HTTPClient = http.DefaultClient
+	caa.HTTPClient = httpClient
 	flag.StringVar(&caa.BaseURL, "caa-base-url", `https://coverartarchive.org/`, "coverartarchive base url")
 	flag.DurationVar(&caa.RateLimit, "caa-rate-limit", 0, "coverartarchive rate limit duration")
 
 	return MusicBrainzClient{&mb, &caa}
 }
 
-func Lyrics() lyrics.Source {
-	var musixmatch lyrics.Musixmatch
-	musixmatch.HTTPClient = http.DefaultClient
-	musixmatch.RateLimit = 500 * time.Millisecond
-
-	var genius lyrics.Genius
-	genius.HTTPClient = http.DefaultClient
-	genius.RateLimit = 500 * time.Millisecond
-
-	return lyrics.ChainSource{&genius, &musixmatch}
+func Addons() *[]wrtag.Addon {
+	var r []wrtag.Addon
+	flag.Var(&addonsParser{addons: &r}, "addon", "add some extra metadata when importing tracks")
+	return &r
 }

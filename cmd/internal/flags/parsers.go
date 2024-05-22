@@ -8,7 +8,10 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
+	"time"
 
+	"go.senan.xyz/wrtag"
+	"go.senan.xyz/wrtag/addons/lyrics"
 	"go.senan.xyz/wrtag/notifications"
 	"go.senan.xyz/wrtag/pathformat"
 	"go.senan.xyz/wrtag/researchlink"
@@ -116,4 +119,24 @@ func (kf *keepFileParser) String() string {
 		parts = append(parts, k)
 	}
 	return strings.Join(parts, ", ")
+}
+
+type addonsParser struct {
+	addons *[]wrtag.Addon
+}
+
+func (tw *addonsParser) Set(value string) error {
+	switch value {
+	case "lyrics":
+		*tw.addons = append(*tw.addons, lyrics.Addon{
+			Source: lyrics.MultiSource{
+				&lyrics.Genius{RateLimit: 500 * time.Millisecond, HTTPClient: httpClient},
+				&lyrics.Musixmatch{RateLimit: 500 * time.Millisecond, HTTPClient: httpClient},
+			},
+		})
+	}
+	return nil
+}
+func (tw addonsParser) String() string {
+	return ""
 }

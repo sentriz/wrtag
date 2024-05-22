@@ -53,6 +53,7 @@ func main() {
 		pathFormat          = flags.PathFormat()
 		researchLinkQuerier = flags.Querier()
 		tagWeights          = flags.TagWeights()
+		addons              = flags.Addons()
 		listenAddr          = flag.String("web-listen-addr", "", "listen addr for web interface")
 		publicURL           = flag.String("web-public-url", "", "public url for web interface")
 		apiKey              = flag.String("web-api-key", "", "api key for web interface")
@@ -107,7 +108,7 @@ func main() {
 		job.Status = StatusComplete
 
 		var err error
-		job.SearchResult, err = wrtag.ProcessDir(ctx, mb, pathFormat, tagWeights, researchLinkQuerier, keepFiles, wrtagOperation(job.Operation), job.SourcePath, job.UseMBID, ic)
+		job.SearchResult, err = wrtag.ProcessDir(ctx, mb, pathFormat, tagWeights, researchLinkQuerier, keepFiles, *addons, wrtagOperation(job.Operation), job.SourcePath, job.UseMBID, ic)
 		if err != nil {
 			job.Status = StatusError
 			job.Error = err.Error()

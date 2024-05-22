@@ -12,6 +12,7 @@ import (
 	"unicode"
 
 	dmp "github.com/sergi/go-diff/diffmatchpatch"
+	"golang.org/x/sync/errgroup"
 
 	"go.senan.xyz/wrtag/musicbrainz"
 	"go.senan.xyz/wrtag/tags"
@@ -73,7 +74,13 @@ func DiffRelease(weights TagWeights, release *musicbrainz.Release, files []*tags
 	return score, diffs
 }
 
+type Addon interface {
+	ProcessTrack(context.Context, *musicbrainz.Release, *musicbrainz.Track, *tags.File) error
+}
+
 func WriteFile(
+	ctx context.Context,
+	addons []Addon,
 	release *musicbrainz.Release, labelInfo musicbrainz.LabelInfo, genres []musicbrainz.Genre,
 	releaseTrack *musicbrainz.Track, i int, f *tags.File,
 ) error {
@@ -116,6 +123,16 @@ func WriteFile(
 
 	f.Write(tags.MBRecordingID, releaseTrack.Recording.ID)
 	f.Write(tags.MBArtistID, mapFunc(releaseTrack.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)
+
+	var wg errgroup.Group
+	for _, addon := range addons {
+		wg.Go(func() error {
+			return addon.ProcessTrack(ctx, release, releaseTrack, f)
+		})
+	}
+	if err := wg.Wait(); err != nil {
+		return fmt.Errorf("run addons: %w", err)
+	}
 
 	// try to avoid extra filesystem writes if we can
 	after := f.CloneRaw()

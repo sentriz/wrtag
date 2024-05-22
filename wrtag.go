@@ -62,9 +62,11 @@ const (
 	Confirm
 )
 
+type Addon = tagmap.Addon
+
 func ProcessDir(
 	ctx context.Context,
-	mb MusicbrainzClient, pathFormat *pathformat.Format, tagWeights tagmap.TagWeights, researchLinkQuerier *researchlink.Querier, keepFiles map[string]struct{},
+	mb MusicbrainzClient, pathFormat *pathformat.Format, tagWeights tagmap.TagWeights, researchLinkQuerier *researchlink.Querier, keepFiles map[string]struct{}, addons []Addon,
 	op FileSystemOperation, srcDir string,
 	useMBID string, importCondition ImportCondition,
 ) (*SearchResult, error) {
@@ -186,13 +188,15 @@ func ProcessDir(
 		if op.ReadOnly() {
 			continue
 		}
+
 		tagFile, err := tags.Read(destPath)
 		if err != nil {
 			return nil, fmt.Errorf("read tag file: %w", err)
 		}
-		if err := tagmap.WriteFile(release, labelInfo, genres, &releaseTrack, i, tagFile); err != nil {
+		if err := tagmap.WriteFile(ctx, addons, release, labelInfo, genres, &releaseTrack, i, tagFile); err != nil {
 			return nil, fmt.Errorf("write tag file: %w", err)
 		}
+
 		tagFile.Close()
 	}
 

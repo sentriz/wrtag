@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.senan.xyz/wrtag/addons/lyrics"
 	"go.senan.xyz/wrtag/clientutil"
-	"go.senan.xyz/wrtag/lyrics"
 )
 
 //go:embed testdata
