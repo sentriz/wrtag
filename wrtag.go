@@ -24,6 +24,7 @@ import (
 	"go.senan.xyz/wrtag/researchlink"
 	"go.senan.xyz/wrtag/tagmap"
 	"go.senan.xyz/wrtag/tags"
+	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -62,7 +63,9 @@ const (
 	Confirm
 )
 
-type Addon = tagmap.Addon
+type Addon interface {
+	ProcessRelease(context.Context, *musicbrainz.Release, []tagmap.MatchedTrack) error
+}
 
 func ProcessDir(
 	ctx context.Context,
@@ -72,12 +75,12 @@ func ProcessDir(
 ) (*SearchResult, error) {
 	srcDir, _ = filepath.Abs(srcDir)
 
-	cover, paths, tagFiles, err := ReadAlbumDir(srcDir)
+	cover, files, err := ReadAlbumDir(srcDir)
 	if err != nil {
 		return nil, fmt.Errorf("read dir: %w", err)
 	}
 
-	searchFile := tagFiles[0]
+	searchFile := files[0]
 
 	var mbid = searchFile.Read(tags.MBReleaseID)
 	if useMBID != "" {
@@ -94,7 +97,7 @@ func ProcessDir(
 		Format:           searchFile.Read(tags.MediaFormat),
 		Label:            searchFile.Read(tags.Label),
 		CatalogueNum:     searchFile.Read(tags.CatalogueNum),
-		NumTracks:        len(tagFiles),
+		NumTracks:        len(files),
 	}
 
 	// parse https://github.com/x1ppy/gazelle-origin files, if one exists
@@ -131,11 +134,16 @@ func ProcessDir(
 	}
 
 	releaseTracks := musicbrainz.FlatTracks(release.Media)
-	if len(releaseTracks) != len(tagFiles) {
-		return &SearchResult{release, 0, "", nil, researchLinks, originFile}, fmt.Errorf("%w: %d remote / %d local", ErrTrackCountMismatch, len(releaseTracks), len(tagFiles))
+	if len(releaseTracks) != len(files) {
+		return &SearchResult{release, 0, "", nil, researchLinks, originFile}, fmt.Errorf("%w: %d remote / %d local", ErrTrackCountMismatch, len(releaseTracks), len(files))
 	}
 
-	score, diff := tagmap.DiffRelease(tagWeights, release, tagFiles)
+	tracks := make([]tagmap.MatchedTrack, 0, len(releaseTracks))
+	for i := range releaseTracks {
+		tracks = append(tracks, tagmap.MatchedTrack{Track: &releaseTracks[i], File: files[i]})
+	}
+
+	score, diff := tagmap.DiffRelease(tagWeights, release, tracks)
 
 	var shouldImport bool
 	switch importCondition {
@@ -169,10 +177,8 @@ func ProcessDir(
 
 	dc := NewDirContext()
 
-	for i := range releaseTracks {
-		releaseTrack, path := releaseTracks[i], paths[i]
-
-		pathFormatData := pathformat.Data{Release: *release, Track: releaseTrack, TrackNum: i + 1, Ext: strings.ToLower(filepath.Ext(path)), IsCompilation: isCompilation}
+	for i, t := range tracks {
+		pathFormatData := pathformat.Data{Release: release, Track: t.Track, TrackNum: i + 1, Ext: strings.ToLower(filepath.Ext(t.Path())), IsCompilation: isCompilation}
 		destPath, err := pathFormat.Execute(pathFormatData)
 		if err != nil {
 			return nil, fmt.Errorf("create path: %w", err)
@@ -181,7 +187,7 @@ func ProcessDir(
 		if err := os.MkdirAll(filepath.Dir(destPath), os.ModePerm); err != nil {
 			return nil, fmt.Errorf("create dest path: %w", err)
 		}
-		if err := op.ProcessFile(dc, path, destPath); err != nil {
+		if err := op.ProcessFile(dc, t.Path(), destPath); err != nil {
 			return nil, fmt.Errorf("process path %q: %w", filepath.Base(destPath), err)
 		}
 
@@ -189,15 +195,27 @@ func ProcessDir(
 			continue
 		}
 
-		tagFile, err := tags.Read(destPath)
+		f, err := tags.Read(destPath)
 		if err != nil {
 			return nil, fmt.Errorf("read tag file: %w", err)
 		}
-		if err := tagmap.WriteFile(ctx, addons, release, labelInfo, genres, &releaseTrack, i, tagFile); err != nil {
+
+		err = tags.SaveSet(f, func(f *tags.File) {
+			tagmap.WriteTo(release, labelInfo, genres, i, t.Track, f)
+		})
+		if err != nil {
 			return nil, fmt.Errorf("write tag file: %w", err)
 		}
+	}
 
-		tagFile.Close()
+	var wg errgroup.Group
+	for _, addon := range addons {
+		wg.Go(func() error {
+			return addon.ProcessRelease(ctx, release, tracks)
+		})
+	}
+	if err := wg.Wait(); err != nil {
+		return nil, fmt.Errorf("run addons: %w", err)
 	}
 
 	if cover == "" {
@@ -233,23 +251,18 @@ func ProcessDir(
 	return &SearchResult{release, score, destDir, diff, researchLinks, originFile}, nil
 }
 
-func ReadAlbumDir(path string) (string, []string, []*tags.File, error) {
+func ReadAlbumDir(path string) (string, []*tags.File, error) {
 	mainPaths, err := fileutil.GlobDir(path, "*")
 	if err != nil {
-		return "", nil, nil, fmt.Errorf("glob dir: %w", err)
+		return "", nil, fmt.Errorf("glob dir: %w", err)
 	}
 	discPaths, err := fileutil.GlobDir(path, "*/*") // recurse once for any disc1/ disc2/ dirs
 	if err != nil {
-		return "", nil, nil, fmt.Errorf("glob dir for discs: %w", err)
-	}
-
-	type pathFile struct {
-		path string
-		f    *tags.File
+		return "", nil, fmt.Errorf("glob dir for discs: %w", err)
 	}
 
 	var cover string
-	var pathFiles []pathFile
+	var files []*tags.File
 	for _, path := range append(mainPaths, discPaths...) {
 		switch strings.ToLower(filepath.Ext(path)) {
 		case ".jpg", ".jpeg", ".png", ".bmp", ".gif":
@@ -260,49 +273,42 @@ func ReadAlbumDir(path string) (string, []string, []*tags.File, error) {
 		if tags.CanRead(path) {
 			file, err := tags.Read(path)
 			if err != nil {
-				return "", nil, nil, fmt.Errorf("read track: %w", err)
+				return "", nil, fmt.Errorf("read track: %w", err)
 			}
-			pathFiles = append(pathFiles, pathFile{path, file})
+			files = append(files, file)
 			file.Close()
 		}
 	}
-	if len(pathFiles) == 0 {
-		return "", nil, nil, ErrNoTracks
+	if len(files) == 0 {
+		return "", nil, ErrNoTracks
 	}
 
 	{
 		// validate we aren't accidentally importing something like an artist folder, which may look
 		// like a multi disc album to us, but will have all its tracks in one subdirectory
 		discDirs := map[string]struct{}{}
-		for _, pf := range pathFiles {
-			discDirs[filepath.Dir(pf.path)] = struct{}{}
+		for _, pf := range files {
+			discDirs[filepath.Dir(pf.Path())] = struct{}{}
 		}
-		if len(discDirs) == 1 && filepath.Dir(pathFiles[0].path) != filepath.Clean(path) {
-			return "", nil, nil, fmt.Errorf("validate tree: %w", ErrNoTracks)
+		if len(discDirs) == 1 && filepath.Dir(files[0].Path()) != filepath.Clean(path) {
+			return "", nil, fmt.Errorf("validate tree: %w", ErrNoTracks)
 		}
 	}
 
-	slices.SortFunc(pathFiles, func(a, b pathFile) int {
+	slices.SortFunc(files, func(a, b *tags.File) int {
 		return cmp.Or(
-			cmp.Compare(a.f.ReadNum(tags.DiscNumber), b.f.ReadNum(tags.DiscNumber)),
-			cmp.Compare(a.f.ReadNum(tags.TrackNumber), b.f.ReadNum(tags.TrackNumber)),
-			cmp.Compare(a.path, b.path),
+			cmp.Compare(a.ReadNum(tags.DiscNumber), b.ReadNum(tags.DiscNumber)),
+			cmp.Compare(a.ReadNum(tags.TrackNumber), b.ReadNum(tags.TrackNumber)),
+			cmp.Compare(a.Path(), b.Path()),
 		)
 	})
 
-	paths := make([]string, 0, len(pathFiles))
-	files := make([]*tags.File, 0, len(pathFiles))
-	for _, pf := range pathFiles {
-		paths = append(paths, pf.path)
-		files = append(files, pf.f)
-	}
-
-	return cover, paths, files, nil
+	return cover, files, nil
 }
 
 func DestDir(pathFormat *pathformat.Format, release *musicbrainz.Release) (string, error) {
-	dummyTrack := musicbrainz.Track{Title: "track"}
-	path, err := pathFormat.Execute(pathformat.Data{Release: *release, Track: dummyTrack, TrackNum: 1, Ext: ".eg"})
+	dummyTrack := &musicbrainz.Track{Title: "track"}
+	path, err := pathFormat.Execute(pathformat.Data{Release: release, Track: dummyTrack, TrackNum: 1, Ext: ".eg"})
 	if err != nil {
 		return "", fmt.Errorf("create path: %w", err)
 	}

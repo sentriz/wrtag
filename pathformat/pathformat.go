@@ -19,8 +19,8 @@ var ErrBadData = errors.New("bad data")
 const delimL, delimR = "{{", "}}"
 
 type Data struct {
-	Release       musicbrainz.Release
-	Track         musicbrainz.Track
+	Release       *musicbrainz.Release
+	Track         *musicbrainz.Track
 	TrackNum      int
 	IsCompilation bool
 	Ext           string
@@ -89,14 +89,14 @@ func (pf *Format) Execute(data Data) (string, error) {
 }
 
 func validate(f Format) error {
-	release := func(artist, name string) musicbrainz.Release {
+	release := func(artist, name string) *musicbrainz.Release {
 		var release musicbrainz.Release
 		release.Title = name
 		release.Artists = append(release.Artists, musicbrainz.ArtistCredit{Name: artist, Artist: musicbrainz.Artist{Name: artist}})
-		return release
+		return &release
 	}
-	track := func(title string) musicbrainz.Track {
-		return musicbrainz.Track{Title: title}
+	track := func(title string) *musicbrainz.Track {
+		return &musicbrainz.Track{Title: title}
 	}
 	compare := func(d1, d2 Data) (bool, error) {
 		path1, err := f.Execute(d1)

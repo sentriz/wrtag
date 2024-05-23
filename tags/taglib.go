@@ -1,8 +1,10 @@
 package tags
 
 import (
+	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"maps"
 	"path/filepath"
 	"regexp"
@@ -64,10 +66,11 @@ type File struct {
 	raw   map[string][]string
 	props *audiotags.AudioProperties
 	file  *audiotags.File
+	path  string
 }
 
-func Read(absPath string) (*File, error) {
-	f, err := audiotags.Open(absPath)
+func Read(path string) (*File, error) {
+	f, err := audiotags.Open(path)
 	if err != nil {
 		return nil, fmt.Errorf("open: %w", err)
 	}
@@ -76,7 +79,7 @@ func Read(absPath string) (*File, error) {
 	normalise(raw, replacements) // tag replacements, case normalisation, etc
 
 	props := f.ReadAudioProperties()
-	return &File{raw: raw, props: props, file: f}, nil
+	return &File{raw: raw, props: props, file: f, path: path}, nil
 }
 
 func (f *File) Read(t string) string        { return first(f.raw[t]) }
@@ -128,6 +131,33 @@ func (f *File) Save() error {
 
 func (f *File) Close() {
 	f.file.Close()
+}
+
+func (f *File) Path() string {
+	return f.path
+}
+
+func SaveSet(f *File, fn func(f *File)) error {
+	before := f.CloneRaw()
+	fn(f)
+	after := f.CloneRaw()
+
+	if maps.EqualFunc(before, after, slices.Equal) {
+		return nil
+	}
+
+	if l := slog.Default(); l.Enabled(context.Background(), slog.LevelDebug) {
+		for k := range after {
+			if b, a := before[k], after[k]; !slices.Equal(b, a) {
+				l.Debug("tag change", "key", k, "from", b, "to", a)
+			}
+		}
+	}
+
+	if err := f.Save(); err != nil {
+		return fmt.Errorf("save: %w", err)
+	}
+	return nil
 }
 
 func first(vs []string) string {

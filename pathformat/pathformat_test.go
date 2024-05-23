@@ -66,13 +66,13 @@ func TestPathFormat(t *testing.T) {
 		}},
 	}
 
-	path, err := pf.Execute(pathformat.Data{Release: release, Track: track, TrackNum: 1, Ext: ".flac"})
+	path, err := pf.Execute(pathformat.Data{Release: &release, Track: &track, TrackNum: 1, Ext: ".flac"})
 	require.NoError(t, err)
 	assert.Equal(t, `/music/albums/Luke Vibert/(2018) Valvable/01.01 Sharon's Tone.flac`, path)
 
 	release.ReleaseGroup.Disambiguation = "Deluxe Edition"
 
-	path, err = pf.Execute(pathformat.Data{Release: release, Track: track, TrackNum: 1, Ext: ".flac"})
+	path, err = pf.Execute(pathformat.Data{Release: &release, Track: &track, TrackNum: 1, Ext: ".flac"})
 	require.NoError(t, err)
 	assert.Equal(t, `/music/albums/Luke Vibert/(2018) Valvable (Deluxe Edition)/01.01 Sharon's Tone.flac`, path)
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/andybalholm/cascadia"
 	"go.senan.xyz/wrtag/clientutil"
 	"go.senan.xyz/wrtag/musicbrainz"
+	"go.senan.xyz/wrtag/tagmap"
 	"go.senan.xyz/wrtag/tags"
 	"golang.org/x/net/html"
 )
@@ -21,14 +22,18 @@ type Addon struct {
 	Source
 }
 
-func (a Addon) ProcessTrack(ctx context.Context, _ *musicbrainz.Release, track *musicbrainz.Track, f *tags.File) error {
-	rec := track.Recording
-	lyricData, err := a.Search(ctx, musicbrainz.ArtistsCreditString(rec.Artists), rec.Title)
-	if err != nil && !errors.Is(err, ErrLyricsNotFound) {
-		return err
+func (a Addon) ProcessRelease(ctx context.Context, release *musicbrainz.Release, tracks []tagmap.MatchedTrack) error {
+	var trackErrs []error
+	for _, track := range tracks {
+		lyricData, err := a.Search(ctx, musicbrainz.ArtistsCreditString(track.Recording.Artists), track.Recording.Title)
+		if err != nil && !errors.Is(err, ErrLyricsNotFound) {
+			trackErrs = append(trackErrs, err)
+			continue
+		}
+		track.Write(tags.Lyrics, lyricData)
+		return nil
 	}
-	f.Write(tags.Lyrics, lyricData)
-	return nil
+	return errors.Join(trackErrs...)
 }
 
 var ErrLyricsNotFound = errors.New("lyrics not found")
@@ -73,7 +78,7 @@ type Musixmatch struct {
 func (mm *Musixmatch) Search(ctx context.Context, artist, song string) (string, error) {
 	mm.initOnce.Do(func() {
 		mm.HTTPClient = clientutil.Wrap(mm.HTTPClient, clientutil.Chain(
-			clientutil.WithRateLimit(mm.RateLimit, "MUSIBR"),
+			clientutil.WithRateLimit(mm.RateLimit),
 		))
 	})
 
@@ -129,7 +134,7 @@ type Genius struct {
 func (g *Genius) Search(ctx context.Context, artist, song string) (string, error) {
 	g.initOnce.Do(func() {
 		g.HTTPClient = clientutil.Wrap(g.HTTPClient, clientutil.Chain(
-			clientutil.WithRateLimit(g.RateLimit, "GENIUS"),
+			clientutil.WithRateLimit(g.RateLimit),
 		))
 	})
 

@@ -121,3 +121,19 @@ func TestNormalise(t *testing.T) {
 	}
 	require.Equal(t, exp, raw)
 }
+
+func TestDoubleSave(t *testing.T) {
+	t.Parallel()
+
+	path := newFile(t, emptyFlac, ".flac")
+	f, err := Read(path)
+	require.NoError(t, err)
+	defer f.Close()
+
+	f.Write(Album, "a")
+	require.NoError(t, f.Save())
+	f.Write(Album, "b")
+	require.NoError(t, f.Save())
+	f.Write(Album, "c")
+	require.NoError(t, f.Save())
+}
