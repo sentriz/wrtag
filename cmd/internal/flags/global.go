@@ -44,13 +44,11 @@ func (n *slogHandler) Handle(ctx context.Context, r slog.Record) error {
 	return n.Handler.Handle(ctx, r)
 }
 
-var httpClient *http.Client
-
 func init() {
-	httpClient = &http.Client{Transport: clientutil.Chain(
+	chain := clientutil.Chain(
 		clientutil.WithLogging(slog.Default()),
 		clientutil.WithUserAgent(fmt.Sprintf(`wrtag/%s`, wrtag.Version)),
-	)(http.DefaultTransport)}
+	)
 
-	http.DefaultClient = httpClient
+	http.DefaultTransport = chain(http.DefaultTransport)
 }

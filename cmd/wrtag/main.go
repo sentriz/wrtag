@@ -16,9 +16,6 @@ import (
 
 	"go.senan.xyz/wrtag"
 	"go.senan.xyz/wrtag/cmd/internal/flags"
-	"go.senan.xyz/wrtag/pathformat"
-	"go.senan.xyz/wrtag/researchlink"
-	"go.senan.xyz/wrtag/tagmap"
 )
 
 func init() {
@@ -37,17 +34,10 @@ func init() {
 	}
 }
 
-// updated while testing
-var mb = flags.MusicBrainz()
-
 func main() {
 	defer flags.ExitError()
 	var (
-		keepFiles           = flags.KeepFiles()
-		pathFormat          = flags.PathFormat()
-		researchLinkQuerier = flags.Querier()
-		tagWeights          = flags.TagWeights()
-		addons              = flags.Addons()
+		cfg = flags.Config()
 	)
 	flags.Parse()
 
@@ -80,7 +70,7 @@ func main() {
 		defer cancel()
 
 		dir := flag.Arg(0)
-		if err := run(ctx, mb, pathFormat, tagWeights, researchLinkQuerier, keepFiles, *addons, operation(command, *dryRun), dir, *useMBID, importCondition); err != nil {
+		if err := run(ctx, cfg, operation(command, *dryRun), dir, importCondition, *useMBID); err != nil {
 			slog.Error("running", "command", command, "err", err)
 			return
 		}
@@ -101,12 +91,10 @@ func operation(name string, dryRun bool) wrtag.FileSystemOperation {
 }
 
 func run(
-	ctx context.Context, mb wrtag.MusicbrainzClient,
-	pathFormat *pathformat.Format, tagWeights tagmap.TagWeights, researchLinkQuerier *researchlink.Querier, keepFiles map[string]struct{}, addons []wrtag.Addon,
-	op wrtag.FileSystemOperation, srcDir string,
-	useMBID string, importCondition wrtag.ImportCondition,
+	ctx context.Context, cfg *wrtag.Config,
+	op wrtag.FileSystemOperation, srcDir string, cond wrtag.ImportCondition, useMBID string,
 ) error {
-	r, err := wrtag.ProcessDir(ctx, mb, pathFormat, tagWeights, researchLinkQuerier, keepFiles, addons, op, srcDir, useMBID, importCondition)
+	r, err := wrtag.ProcessDir(ctx, cfg, op, srcDir, cond, useMBID)
 	if err != nil && !errors.Is(err, wrtag.ErrScoreTooLow) {
 		return fmt.Errorf("processing: %w", err)
 	}

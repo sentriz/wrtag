@@ -1,8 +1,6 @@
 package clientutil
 
 import (
-	"fmt"
-	"io/fs"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -78,16 +76,6 @@ func WithUserAgent(userAgent string) Middleware {
 
 func Passthrough(next http.RoundTripper) http.RoundTripper {
 	return next
-}
-
-func FSClient(fsys fs.FS, sub string) *http.Client {
-	subfs, err := fs.Sub(fsys, sub)
-	if err != nil {
-		panic(fmt.Sprintf("clientutil: fs.Sub: %v", err.Error()))
-	}
-	c := &http.Client{}
-	c.Transport = http.NewFileTransportFS(subfs)
-	return c
 }
 
 type RoundTripFunc func(*http.Request) (*http.Response, error)

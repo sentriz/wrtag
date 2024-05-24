@@ -3,13 +3,14 @@ package lyrics_test
 import (
 	"context"
 	"embed"
+	"io/fs"
+	"net/http"
 	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.senan.xyz/wrtag/addons/lyrics"
-	"go.senan.xyz/wrtag/clientutil"
 )
 
 //go:embed testdata
@@ -19,7 +20,7 @@ func TestMusixmatch(t *testing.T) {
 	t.Parallel()
 
 	var src lyrics.Musixmatch
-	src.HTTPClient = clientutil.FSClient(responses, "testdata/musixmatch")
+	src.HTTPClient = fsClient(responses, "testdata/musixmatch")
 
 	resp, err := src.Search(context.Background(), "The Fall", "Wings")
 	require.NoError(t, err)
@@ -36,7 +37,7 @@ func TestGenius(t *testing.T) {
 	t.Parallel()
 
 	var src lyrics.Genius
-	src.HTTPClient = clientutil.FSClient(responses, "testdata/genius")
+	src.HTTPClient = fsClient(responses, "testdata/genius")
 
 	resp, err := src.Search(context.Background(), "the fall", "totally wired")
 	require.NoError(t, err)
@@ -48,4 +49,14 @@ func TestGenius(t *testing.T) {
 	resp, err = src.Search(context.Background(), "the fall", "uhh yeah - uh greath")
 	require.ErrorIs(t, err, lyrics.ErrLyricsNotFound)
 	assert.Empty(t, resp)
+}
+
+func fsClient(fsys fs.FS, sub string) *http.Client {
+	fsys, err := fs.Sub(fsys, sub)
+	if err != nil {
+		panic(err)
+	}
+	var c http.Client
+	c.Transport = http.NewFileTransportFS(fsys)
+	return &c
 }

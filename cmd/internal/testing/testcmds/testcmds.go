@@ -3,6 +3,7 @@ package testcmds
 import (
 	"crypto/rand"
 	"embed"
+	_ "embed"
 	"flag"
 	"fmt"
 	"io"
@@ -16,28 +17,23 @@ import (
 	"strconv"
 	"strings"
 
-	"go.senan.xyz/wrtag/clientutil"
 	"go.senan.xyz/wrtag/fileutil"
-	"go.senan.xyz/wrtag/musicbrainz"
 	"go.senan.xyz/wrtag/tags"
 )
 
 //go:embed testdata/responses
 var responses embed.FS
 
-func MockMusicBrainz(mb *musicbrainz.MBClient) {
-	mb.RateLimit = 0
-	mb.HTTPClient = clientutil.FSClient(responses, "testdata/responses/musicbrainz")
-}
-func MockCoverArtArchive(caa *musicbrainz.CAAClient) {
-	caa.RateLimit = 0
-	caa.HTTPClient = clientutil.FSClient(responses, "testdata/responses/coverartarchive")
-}
+func RegisterTransport() {
+	var t http.Transport
+	t.RegisterProtocol("file", http.NewFileTransportFS(responses))
 
-func init() {
-	// panic if someone tries to use the default client/transport
-	http.DefaultClient.Transport = panicTransport
-	http.DefaultTransport = panicTransport
+	os.Setenv("WRTAG_MB_BASE_URL", "file:///testdata/responses/musicbrainz/ws/2")
+	os.Setenv("WRTAG_MB_RATE_LIMIT", "0")
+	os.Setenv("WRTAG_CAA_BASE_URL", "file:///testdata/responses/coverartarchive")
+	os.Setenv("WRTAG_CAA_RATE_LIMIT", "0")
+
+	http.DefaultTransport = &t
 }
 
 func Tag() {
@@ -227,7 +223,3 @@ func ensureFlac(path string) error {
 	}
 	return nil
 }
-
-var panicTransport = clientutil.RoundTripFunc(func(r *http.Request) (*http.Response, error) {
-	panic("panic transport used")
-})

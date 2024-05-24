@@ -19,8 +19,6 @@ import (
 	"go.senan.xyz/wrtag/cmd/internal/flags"
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/notifications"
-	"go.senan.xyz/wrtag/pathformat"
-	"go.senan.xyz/wrtag/tagmap"
 )
 
 func init() {
@@ -34,25 +32,18 @@ func init() {
 	}
 }
 
-// updated while testing
-var mb = flags.MusicBrainz()
-
 func main() {
 	defer flags.ExitError()
 	var (
-		keepFiles  = flags.KeepFiles()
-		notifs     = flags.Notifications()
-		pathFormat = flags.PathFormat()
-		tagWeights = flags.TagWeights()
-		addons     = flags.Addons()
-		interval   = flag.Duration("interval", 0, "max duration a release should be left unsynced")
-		dryRun     = flag.Bool("dry-run", false, "dry run")
+		cfg      = flags.Config()
+		interval = flag.Duration("interval", 0, "max duration a release should be left unsynced")
+		dryRun   = flag.Bool("dry-run", false, "dry run")
 	)
 	flags.EnvPrefix("wrtag") // reuse main binary's namespace
 	flags.Parse()
 
 	// walk the whole root dir by default, or some user provided dirs
-	var dirs = []string{pathFormat.Root()}
+	var dirs = []string{cfg.PathFormat.Root()}
 	if flag.NArg() > 0 {
 		dirs = flag.Args()
 	}
@@ -87,7 +78,7 @@ func main() {
 		go func() {
 			defer wg.Done()
 			ctxConsume(ctx, leaves, func(dir string) {
-				if err := processDir(ctx, &knownDests, mb, pathFormat, tagWeights, keepFiles, *addons, operation, dir, *interval); err != nil {
+				if err := processDir(ctx, &knownDests, *interval, cfg, operation, dir); err != nil {
 					slog.ErrorContext(ctx, "processing dir", "dir", dir, "err", err)
 					errN.Add(1)
 					return
@@ -101,20 +92,19 @@ func main() {
 
 	slog := slog.With("took", time.Since(start), "dirs", doneN.Load(), "errs", errN.Load())
 	if errN.Load() > 0 {
-		notifs.Send(ctx, notifications.SyncError, "sync finished with errors")
+		cfg.Notifications.Send(ctx, notifications.SyncError, "sync finished with errors")
 		slog.Error("sync finished with errors")
 		return
 	}
-	notifs.Send(ctx, notifications.Complete, "sync finished")
+	cfg.Notifications.Send(ctx, notifications.Complete, "sync finished")
 	slog.Info("sync finished")
 }
 
 func processDir(
 	ctx context.Context,
-	knownDests *sync.Map,
-	mb wrtag.MusicbrainzClient, pathFormat *pathformat.Format, tagWeights tagmap.TagWeights, keepFiles map[string]struct{}, addons []wrtag.Addon,
+	knownDests *sync.Map, interval time.Duration,
+	cfg *wrtag.Config,
 	op wrtag.FileSystemOperation, srcDir string,
-	interval time.Duration,
 ) error {
 	{
 		// make sure we don't try process a dir that was created while walking
@@ -134,7 +124,7 @@ func processDir(
 		}
 	}
 
-	r, err := wrtag.ProcessDir(ctx, mb, pathFormat, tagWeights, nil, keepFiles, addons, op, srcDir, "", wrtag.HighScoreOrMBID)
+	r, err := wrtag.ProcessDir(ctx, cfg, op, srcDir, wrtag.HighScoreOrMBID, "")
 	if err != nil {
 		return err
 	}

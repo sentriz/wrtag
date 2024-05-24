@@ -47,17 +47,11 @@ func init() {
 func main() {
 	defer flags.ExitError()
 	var (
-		mb                  = flags.MusicBrainz()
-		keepFiles           = flags.KeepFiles()
-		notifs              = flags.Notifications()
-		pathFormat          = flags.PathFormat()
-		researchLinkQuerier = flags.Querier()
-		tagWeights          = flags.TagWeights()
-		addons              = flags.Addons()
-		listenAddr          = flag.String("web-listen-addr", "", "listen addr for web interface")
-		publicURL           = flag.String("web-public-url", "", "public url for web interface")
-		apiKey              = flag.String("web-api-key", "", "api key for web interface")
-		dbPath              = flag.String("web-db-path", "wrtag.db", "db path for web interface")
+		cfg        = flags.Config()
+		listenAddr = flag.String("web-listen-addr", "", "listen addr for web interface")
+		publicURL  = flag.String("web-public-url", "", "public url for web interface")
+		apiKey     = flag.String("web-api-key", "", "api key for web interface")
+		dbPath     = flag.String("web-db-path", "wrtag.db", "db path for web interface")
 	)
 	flags.EnvPrefix("wrtag") // reuse main binary's namespace
 	flags.Parse()
@@ -108,23 +102,23 @@ func main() {
 		job.Status = StatusComplete
 
 		var err error
-		job.SearchResult, err = wrtag.ProcessDir(ctx, mb, pathFormat, tagWeights, researchLinkQuerier, keepFiles, *addons, wrtagOperation(job.Operation), job.SourcePath, job.UseMBID, ic)
+		job.SearchResult, err = wrtag.ProcessDir(ctx, cfg, wrtagOperation(job.Operation), job.SourcePath, ic, job.UseMBID)
 		if err != nil {
 			job.Status = StatusError
 			job.Error = err.Error()
 			if errors.Is(err, wrtag.ErrScoreTooLow) {
-				notifs.Send(ctx, notifications.NeedsInput, jobNotificationMessage(*publicURL, job))
+				cfg.Notifications.Send(ctx, notifications.NeedsInput, jobNotificationMessage(*publicURL, job))
 				job.Status = StatusNeedsInput
 			}
 			return nil
 		}
 
-		job.DestPath, err = wrtag.DestDir(pathFormat, job.SearchResult.Release)
+		job.DestPath, err = wrtag.DestDir(&cfg.PathFormat, job.SearchResult.Release)
 		if err != nil {
 			return fmt.Errorf("gen dest dir: %w", err)
 		}
 
-		notifs.Send(ctx, notifications.Complete, jobNotificationMessage(*publicURL, job))
+		cfg.Notifications.Send(ctx, notifications.Complete, jobNotificationMessage(*publicURL, job))
 
 		// either if this was a copy or move job, subsequent re-imports should just be a move so we can retag
 		job.Operation = OperationMove

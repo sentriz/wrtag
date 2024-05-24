@@ -19,6 +19,7 @@ import (
 
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/musicbrainz"
+	"go.senan.xyz/wrtag/notifications"
 	"go.senan.xyz/wrtag/originfile"
 	"go.senan.xyz/wrtag/pathformat"
 	"go.senan.xyz/wrtag/researchlink"
@@ -41,11 +42,6 @@ const (
 	thresholdSizeTrim  uint64 = 3000 * 1e6 // 3000 MB
 )
 
-type MusicbrainzClient interface {
-	SearchRelease(ctx context.Context, q musicbrainz.ReleaseQuery) (*musicbrainz.Release, error)
-	GetCover(ctx context.Context, release *musicbrainz.Release) ([]byte, string, error)
-}
-
 type SearchResult struct {
 	Release       *musicbrainz.Release
 	Score         float64
@@ -67,11 +63,20 @@ type Addon interface {
 	ProcessRelease(context.Context, *musicbrainz.Release, []tagmap.MatchedTrack) error
 }
 
+type Config struct {
+	MusicBrainzClient     musicbrainz.MBClient
+	CoverArtArchiveClient musicbrainz.CAAClient
+	PathFormat            pathformat.Format
+	TagWeights            tagmap.TagWeights
+	ResearchLinkQuerier   researchlink.Querier
+	KeepFiles             map[string]struct{}
+	Addons                []Addon
+	Notifications         notifications.Notifications
+}
+
 func ProcessDir(
-	ctx context.Context,
-	mb MusicbrainzClient, pathFormat *pathformat.Format, tagWeights tagmap.TagWeights, researchLinkQuerier *researchlink.Querier, keepFiles map[string]struct{}, addons []Addon,
-	op FileSystemOperation, srcDir string,
-	useMBID string, importCondition ImportCondition,
+	ctx context.Context, cfg *Config,
+	op FileSystemOperation, srcDir string, cond ImportCondition, useMBID string,
 ) (*SearchResult, error) {
 	srcDir, _ = filepath.Abs(srcDir)
 
@@ -112,25 +117,23 @@ func ProcessDir(
 		}
 	}
 
-	release, err := mb.SearchRelease(ctx, query)
+	release, err := cfg.MusicBrainzClient.SearchRelease(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("search musicbrainz: %w", err)
 	}
 
 	var researchLinks []researchlink.SearchResult
-	if researchLinkQuerier != nil {
-		var artist = searchFile.Read(tags.AlbumArtist)
-		if artist == "" {
-			artist = searchFile.Read(tags.Artist)
-		}
-		researchLinks, err = researchLinkQuerier.Search(researchlink.Query{
-			Artist: artist,
-			Album:  searchFile.Read(tags.Album),
-			Date:   searchFile.ReadTime(tags.Date),
-		})
-		if err != nil {
-			return nil, fmt.Errorf("research querier search: %w", err)
-		}
+	var artist = searchFile.Read(tags.AlbumArtist)
+	if artist == "" {
+		artist = searchFile.Read(tags.Artist)
+	}
+	researchLinks, err = cfg.ResearchLinkQuerier.Search(researchlink.Query{
+		Artist: artist,
+		Album:  searchFile.Read(tags.Album),
+		Date:   searchFile.ReadTime(tags.Date),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("research querier search: %w", err)
 	}
 
 	releaseTracks := musicbrainz.FlatTracks(release.Media)
@@ -143,10 +146,10 @@ func ProcessDir(
 		tracks = append(tracks, tagmap.MatchedTrack{Track: &releaseTracks[i], File: files[i]})
 	}
 
-	score, diff := tagmap.DiffRelease(tagWeights, release, tracks)
+	score, diff := tagmap.DiffRelease(cfg.TagWeights, release, tracks)
 
 	var shouldImport bool
-	switch importCondition {
+	switch cond {
 	case HighScoreOrMBID:
 		shouldImport = score >= minScore || mbid != ""
 	case HighScore:
@@ -159,7 +162,7 @@ func ProcessDir(
 		return &SearchResult{release, score, "", diff, researchLinks, originFile}, ErrScoreTooLow
 	}
 
-	destDir, err := DestDir(pathFormat, release)
+	destDir, err := DestDir(&cfg.PathFormat, release)
 	if err != nil {
 		return nil, fmt.Errorf("gen dest dir: %w", err)
 	}
@@ -179,7 +182,7 @@ func ProcessDir(
 
 	for i, t := range tracks {
 		pathFormatData := pathformat.Data{Release: release, Track: t.Track, TrackNum: i + 1, Ext: strings.ToLower(filepath.Ext(t.Path())), IsCompilation: isCompilation}
-		destPath, err := pathFormat.Execute(pathFormatData)
+		destPath, err := cfg.PathFormat.Execute(pathFormatData)
 		if err != nil {
 			return nil, fmt.Errorf("create path: %w", err)
 		}
@@ -209,7 +212,7 @@ func ProcessDir(
 	}
 
 	var wg errgroup.Group
-	for _, addon := range addons {
+	for _, addon := range cfg.Addons {
 		wg.Go(func() error {
 			return addon.ProcessRelease(ctx, release, tracks)
 		})
@@ -219,7 +222,7 @@ func ProcessDir(
 	}
 
 	if cover == "" {
-		cover, err = tryDownloadMusicbrainzCover(ctx, mb, destDir, release)
+		cover, err = tryDownloadMusicbrainzCover(ctx, &cfg.CoverArtArchiveClient, destDir, release)
 		if err != nil {
 			return nil, fmt.Errorf("try download mb cover: %w", err)
 		}
@@ -232,7 +235,7 @@ func ProcessDir(
 		}
 	}
 
-	for kf := range keepFiles {
+	for kf := range cfg.KeepFiles {
 		if err := op.ProcessFile(dc, filepath.Join(srcDir, kf), filepath.Join(destDir, kf)); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("process keep file %q: %w", kf, err)
 		}
@@ -243,7 +246,7 @@ func ProcessDir(
 	}
 
 	if srcDir != destDir {
-		if err := op.CleanDir(dc, pathFormat.Root(), srcDir); err != nil {
+		if err := op.CleanDir(dc, cfg.PathFormat.Root(), srcDir); err != nil {
 			return nil, fmt.Errorf("clean: %w", err)
 		}
 	}
@@ -482,8 +485,8 @@ func trimDir(dc DirContext, dest string, dryRun bool) error {
 	return nil
 }
 
-func tryDownloadMusicbrainzCover(ctx context.Context, mb MusicbrainzClient, tmpDir string, release *musicbrainz.Release) (string, error) {
-	cover, ext, err := mb.GetCover(ctx, release)
+func tryDownloadMusicbrainzCover(ctx context.Context, caa *musicbrainz.CAAClient, tmpDir string, release *musicbrainz.Release) (string, error) {
+	cover, ext, err := caa.GetCover(ctx, release)
 	if err != nil {
 		return "", fmt.Errorf("request cover url: %w", err)
 	}

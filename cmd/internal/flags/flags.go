@@ -9,10 +9,6 @@ import (
 
 	"go.senan.xyz/flagconf"
 	"go.senan.xyz/wrtag"
-	"go.senan.xyz/wrtag/musicbrainz"
-	"go.senan.xyz/wrtag/notifications"
-	"go.senan.xyz/wrtag/pathformat"
-	"go.senan.xyz/wrtag/researchlink"
 	"go.senan.xyz/wrtag/tagmap"
 )
 
@@ -48,57 +44,25 @@ func Parse() {
 	}
 }
 
-func PathFormat() *pathformat.Format {
-	var r pathformat.Format
-	flag.Var(&pathFormatParser{&r}, "path-format", "music directory and go templated path format to define music library layout")
-	return &r
-}
+func Config() *wrtag.Config {
+	var cfg wrtag.Config
 
-func Querier() *researchlink.Querier {
-	var r researchlink.Querier
-	flag.Var(&querierParser{&r}, "research-link", "define a helper url to help find information about an unmatched release")
-	return &r
-}
+	flag.Var(&pathFormatParser{&cfg.PathFormat}, "path-format", "music directory and go templated path format to define music library layout")
+	flag.Var(&querierParser{&cfg.ResearchLinkQuerier}, "research-link", "define a helper url to help find information about an unmatched release")
+	flag.Var(&notificationsParser{&cfg.Notifications}, "notification-uri", "add a shoutrrr notification uri for an event")
+	flag.Var(&addonsParser{&cfg.Addons}, "addon", "add some extra metadata when importing tracks")
 
-func KeepFiles() map[string]struct{} {
-	var r = map[string]struct{}{}
-	flag.Var(&keepFileParser{r}, "keep-file", "files to keep from source directories")
-	return r
-}
+	cfg.KeepFiles = map[string]struct{}{}
+	flag.Var(&keepFileParser{cfg.KeepFiles}, "keep-file", "files to keep from source directories")
 
-func TagWeights() tagmap.TagWeights {
-	r := tagmap.TagWeights{}
-	flag.Var(&tagWeightsParser{r}, "tag-weight", "adjust distance weighting for a tag between. 0 to ignore")
-	return r
-}
+	cfg.TagWeights = tagmap.TagWeights{}
+	flag.Var(&tagWeightsParser{cfg.TagWeights}, "tag-weight", "adjust distance weighting for a tag between. 0 to ignore")
 
-func Notifications() *notifications.Notifications {
-	var r notifications.Notifications
-	flag.Var(&notificationsParser{&r}, "notification-uri", "add a shoutrrr notification uri for an event")
-	return &r
-}
+	flag.StringVar(&cfg.MusicBrainzClient.BaseURL, "mb-base-url", `https://musicbrainz.org/ws/2/`, "musicbrainz base url")
+	flag.DurationVar(&cfg.MusicBrainzClient.RateLimit, "mb-rate-limit", 1*time.Second, "musicbrainz rate limit duration")
 
-type MusicBrainzClient struct {
-	*musicbrainz.MBClient
-	*musicbrainz.CAAClient
-}
+	flag.StringVar(&cfg.CoverArtArchiveClient.BaseURL, "caa-base-url", `https://coverartarchive.org/`, "coverartarchive base url")
+	flag.DurationVar(&cfg.CoverArtArchiveClient.RateLimit, "caa-rate-limit", 0, "coverartarchive rate limit duration")
 
-func MusicBrainz() MusicBrainzClient {
-	var mb musicbrainz.MBClient
-	mb.HTTPClient = httpClient
-	flag.StringVar(&mb.BaseURL, "mb-base-url", `https://musicbrainz.org/ws/2/`, "musicbrainz base url")
-	flag.DurationVar(&mb.RateLimit, "mb-rate-limit", 1*time.Second, "musicbrainz rate limit duration")
-
-	var caa musicbrainz.CAAClient
-	caa.HTTPClient = httpClient
-	flag.StringVar(&caa.BaseURL, "caa-base-url", `https://coverartarchive.org/`, "coverartarchive base url")
-	flag.DurationVar(&caa.RateLimit, "caa-rate-limit", 0, "coverartarchive rate limit duration")
-
-	return MusicBrainzClient{&mb, &caa}
-}
-
-func Addons() *[]wrtag.Addon {
-	var r []wrtag.Addon
-	flag.Var(&addonsParser{addons: &r}, "addon", "add some extra metadata when importing tracks")
-	return &r
+	return &cfg
 }

@@ -84,7 +84,7 @@ func (n notificationsParser) String() string {
 
 type tagWeightsParser struct{ tagmap.TagWeights }
 
-func (tw *tagWeightsParser) Set(value string) error {
+func (tw tagWeightsParser) Set(value string) error {
 	const sep = " "
 	i := strings.LastIndex(value, sep)
 	if i < 0 {
@@ -130,8 +130,8 @@ func (tw *addonsParser) Set(value string) error {
 	case "lyrics":
 		*tw.addons = append(*tw.addons, lyrics.Addon{
 			Source: lyrics.MultiSource{
-				&lyrics.Genius{RateLimit: 500 * time.Millisecond, HTTPClient: httpClient},
-				&lyrics.Musixmatch{RateLimit: 500 * time.Millisecond, HTTPClient: httpClient},
+				&lyrics.Genius{RateLimit: 500 * time.Millisecond},
+				&lyrics.Musixmatch{RateLimit: 500 * time.Millisecond},
 			},
 		})
 	}
