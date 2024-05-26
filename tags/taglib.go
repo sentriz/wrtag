@@ -137,11 +137,20 @@ func (f *File) Path() string {
 	return f.path
 }
 
-func SaveSet(f *File, fn func(f *File)) error {
+func Write(path string, fn func(f *File) error) error {
+	f, err := Read(path)
+	if err != nil {
+		return fmt.Errorf("read tag file: %w", err)
+	}
+	defer f.Close()
+
 	before := f.CloneRaw()
-	fn(f)
+	if err := fn(f); err != nil {
+		return err
+	}
 	after := f.CloneRaw()
 
+	// try avoid filesystem writes if we can
 	if maps.EqualFunc(before, after, slices.Equal) {
 		return nil
 	}

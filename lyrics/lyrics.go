@@ -12,29 +12,8 @@ import (
 
 	"github.com/andybalholm/cascadia"
 	"go.senan.xyz/wrtag/clientutil"
-	"go.senan.xyz/wrtag/musicbrainz"
-	"go.senan.xyz/wrtag/tagmap"
-	"go.senan.xyz/wrtag/tags"
 	"golang.org/x/net/html"
 )
-
-type Addon struct {
-	Source
-}
-
-func (a Addon) ProcessRelease(ctx context.Context, release *musicbrainz.Release, tracks []tagmap.MatchedTrack) error {
-	var trackErrs []error
-	for _, track := range tracks {
-		lyricData, err := a.Search(ctx, musicbrainz.ArtistsCreditString(track.Recording.Artists), track.Recording.Title)
-		if err != nil && !errors.Is(err, ErrLyricsNotFound) {
-			trackErrs = append(trackErrs, err)
-			continue
-		}
-		track.Write(tags.Lyrics, lyricData)
-		return nil
-	}
-	return errors.Join(trackErrs...)
-}
 
 var ErrLyricsNotFound = errors.New("lyrics not found")
 

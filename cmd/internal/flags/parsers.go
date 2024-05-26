@@ -10,8 +10,8 @@ import (
 	"text/template"
 	"time"
 
-	"go.senan.xyz/wrtag"
-	"go.senan.xyz/wrtag/addons/lyrics"
+	"go.senan.xyz/wrtag/addons"
+	"go.senan.xyz/wrtag/lyrics"
 	"go.senan.xyz/wrtag/notifications"
 	"go.senan.xyz/wrtag/pathformat"
 	"go.senan.xyz/wrtag/researchlink"
@@ -122,13 +122,13 @@ func (kf *keepFileParser) String() string {
 }
 
 type addonsParser struct {
-	addons *[]wrtag.Addon
+	addons *[]addons.Addon
 }
 
 func (tw *addonsParser) Set(value string) error {
 	switch value {
 	case "lyrics":
-		*tw.addons = append(*tw.addons, lyrics.Addon{
+		*tw.addons = append(*tw.addons, addons.Lyrics{
 			Source: lyrics.MultiSource{
 				&lyrics.Genius{RateLimit: 500 * time.Millisecond},
 				&lyrics.Musixmatch{RateLimit: 500 * time.Millisecond},

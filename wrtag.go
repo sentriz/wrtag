@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"go.senan.xyz/wrtag/addons"
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/musicbrainz"
 	"go.senan.xyz/wrtag/notifications"
@@ -25,7 +26,6 @@ import (
 	"go.senan.xyz/wrtag/researchlink"
 	"go.senan.xyz/wrtag/tagmap"
 	"go.senan.xyz/wrtag/tags"
-	"golang.org/x/sync/errgroup"
 )
 
 var (
@@ -59,10 +59,6 @@ const (
 	Confirm
 )
 
-type Addon interface {
-	ProcessRelease(context.Context, *musicbrainz.Release, []tagmap.MatchedTrack) error
-}
-
 type Config struct {
 	MusicBrainzClient     musicbrainz.MBClient
 	CoverArtArchiveClient musicbrainz.CAAClient
@@ -70,7 +66,7 @@ type Config struct {
 	TagWeights            tagmap.TagWeights
 	ResearchLinkQuerier   researchlink.Querier
 	KeepFiles             map[string]struct{}
-	Addons                []Addon
+	Addons                []addons.Addon
 	Notifications         notifications.Notifications
 }
 
@@ -180,45 +176,40 @@ func ProcessDir(
 
 	dc := NewDirContext()
 
+	destPaths := make([]string, 0, len(tracks))
 	for i, t := range tracks {
 		pathFormatData := pathformat.Data{Release: release, Track: t.Track, TrackNum: i + 1, Ext: strings.ToLower(filepath.Ext(t.Path())), IsCompilation: isCompilation}
 		destPath, err := cfg.PathFormat.Execute(pathFormatData)
 		if err != nil {
 			return nil, fmt.Errorf("create path: %w", err)
 		}
-
 		if err := os.MkdirAll(filepath.Dir(destPath), os.ModePerm); err != nil {
 			return nil, fmt.Errorf("create dest path: %w", err)
 		}
 		if err := op.ProcessFile(dc, t.Path(), destPath); err != nil {
-			return nil, fmt.Errorf("process path %q: %w", filepath.Base(destPath), err)
+			return nil, fmt.Errorf("process path %q: %w", filepath.Base(t.Path()), err)
 		}
 
-		if op.ReadOnly() {
-			continue
+		if !op.ReadOnly() {
+			err = tags.Write(destPath, func(f *tags.File) error {
+				tagmap.WriteTo(release, labelInfo, genres, i, t.Track, f)
+				return nil
+			})
+			if err != nil {
+				return nil, fmt.Errorf("write tag file: %w", err)
+			}
 		}
 
-		f, err := tags.Read(destPath)
-		if err != nil {
-			return nil, fmt.Errorf("read tag file: %w", err)
-		}
-
-		err = tags.SaveSet(f, func(f *tags.File) {
-			tagmap.WriteTo(release, labelInfo, genres, i, t.Track, f)
-		})
-		if err != nil {
-			return nil, fmt.Errorf("write tag file: %w", err)
-		}
+		destPaths = append(destPaths, destPath)
 	}
 
-	var wg errgroup.Group
-	for _, addon := range cfg.Addons {
-		wg.Go(func() error {
-			return addon.ProcessRelease(ctx, release, tracks)
-		})
-	}
-	if err := wg.Wait(); err != nil {
-		return nil, fmt.Errorf("run addons: %w", err)
+	// process addons with new tag.Files
+	if !op.ReadOnly() {
+		for _, addon := range cfg.Addons {
+			if err := addon.ProcessRelease(ctx, destPaths); err != nil {
+				return nil, fmt.Errorf("process addon: %w", err)
+			}
+		}
 	}
 
 	if cover == "" {
