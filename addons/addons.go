@@ -33,7 +33,6 @@ func (a Lyrics) ProcessRelease(ctx context.Context, paths []string) error {
 			trackErrs = append(trackErrs, err)
 			continue
 		}
-
 	}
 	return errors.Join(trackErrs...)
 }
