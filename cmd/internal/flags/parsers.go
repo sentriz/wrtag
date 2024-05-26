@@ -125,10 +125,10 @@ type addonsParser struct {
 	addons *[]addons.Addon
 }
 
-func (tw *addonsParser) Set(value string) error {
+func (a *addonsParser) Set(value string) error {
 	switch value {
 	case "lyrics":
-		*tw.addons = append(*tw.addons, addons.Lyrics{
+		*a.addons = append(*a.addons, addons.Lyrics{
 			Source: lyrics.MultiSource{
 				&lyrics.Genius{RateLimit: 500 * time.Millisecond},
 				&lyrics.Musixmatch{RateLimit: 500 * time.Millisecond},
@@ -137,6 +137,10 @@ func (tw *addonsParser) Set(value string) error {
 	}
 	return nil
 }
-func (tw addonsParser) String() string {
-	return ""
+func (a addonsParser) String() string {
+	var parts []string
+	for _, k := range *a.addons {
+		parts = append(parts, k.Name())
+	}
+	return strings.Join(parts, ", ")
 }

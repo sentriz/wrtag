@@ -207,7 +207,7 @@ func ProcessDir(
 	if !op.ReadOnly() {
 		for _, addon := range cfg.Addons {
 			if err := addon.ProcessRelease(ctx, destPaths); err != nil {
-				return nil, fmt.Errorf("process addon: %w", err)
+				return nil, fmt.Errorf("process addon %q: %w", addon.Name(), err)
 			}
 		}
 	}

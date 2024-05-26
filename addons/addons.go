@@ -10,6 +10,7 @@ import (
 
 type Addon interface {
 	ProcessRelease(context.Context, []string) error
+	Name() string
 }
 
 type Lyrics struct {
@@ -35,4 +36,8 @@ func (a Lyrics) ProcessRelease(ctx context.Context, paths []string) error {
 
 	}
 	return errors.Join(trackErrs...)
+}
+
+func (a Lyrics) Name() string {
+	return "lyrics"
 }
