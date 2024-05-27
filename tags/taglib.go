@@ -125,10 +125,6 @@ func (f *File) Bitrate() int          { return f.props.Bitrate }
 func (f *File) SampleRate() int       { return f.props.Samplerate }
 func (f *File) NumChannels() int      { return f.props.Channels }
 
-func (f *File) CloneRaw() map[string][]string {
-	return maps.Clone(f.raw)
-}
-
 func (f *File) Save() error {
 	if !f.file.WriteTags(f.raw) {
 		return ErrWrite
@@ -151,21 +147,20 @@ func Write(path string, fn func(f *File) error) error {
 	}
 	defer f.Close()
 
-	before := f.CloneRaw()
+	before := maps.Clone(f.raw)
 	if err := fn(f); err != nil {
 		return err
 	}
-	after := f.CloneRaw()
 
 	// try avoid filesystem writes if we can
-	if maps.EqualFunc(before, after, slices.Equal) {
+	if maps.EqualFunc(before, f.raw, slices.Equal) {
 		return nil
 	}
 
 	if l := slog.Default(); l.Enabled(context.Background(), slog.LevelDebug) {
-		for k := range after {
-			if b, a := before[k], after[k]; !slices.Equal(b, a) {
-				l.Debug("tag change", "key", k, "from", b, "to", a)
+		for k := range f.raw {
+			if before, after := before[k], f.raw[k]; !slices.Equal(before, after) {
+				l.Debug("tag change", "key", k, "from", before, "to", after)
 			}
 		}
 	}
