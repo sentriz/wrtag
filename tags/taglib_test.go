@@ -100,21 +100,15 @@ func TestNormalise(t *testing.T) {
 	t.Parallel()
 
 	raw := map[string][]string{
-		"Some":                {"a", "b"},
-		"other Test":          {"x"},
 		"media":               {"CD"},
 		"trackc":              {"14"},
 		"year":                {"1967"},
 		"album artist credit": {"Steve"},
 	}
-	normalise(raw, replacements)
+	normalise(raw, alternatives)
 
 	exp := map[string][]string{
-		"some":       {"a", "b"}, // convert lower
-		"other_test": {"x"},      // replace spaces
-		"media":      {"CD"},     // leave alone
-
-		// replacements
+		"media":              {"CD"},
 		"tracknumber":        {"14"},
 		"date":               {"1967"},
 		"albumartist_credit": {"Steve"},

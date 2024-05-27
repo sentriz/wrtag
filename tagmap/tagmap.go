@@ -76,7 +76,7 @@ func WriteTo(
 	release *musicbrainz.Release, labelInfo musicbrainz.LabelInfo, genres []musicbrainz.Genre,
 	i int, trk *musicbrainz.Track, f *tags.File,
 ) {
-	f.ClearAll()
+	f.ClearUnknown()
 
 	var genreNames []string
 	for _, g := range genres[:min(6, len(genres))] { // top 6 genre strings

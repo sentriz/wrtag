@@ -6,6 +6,7 @@ require (
 	github.com/andybalholm/cascadia v1.3.2
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/containrrr/shoutrrr v0.8.0
+	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
 	github.com/r3labs/sse/v2 v2.10.0
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be

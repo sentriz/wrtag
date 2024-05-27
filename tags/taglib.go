@@ -21,31 +21,33 @@ import (
 var ErrWrite = errors.New("error writing tags")
 
 // https://picard-docs.musicbrainz.org/downloads/MusicBrainz_Picard_Tag_Map.html
+
+//go:generate go run gen_taglist.go -- $GOFILE taglist.gen.go
 const (
 	Album              = "album"
-	AlbumArtist        = "albumartist"
-	AlbumArtists       = "albumartists"
-	AlbumArtistCredit  = "albumartist_credit"
-	AlbumArtistsCredit = "albumartists_credit"
-	Date               = "date"
-	OriginalDate       = "originaldate"
+	AlbumArtist        = "albumartist"         //tag: alts "album_artist"
+	AlbumArtists       = "albumartists"        //tag: alts "album_artists"
+	AlbumArtistCredit  = "albumartist_credit"  //tag: alts "album_artist_credit"
+	AlbumArtistsCredit = "albumartists_credit" //tag: alts "album_artists_credit"
+	Date               = "date"                //tag: alts "year"
+	OriginalDate       = "originaldate"        //tag: alts "original_year"
 	MediaFormat        = "media"
 	Label              = "label"
-	CatalogueNum       = "catalognumber"
+	CatalogueNum       = "catalognumber" //tag: alts "catalognum"
 
 	MBReleaseID      = "musicbrainz_albumid"
 	MBReleaseGroupID = "musicbrainz_releasegroupid"
 	MBAlbumArtistID  = "musicbrainz_albumartistid"
-	MBAlbumComment   = "musicbrainz_albumcomment" // seems like beets uses this for disambiguations
+	MBAlbumComment   = "musicbrainz_albumcomment"
 
 	Title         = "title"
 	Artist        = "artist"
 	Artists       = "artists"
-	ArtistCredit  = "artist_credit"
-	ArtistsCredit = "artists_credit"
+	ArtistCredit  = "artist_credit"  //tag: alts "artistcredit"
+	ArtistsCredit = "artists_credit" //tag: alts "artistscredit"
 	Genre         = "genre"
 	Genres        = "genres"
-	TrackNumber   = "tracknumber"
+	TrackNumber   = "tracknumber" //tag: alts "track" "trackc"
 	DiscNumber    = "discnumber"
 
 	MBRecordingID = "musicbrainz_trackid"
@@ -81,7 +83,7 @@ func Read(path string) (*File, error) {
 	}
 
 	raw := f.ReadTags()
-	normalise(raw, replacements) // tag replacements, case normalisation, etc
+	normalise(raw, alternatives) // tag replacements, case normalisation, etc
 
 	props := f.ReadAudioProperties()
 	return &File{raw: raw, props: props, file: f, path: path}, nil
@@ -119,6 +121,13 @@ func (f *File) WritedB(t string, v float64)    { f.Write(t, floatStr(v, 2)+" dB"
 
 func (f *File) Clear(t string) { delete(f.raw, t) }
 func (f *File) ClearAll()      { clear(f.raw) }
+func (f *File) ClearUnknown() {
+	for k := range f.raw {
+		if _, ok := knownTags[k]; !ok {
+			delete(f.raw, k)
+		}
+	}
+}
 
 func (f *File) Length() time.Duration { return time.Duration(f.props.LengthMs) * time.Millisecond }
 func (f *File) Bitrate() int          { return f.props.Bitrate }
@@ -184,6 +193,7 @@ func intStr(v int) string {
 	}
 	return strconv.Itoa(v)
 }
+
 func floatStr(v float64, p int) string {
 	return strconv.FormatFloat(v, 'f', p, 64)
 }
@@ -201,21 +211,8 @@ func anyTime(str string) time.Time {
 	return t
 }
 
-// tags we can use instead if we dont have the ones we're expecting.
-// it maps [bad] -> [good]
-var replacements = map[string]string{
-	"year":                Date,
-	"original_year":       OriginalDate,
-	"track":               TrackNumber,
-	"trackc":              TrackNumber,
-	"catalognum":          CatalogueNum,
-	"album_artists":       AlbumArtists,
-	"album artist credit": AlbumArtistCredit,
-	"artist credit":       ArtistCredit,
-}
-
-func normalise(raw map[string][]string, fallbacks map[string]string) {
-	for kbad, kgood := range fallbacks {
+func normalise(raw map[string][]string, alternatives map[string]string) {
+	for kbad, kgood := range alternatives {
 		if _, ok := raw[kgood]; ok {
 			continue
 		}
@@ -224,17 +221,6 @@ func normalise(raw map[string][]string, fallbacks map[string]string) {
 			delete(raw, kbad)
 			continue
 		}
-	}
-
-	for k, vs := range raw {
-		kNew := k
-		kNew = strings.ToLower(kNew)
-		kNew = strings.ReplaceAll(kNew, " ", "_")
-		if k == kNew {
-			continue
-		}
-		delete(raw, k)
-		raw[kNew] = vs
 	}
 }
 
