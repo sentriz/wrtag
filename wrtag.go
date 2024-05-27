@@ -17,7 +17,6 @@ import (
 	"syscall"
 	"time"
 
-	"go.senan.xyz/wrtag/addons"
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/musicbrainz"
 	"go.senan.xyz/wrtag/notifications"
@@ -59,6 +58,11 @@ const (
 	Confirm
 )
 
+type Addon interface {
+	ProcessRelease(context.Context, []string) error
+	Name() string
+}
+
 type Config struct {
 	MusicBrainzClient     musicbrainz.MBClient
 	CoverArtArchiveClient musicbrainz.CAAClient
@@ -66,7 +70,7 @@ type Config struct {
 	TagWeights            tagmap.TagWeights
 	ResearchLinkQuerier   researchlink.Querier
 	KeepFiles             map[string]struct{}
-	Addons                []addons.Addon
+	Addons                []Addon
 	Notifications         notifications.Notifications
 }
 

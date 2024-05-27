@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.senan.xyz/wrtag/lyrics"
+	"go.senan.xyz/wrtag/addon/lyrics"
 )
 
 //go:embed testdata
