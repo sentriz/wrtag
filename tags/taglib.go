@@ -51,6 +51,11 @@ const (
 	MBRecordingID = "musicbrainz_trackid"
 	MBArtistID    = "musicbrainz_artistid"
 
+	ReplayGainTrackGain = "replaygain_track_gain"
+	ReplayGainTrackPeak = "replaygain_track_peak"
+	ReplayGainAlbumGain = "replaygain_album_gain"
+	ReplayGainAlbumPeak = "replaygain_album_peak"
+
 	Lyrics = "lyrics"
 )
 
@@ -108,7 +113,9 @@ func (f *File) Write(t string, v ...string) {
 	}
 	f.raw[t] = v
 }
-func (f *File) WriteNum(t string, v int) { f.Write(t, intStr(v)) }
+func (f *File) WriteNum(t string, v int)       { f.Write(t, intStr(v)) }
+func (f *File) WriteFloat(t string, v float64) { f.Write(t, floatStr(v, 6)) }
+func (f *File) WritedB(t string, v float64)    { f.Write(t, floatStr(v, 2)+" dB") }
 
 func (f *File) Clear(t string) { delete(f.raw, t) }
 func (f *File) ClearAll()      { clear(f.raw) }
@@ -181,6 +188,9 @@ func intStr(v int) string {
 		return ""
 	}
 	return strconv.Itoa(v)
+}
+func floatStr(v float64, p int) string {
+	return strconv.FormatFloat(v, 'f', p, 64)
 }
 
 var numExpr = regexp.MustCompile(`\d+`)

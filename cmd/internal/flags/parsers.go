@@ -134,6 +134,8 @@ func (a *addonsParser) Set(value string) error {
 				&lyrics.Musixmatch{RateLimit: 500 * time.Millisecond},
 			},
 		})
+	case "replaygain":
+		*a.addons = append(*a.addons, addons.ReplayGain{})
 	}
 	return nil
 }
