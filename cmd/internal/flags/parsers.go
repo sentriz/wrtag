@@ -138,6 +138,9 @@ func (a *addonsParser) Set(value string) error {
 	return nil
 }
 func (a addonsParser) String() string {
+	if a.addons == nil {
+		return ""
+	}
 	var parts []string
 	for _, k := range *a.addons {
 		parts = append(parts, k.Name())
