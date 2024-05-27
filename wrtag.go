@@ -76,7 +76,7 @@ func ProcessDir(
 ) (*SearchResult, error) {
 	srcDir, _ = filepath.Abs(srcDir)
 
-	cover, files, err := ReadAlbumDir(srcDir)
+	cover, files, err := ReadReleaseDir(srcDir)
 	if err != nil {
 		return nil, fmt.Errorf("read dir: %w", err)
 	}
@@ -245,7 +245,7 @@ func ProcessDir(
 	return &SearchResult{release, score, destDir, diff, researchLinks, originFile}, nil
 }
 
-func ReadAlbumDir(path string) (string, []*tags.File, error) {
+func ReadReleaseDir(path string) (string, []*tags.File, error) {
 	mainPaths, err := fileutil.GlobDir(path, "*")
 	if err != nil {
 		return "", nil, fmt.Errorf("glob dir: %w", err)
@@ -292,6 +292,7 @@ func ReadAlbumDir(path string) (string, []*tags.File, error) {
 	slices.SortFunc(files, func(a, b *tags.File) int {
 		return cmp.Or(
 			cmp.Compare(a.ReadNum(tags.DiscNumber), b.ReadNum(tags.DiscNumber)),
+			cmp.Compare(filepath.Dir(a.Path()), filepath.Dir(b.Path())), // maybe disc folder
 			cmp.Compare(a.ReadNum(tags.TrackNumber), b.ReadNum(tags.TrackNumber)),
 			cmp.Compare(a.Path(), b.Path()),
 		)
