@@ -24,6 +24,7 @@ var _ flag.Value = (*querierParser)(nil)
 var _ flag.Value = (*notificationsParser)(nil)
 var _ flag.Value = (*tagWeightsParser)(nil)
 var _ flag.Value = (*keepFileParser)(nil)
+var _ flag.Value = (*addonsParser)(nil)
 
 type pathFormatParser struct{ *pathformat.Format }
 
