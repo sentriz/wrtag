@@ -27,10 +27,17 @@ func Calculate(ctx context.Context, truePeak bool, trackPaths []string) (album L
 		return Level{}, nil, nil
 	}
 
-	cmd := exec.CommandContext(ctx,
-		RsgainCommand,
-		append([]string{"custom", "--output", "--tagmode", "s", "--album"}, trackPaths...)...,
-	)
+	var args []string
+	args = append(args, "custom")
+	args = append(args, "--output")
+	args = append(args, "--tagmode", "s")
+	if truePeak {
+		args = append(args, "--true-peak")
+	}
+	args = append(args, "--album")
+	args = append(args, trackPaths...)
+
+	cmd := exec.CommandContext(ctx, RsgainCommand, args...)
 
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr
