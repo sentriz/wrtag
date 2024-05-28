@@ -1,8 +1,10 @@
 package replaygain
 
 import (
+	"bytes"
 	"context"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
 	"os/exec"
@@ -13,16 +15,16 @@ var ErrNoRsgain = fmt.Errorf("rsgain not found in PATH")
 
 const RsgainCommand = "rsgain"
 
-type Loudness struct {
+type Level struct {
 	GaindB, Peak float64
 }
 
-func Calculate(ctx context.Context, truePeak bool, trackPaths []string) (Loudness, []Loudness, error) {
+func Calculate(ctx context.Context, truePeak bool, trackPaths []string) (album Level, tracks []Level, err error) {
 	if _, err := exec.LookPath(RsgainCommand); err != nil {
-		return Loudness{}, nil, fmt.Errorf("%w: %w", ErrNoRsgain, err)
+		return Level{}, nil, fmt.Errorf("%w: %w", ErrNoRsgain, err)
 	}
 	if len(trackPaths) == 0 {
-		return Loudness{}, nil, nil
+		return Level{}, nil, nil
 	}
 
 	cmd := exec.CommandContext(ctx,
@@ -30,12 +32,21 @@ func Calculate(ctx context.Context, truePeak bool, trackPaths []string) (Loudnes
 		append([]string{"custom", "--output", "--tagmode", "s", "--album"}, trackPaths...)...,
 	)
 
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+
+	defer func() {
+		if err != nil && stderr.Len() > 0 {
+			err = fmt.Errorf("%w: stderr: %q", err, stderr.String())
+		}
+	}()
+
 	stdout, err := cmd.StdoutPipe()
 	if err != nil {
-		return Loudness{}, nil, fmt.Errorf("get stdout pipe: %w", err)
+		return Level{}, nil, fmt.Errorf("get stdout pipe: %w", err)
 	}
 	if err := cmd.Start(); err != nil {
-		return Loudness{}, nil, fmt.Errorf("start cmd: %w", err)
+		return Level{}, nil, fmt.Errorf("start cmd: %w", err)
 	}
 
 	reader := csv.NewReader(stdout)
@@ -43,45 +54,41 @@ func Calculate(ctx context.Context, truePeak bool, trackPaths []string) (Loudnes
 	reader.ReuseRecord = true
 
 	if _, err := reader.Read(); err != nil {
-		return Loudness{}, nil, fmt.Errorf("read header: %w", err)
+		return Level{}, nil, fmt.Errorf("read header: %w", err)
 	}
 
-	album := Loudness{}
-	tracks := make([]Loudness, 0, len(trackPaths))
 	for {
-		record, err := reader.Read()
-		if err == io.EOF {
+		columns, err := reader.Read()
+		if errors.Is(err, io.EOF) {
 			break
 		}
 		if err != nil {
-			return Loudness{}, nil, fmt.Errorf("read line: %w", err)
+			return Level{}, nil, fmt.Errorf("read line: %w", err)
 		}
-		if len(record) != NumColumns {
-			return Loudness{}, nil, fmt.Errorf("num columns mismatch %d / %d", len(record), NumColumns)
-		}
-
-		var m Loudness
-		if m.GaindB, err = strconv.ParseFloat(record[GaindB], 64); err != nil {
-			return Loudness{}, nil, fmt.Errorf("read gain dB: %w", err)
-		}
-		if m.Peak, err = strconv.ParseFloat(record[Peak], 64); err != nil {
-			return Loudness{}, nil, fmt.Errorf("read peak: %w", err)
+		if len(columns) != numColumns {
+			return Level{}, nil, fmt.Errorf("num columns mismatch %d / %d", len(columns), numColumns)
 		}
 
-		switch record[Filename] {
+		var gaindB, peak float64
+		if gaindB, err = strconv.ParseFloat(columns[GaindB], 64); err != nil {
+			return Level{}, nil, fmt.Errorf("read gain dB: %w", err)
+		}
+		if peak, err = strconv.ParseFloat(columns[Peak], 64); err != nil {
+			return Level{}, nil, fmt.Errorf("read peak: %w", err)
+		}
+
+		switch columns[Filename] {
 		case "Album":
-			album = m
+			album.GaindB = gaindB
+			album.Peak = peak
 		default:
-			tracks = append(tracks, m)
+			tracks = append(tracks, Level{GaindB: gaindB, Peak: peak})
 		}
 	}
 	if err := cmd.Wait(); err != nil {
-		return Loudness{}, nil, fmt.Errorf("wait cmd: %w", err)
+		return Level{}, nil, fmt.Errorf("wait cmd: %w", err)
 	}
 
-	if len(tracks) != len(trackPaths) {
-		return Loudness{}, nil, fmt.Errorf("num tracks mismatch %d / %d", len(tracks), len(trackPaths))
-	}
 	return album, tracks, nil
 }
 
@@ -95,5 +102,5 @@ const (
 	PeakdB
 	PeakType
 	ClippingAdjustment
-	NumColumns
+	numColumns
 )
