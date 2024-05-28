@@ -27,7 +27,9 @@ RUN  \
 
 FROM alpine:3.19
 LABEL org.opencontainers.image.source https://github.com/sentriz/wrtag
-RUN apk add -U --no-cache ca-certificates
+RUN apk add -U --no-cache \
+    rsgain \
+    ca-certificates
 
 COPY --from=builder \
     /usr/lib/libgcc_s.so.1 \
