@@ -35,9 +35,10 @@ func init() {
 func main() {
 	defer flags.ExitError()
 	var (
-		cfg      = flags.Config()
-		interval = flag.Duration("interval", 0, "max duration a release should be left unsynced")
-		dryRun   = flag.Bool("dry-run", false, "dry run")
+		cfg        = flags.Config()
+		interval   = flag.Duration("interval", 0, "max duration a release should be left unsynced")
+		dryRun     = flag.Bool("dry-run", false, "do a dry run of imports")
+		numWorkers = flag.Int("num-workers", 4, "number of directories to process concurrently")
 	)
 	flags.EnvPrefix("wrtag") // reuse main binary's namespace
 	flags.Parse()
@@ -73,7 +74,7 @@ func main() {
 	var knownDests sync.Map
 	var doneN, errN atomic.Uint32
 	var wg sync.WaitGroup
-	for range 4 {
+	for range *numWorkers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
