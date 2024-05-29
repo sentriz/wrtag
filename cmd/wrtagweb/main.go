@@ -90,11 +90,16 @@ func main() {
 
 	processJob := func(ctx context.Context, job *Job, ic wrtag.ImportCondition) error {
 		job.Status = StatusInProgress
-		_ = db.Update(job.ID, &job)
+		if err := db.Update(job.ID, &job); err != nil {
+			return fmt.Errorf("update job: %w", err)
+		}
 
 		emit(eventJob(job.ID), eventAllJobs())
 		defer func() {
-			_ = db.Update(job.ID, &job)
+			if err := db.Update(job.ID, &job); err != nil {
+				slog.Error("update job", "job_id", job.ID, "err", err)
+				return
+			}
 			emit(eventJob(job.ID), eventAllJobs())
 		}()
 
