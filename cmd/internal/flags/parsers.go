@@ -5,14 +5,15 @@ import (
 	"flag"
 	"fmt"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"text/template"
 	"time"
 
 	"go.senan.xyz/wrtag"
+	"go.senan.xyz/wrtag/addon"
 	"go.senan.xyz/wrtag/addon/lyrics"
-	"go.senan.xyz/wrtag/addon/replaygain"
 	"go.senan.xyz/wrtag/notifications"
 	"go.senan.xyz/wrtag/pathformat"
 	"go.senan.xyz/wrtag/researchlink"
@@ -128,16 +129,27 @@ type addonsParser struct {
 }
 
 func (a *addonsParser) Set(value string) error {
-	switch value {
+	parts := strings.Fields(value)
+	if len(parts) == 0 {
+		return fmt.Errorf("invalid addon string")
+	}
+	name, args := parts[0], parts[1:]
+
+	switch name {
 	case "lyrics":
-		*a.addons = append(*a.addons, lyrics.Addon{
+		*a.addons = append(*a.addons, addon.LyricsAddon{
 			Source: lyrics.MultiSource{
 				&lyrics.Genius{RateLimit: 500 * time.Millisecond},
 				&lyrics.Musixmatch{RateLimit: 500 * time.Millisecond},
 			},
 		})
 	case "replaygain":
-		*a.addons = append(*a.addons, replaygain.Addon{})
+		*a.addons = append(*a.addons, addon.ReplayGainAddon{
+			TruePeak: slices.Contains(args, "true-peak"),
+			Force:    slices.Contains(args, "force"),
+		})
+	default:
+		return fmt.Errorf("unknown addon %q", name)
 	}
 	return nil
 }

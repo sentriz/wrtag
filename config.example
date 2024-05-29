@@ -31,6 +31,8 @@
 #tag-weight media format 0.5
 #tag-weight catalogue num 1.2
 
-# addons add external metadata to tracks after a musicbrainz match. can be used when importing for web, sync cli, or normal cli
+# addons add external metadata to tracks after a musicbrainz match. can be used when importing for web, sync cli, or normal cli.
+# addons can have have arguments too. for example "addon replaygain true-peak" or "addon replaygain force".
+
 #addon lyrics
 #addon replaygain
