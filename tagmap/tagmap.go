@@ -91,8 +91,8 @@ func WriteTo(
 	f.Write(tags.AlbumArtists, musicbrainz.ArtistsNames(release.Artists)...)
 	f.Write(tags.AlbumArtistCredit, musicbrainz.ArtistsCreditString(release.Artists))
 	f.Write(tags.AlbumArtistsCredit, musicbrainz.ArtistsCreditNames(release.Artists)...)
-	f.Write(tags.Date, release.Date.Format(time.DateOnly))
-	f.Write(tags.OriginalDate, release.ReleaseGroup.FirstReleaseDate.Format(time.DateOnly))
+	f.Write(tags.Date, formatDate(release.Date.Time))
+	f.Write(tags.OriginalDate, formatDate(release.ReleaseGroup.FirstReleaseDate.Time))
 	f.Write(tags.MediaFormat, release.Media[0].Format)
 	f.Write(tags.Label, labelInfo.Label.Name)
 	f.Write(tags.CatalogueNum, labelInfo.CatalogNumber)
@@ -155,6 +155,13 @@ func norm(input string) string {
 		}
 		return -1
 	}, input)
+}
+
+func formatDate(d time.Time) string {
+	if d.IsZero() {
+		return ""
+	}
+	return d.Format(time.DateOnly)
 }
 
 func mapFunc[T, To any](elms []T, f func(int, T) To) []To {
