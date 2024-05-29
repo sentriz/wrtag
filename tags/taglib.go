@@ -168,9 +168,10 @@ func Write(path string, fn func(f *File) error) error {
 	}
 
 	if l := slog.Default(); l.Enabled(context.Background(), slog.LevelDebug) {
+		pathBase := filepath.Base(path)
 		for k := range f.raw {
 			if before, after := before[k], f.raw[k]; !slices.Equal(before, after) {
-				l.Debug("tag change", "key", k, "from", before, "to", after)
+				l.Debug("tag change", "file", pathBase, "key", k, "from", before, "to", after)
 			}
 		}
 	}
