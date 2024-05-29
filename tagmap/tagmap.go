@@ -96,6 +96,7 @@ func WriteTo(
 	f.Write(tags.MediaFormat, release.Media[0].Format)
 	f.Write(tags.Label, labelInfo.Label.Name)
 	f.Write(tags.CatalogueNum, labelInfo.CatalogNumber)
+	f.Write(tags.UPC, release.Barcode)
 
 	f.Write(tags.MBReleaseID, release.ID)
 	f.Write(tags.MBReleaseGroupID, release.ReleaseGroup.ID)

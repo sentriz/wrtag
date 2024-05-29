@@ -102,6 +102,7 @@ func ProcessDir(
 		Format:           searchFile.Read(tags.MediaFormat),
 		Label:            searchFile.Read(tags.Label),
 		CatalogueNum:     searchFile.Read(tags.CatalogueNum),
+		Barcode:          searchFile.Read(tags.UPC),
 		NumTracks:        len(files),
 	}
 
@@ -123,13 +124,10 @@ func ProcessDir(
 	}
 
 	var researchLinks []researchlink.SearchResult
-	var artist = searchFile.Read(tags.AlbumArtist)
-	if artist == "" {
-		artist = searchFile.Read(tags.Artist)
-	}
 	researchLinks, err = cfg.ResearchLinkQuerier.Search(researchlink.Query{
-		Artist: artist,
+		Artist: cmp.Or(searchFile.Read(tags.AlbumArtist), searchFile.Read(tags.Artist)),
 		Album:  searchFile.Read(tags.Album),
+		UPC:    searchFile.Read(tags.UPC),
 		Date:   searchFile.ReadTime(tags.Date),
 	})
 	if err != nil {

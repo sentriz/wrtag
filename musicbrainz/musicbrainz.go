@@ -78,6 +78,7 @@ type ReleaseQuery struct {
 	Format       string
 	Label        string
 	CatalogueNum string
+	Barcode      string
 	NumTracks    int
 }
 
@@ -116,6 +117,9 @@ func (c *MBClient) SearchRelease(ctx context.Context, q ReleaseQuery) (*Release,
 	}
 	if q.CatalogueNum != "" {
 		params = append(params, field("catno", strings.ToLower(q.CatalogueNum)))
+	}
+	if q.Barcode != "" {
+		params = append(params, field("barcode", q.Barcode))
 	}
 	if q.NumTracks > 0 {
 		params = append(params, field("tracks", q.NumTracks))

@@ -9,7 +9,7 @@
 #research-link kagi https://kagi.com/search?l=4&q={{ printf "%s %s" .Artist .Album | urlquery }}
 #research-link juno https://www.junodownload.com/search/?q%5Ball%5D%5B%5D={{ printf "%s %s" .Artist .Album | urlquery }}
 #research-link deezer https://www.deezer.com/search/{{ printf "%s %s" .Artist .Album | urlquery }}
-#research-link a-tisket https://atisket.pulsewidth.org.uk/
+#research-link a-tisket https://atisket.pulsewidth.org.uk/?upc={{ .UPC | urlquery }}
 #research-link musicbrainz https://musicbrainz.org/taglookup?tag-lookup.artist={{ .Artist | urlquery }}&tag-lookup.release={{ .Album | urlquery }}
 
 # add notification uri that are triggered by various events

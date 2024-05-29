@@ -34,6 +34,7 @@ const (
 	MediaFormat        = "media"
 	Label              = "label"
 	CatalogueNum       = "catalognumber" //tag: alts "catalognum"
+	UPC                = "upc"           //tag: alts "mcn"
 
 	MBReleaseID      = "musicbrainz_albumid"
 	MBReleaseGroupID = "musicbrainz_releasegroupid"

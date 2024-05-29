@@ -31,6 +31,7 @@ var knownTags = map[string]struct{}{
 	"replaygain_track_peak": {},
 	"title": {},
 	"tracknumber": {},
+	"upc": {},
 }
 var alternatives = map[string]string{
 	"ALBUM": "album",
@@ -123,4 +124,7 @@ var alternatives = map[string]string{
 	"TRACK": "tracknumber",
 	"trackc": "tracknumber",
 	"TRACKC": "tracknumber",
+	"UPC": "upc",
+	"mcn": "upc",
+	"MCN": "upc",
 }
