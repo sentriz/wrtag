@@ -45,9 +45,6 @@ L:
 			continue
 		}
 
-		l, err := shlex.Split(text)
-		cerr(err)
-
 		// line format
 		const (
 			_ = iota
@@ -56,6 +53,9 @@ L:
 			comment
 			instr
 		)
+
+		l, err := shlex.Split(text)
+		cerr(err)
 
 		tagList[l[tag]] = nil
 		if len(l)-1 >= comment && l[comment] == "//tag:" && l[instr] == "alts" {
