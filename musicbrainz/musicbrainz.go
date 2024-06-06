@@ -407,8 +407,7 @@ func AnyLabelInfo(release *Release) LabelInfo {
 	if len(release.LabelInfo) > 0 {
 		return release.LabelInfo[0]
 	}
-	var labelInfo LabelInfo
-	return labelInfo
+	return LabelInfo{}
 }
 
 type AnyTime struct {
