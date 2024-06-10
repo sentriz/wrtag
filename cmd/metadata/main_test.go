@@ -61,17 +61,17 @@ func mainFile() {
 func TestParseTagMap(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, map[string][]string{}, parseTagMap(nil))
-	assert.Equal(t, map[string][]string{}, parseTagMap([]string{","}))
-	assert.Equal(t, map[string][]string{}, parseTagMap([]string{",", ","}))
-	assert.Equal(t, map[string][]string{"genres": nil}, parseTagMap([]string{"genres"}))
-	assert.Equal(t, map[string][]string{"genres": {"a"}}, parseTagMap([]string{"genres", "a"}))
-	assert.Equal(t, map[string][]string{"genres": {"a", "b"}}, parseTagMap([]string{"genres", "a", "b"}))
-	assert.Equal(t, map[string][]string{"genres": {"a", "b", "c"}}, parseTagMap([]string{"genres", "a", "b", "c"}))
-	assert.Equal(t, map[string][]string{"genres": {"a", "b", "c"}}, parseTagMap([]string{"genres", "a", "b", "c", ","}))
-	assert.Equal(t, map[string][]string{"genres": {"a", "b", "c"}, "artists": nil}, parseTagMap([]string{"genres", "a", "b", "c", ",", "artists"}))
-	assert.Equal(t, map[string][]string{"genres": {"a", "b", "c"}, "artists": {"a", "b"}}, parseTagMap([]string{"genres", "a", "b", "c", ",", "artists", "a", "b"}))
-	assert.Equal(t, map[string][]string{"genres": {"a", "b", "c"}, "artists": {"a", "b", "c"}}, parseTagMap([]string{"genres", "a", "b", "c", ",", "artists", "a", "b", "c"}))
+	assert.Equal(t, map[string][]string{}, parseTagKeyMap(nil))
+	assert.Equal(t, map[string][]string{}, parseTagKeyMap([]string{","}))
+	assert.Equal(t, map[string][]string{}, parseTagKeyMap([]string{",", ","}))
+	assert.Equal(t, map[string][]string{"genres": nil}, parseTagKeyMap([]string{"genres"}))
+	assert.Equal(t, map[string][]string{"genres": {"a"}}, parseTagKeyMap([]string{"genres", "a"}))
+	assert.Equal(t, map[string][]string{"genres": {"a", "b"}}, parseTagKeyMap([]string{"genres", "a", "b"}))
+	assert.Equal(t, map[string][]string{"genres": {"a", "b", "c"}}, parseTagKeyMap([]string{"genres", "a", "b", "c"}))
+	assert.Equal(t, map[string][]string{"genres": {"a", "b", "c"}}, parseTagKeyMap([]string{"genres", "a", "b", "c", ","}))
+	assert.Equal(t, map[string][]string{"genres": {"a", "b", "c"}, "artists": nil}, parseTagKeyMap([]string{"genres", "a", "b", "c", ",", "artists"}))
+	assert.Equal(t, map[string][]string{"genres": {"a", "b", "c"}, "artists": {"a", "b"}}, parseTagKeyMap([]string{"genres", "a", "b", "c", ",", "artists", "a", "b"}))
+	assert.Equal(t, map[string][]string{"genres": {"a", "b", "c"}, "artists": {"a", "b", "c"}}, parseTagKeyMap([]string{"genres", "a", "b", "c", ",", "artists", "a", "b", "c"}))
 }
 
 func TestFormatDuration(t *testing.T) {

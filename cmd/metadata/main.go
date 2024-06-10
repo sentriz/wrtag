@@ -34,62 +34,56 @@ func init() {
 		fmt.Fprintf(flag.Output(), "\n")
 		fmt.Fprintf(flag.Output(), "Options:\n")
 		flag.PrintDefaults()
+		fmt.Fprintf(flag.Output(), "\n")
+		fmt.Fprintf(flag.Output(), "See also:\n")
+		fmt.Fprintf(flag.Output(), "  $ %s read -h\n", flag.Name())
 	}
 }
 
 func main() {
 	defer flags.ExitError()
-	var (
-		noProperties = flag.Bool("no-properties", false, "dont read file properties like length or bitrate")
-	)
 	flags.Parse()
 
-	command := flag.Arg(0)
-
-	switch command {
-	case "read", "write", "clear":
-	default:
-		slog.Error("unknown command")
+	if flag.NArg() == 0 {
+		slog.Error("no command provided")
 		return
 	}
 
-	argPaths := flag.Args()[1:]
-
-	var args, paths []string
-	if i := slices.Index(argPaths, "--"); i >= 0 {
-		args = argPaths[:i]
-		paths = argPaths[i+1:]
-	}
-	if len(paths) == 0 {
-		slog.Error("no paths provided")
-		return
-	}
-
-	var err error
-	switch command {
+	switch command, args := flag.Arg(0), flag.Args()[1:]; command {
 	case "read":
-		args := parseTags(args)
-		err = iterFiles(paths, func(p string) error {
-			return read(p, *noProperties, args)
-		})
+		flag := flag.NewFlagSet(command, flag.ExitOnError)
+		var (
+			withProperties = flag.Bool("properties", false, "show file properties like length and bitrate")
+		)
+		flag.Parse(args)
+
+		args, paths := splitPaths(flag.Args())
+		keys := parseTagKeys(args)
+		if err := iterFiles(paths, func(p string) error { return read(p, *withProperties, keys) }); err != nil {
+			slog.Error("process read", "err", err)
+			return
+		}
 	case "write":
-		args := parseTagMap(args)
-		err = iterFiles(paths, func(p string) error {
-			return write(p, args)
-		})
+		args, paths := splitPaths(args)
+		keys := parseTagKeyMap(args)
+		if err := iterFiles(paths, func(p string) error { return write(p, keys) }); err != nil {
+			slog.Error("process write", "err", err)
+			return
+		}
 	case "clear":
-		args := parseTags(args)
-		err = iterFiles(paths, func(p string) error {
-			return clear(p, args)
-		})
-	}
-	if err != nil {
-		slog.Error("running", "err", err)
+		args, paths := splitPaths(args)
+		keys := parseTagKeys(args)
+		if err := iterFiles(paths, func(p string) error { return clear(p, keys) }); err != nil {
+			slog.Error("process clear", "err", err)
+			return
+		}
+	default:
+		slog.Error("unknown command", "command", command)
 		return
 	}
 }
 
-func read(path string, noProperties bool, keys map[string]struct{}) error {
+func read(path string, withProperties bool, keys map[string]struct{}) error {
 	file, err := tags.Read(path)
 	if err != nil {
 		return fmt.Errorf("read: %w", err)
@@ -113,7 +107,7 @@ func read(path string, noProperties bool, keys map[string]struct{}) error {
 		}
 		return true
 	})
-	if noProperties {
+	if !withProperties {
 		return nil
 	}
 
@@ -166,7 +160,14 @@ func clear(path string, keys map[string]struct{}) error {
 	return nil
 }
 
-func parseTags(args []string) map[string]struct{} {
+func splitPaths(argPaths []string) ([]string, []string) {
+	if i := slices.Index(argPaths, "--"); i >= 0 {
+		return argPaths[:i], argPaths[i+1:]
+	}
+	return nil, argPaths // if no --, presume paths
+}
+
+func parseTagKeys(args []string) map[string]struct{} {
 	var keys = map[string]struct{}{}
 	for _, k := range args {
 		keys[k] = struct{}{}
@@ -174,7 +175,7 @@ func parseTags(args []string) map[string]struct{} {
 	return keys
 }
 
-func parseTagMap(args []string) map[string][]string {
+func parseTagKeyMap(args []string) map[string][]string {
 	r := make(map[string][]string)
 	var k string
 	for _, v := range args {
@@ -193,6 +194,9 @@ func parseTagMap(args []string) map[string][]string {
 }
 
 func iterFiles(paths []string, f func(p string) error) error {
+	if len(paths) == 0 {
+		return fmt.Errorf("no paths provided")
+	}
 	var pathErrs []error
 	for _, p := range paths {
 		info, err := os.Stat(p)

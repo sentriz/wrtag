@@ -17,4 +17,4 @@ stderr 'no paths provided'
 stderr 'no paths provided'
 
 ! exec metadata
-stderr 'unknown command'
+stderr 'no command provided'
