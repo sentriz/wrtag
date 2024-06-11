@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/araddon/dateparse"
@@ -71,10 +72,11 @@ func CanRead(absPath string) bool {
 }
 
 type File struct {
-	raw   map[string][]string
-	props *audiotags.AudioProperties
-	file  *audiotags.File
-	path  string
+	raw            map[string][]string
+	properties     *audiotags.AudioProperties
+	propertiesOnce sync.Once
+	file           *audiotags.File
+	path           string
 }
 
 func Read(path string) (*File, error) {
@@ -86,8 +88,13 @@ func Read(path string) (*File, error) {
 	raw := f.ReadTags()
 	normalise(raw, alternatives) // tag replacements, case normalisation, etc
 
-	props := f.ReadAudioProperties()
-	return &File{raw: raw, props: props, file: f, path: path}, nil
+	return &File{raw: raw, file: f, path: path}, nil
+}
+
+func (f *File) initProperties() {
+	f.propertiesOnce.Do(func() {
+		f.properties = f.file.ReadAudioProperties()
+	})
 }
 
 func (f *File) Read(t string) string        { return first(f.raw[t]) }
@@ -130,10 +137,13 @@ func (f *File) ClearUnknown() {
 	}
 }
 
-func (f *File) Length() time.Duration { return time.Duration(f.props.LengthMs) * time.Millisecond }
-func (f *File) Bitrate() int          { return f.props.Bitrate }
-func (f *File) SampleRate() int       { return f.props.Samplerate }
-func (f *File) NumChannels() int      { return f.props.Channels }
+func (f *File) Length() time.Duration {
+	f.initProperties()
+	return time.Duration(f.properties.LengthMs) * time.Millisecond
+}
+func (f *File) Bitrate() int     { f.initProperties(); return f.properties.Bitrate }
+func (f *File) SampleRate() int  { f.initProperties(); return f.properties.Samplerate }
+func (f *File) NumChannels() int { f.initProperties(); return f.properties.Channels }
 
 func (f *File) Save() error {
 	if !f.file.WriteTags(f.raw) {
