@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"errors"
 	"flag"
 	"fmt"
@@ -23,6 +24,10 @@ func init() {
 		fmt.Fprintf(flag.Output(), "  $ %s [<options>] write ( <tag> <value>... , )... -- <path>...\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ %s [<options>] clear <tag>... -- <path>...\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "\n")
+		fmt.Fprintf(flag.Output(), "  # <tag> is an audio metadata tag key\n")
+		fmt.Fprintf(flag.Output(), "  # <value> is an audio metadata tag value\n")
+		fmt.Fprintf(flag.Output(), "  # <path> is path(s) to audio files, dir(s) to find audio files in, or \"-\" for list audio file paths from stdin\n")
+		fmt.Fprintf(flag.Output(), "\n")
 		fmt.Fprintf(flag.Output(), "Options:\n")
 		flag.PrintDefaults()
 		fmt.Fprintf(flag.Output(), "\n")
@@ -36,6 +41,9 @@ func init() {
 		fmt.Fprintf(flag.Output(), "  $ %s write artist \"Sensient\" , genres \"psy\" \"minimal\" \"techno\" -- dir/\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ %s clear -- a.flac\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ %s clear lyrics artist_credit -- *.flac\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s find x/ -type f | metadata write artist \"Sensient\" b -\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s find y/ -type f | metadata read artist title -\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s find y/ -type f -name \"*extended*\" | metadata read -properties length -\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "\n")
 		fmt.Fprintf(flag.Output(), "See also:\n")
 		fmt.Fprintf(flag.Output(), "  $ %s read -h\n", flag.Name())
@@ -166,7 +174,11 @@ func splitArgPaths(argPaths []string) (args []string, paths []string) {
 	if i := slices.Index(argPaths, "--"); i >= 0 {
 		return argPaths[:i], argPaths[i+1:]
 	}
-	return nil, argPaths // no "--", presume paths
+	// UX exception for stdin, assume that it (and anything following) is a path
+	if i := slices.Index(argPaths, "-"); i >= 0 {
+		return argPaths[:i], argPaths[i:]
+	}
+	return nil, argPaths // no delimiter so presume paths
 }
 
 func parseTagKeys(args []string) map[string]struct{} {
@@ -199,8 +211,24 @@ func iterFiles(paths []string, f func(p string) error) error {
 	if len(paths) == 0 {
 		return fmt.Errorf("no paths provided")
 	}
+
 	var pathErrs []error
 	for _, p := range paths {
+		if p == "-" {
+			// read paths from stdin if we have them
+			sc := bufio.NewScanner(os.Stdin)
+			for sc.Scan() {
+				if err := f(sc.Text()); err != nil {
+					pathErrs = append(pathErrs, err)
+					continue
+				}
+			}
+			if err := sc.Err(); err != nil {
+				return fmt.Errorf("scan stdin: %w", err)
+			}
+			continue
+		}
+
 		info, err := os.Stat(p)
 		if err != nil {
 			return err
