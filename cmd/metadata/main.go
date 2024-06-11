@@ -57,21 +57,21 @@ func main() {
 		)
 		flag.Parse(args)
 
-		args, paths := splitPaths(flag.Args())
+		args, paths := splitArgPaths(flag.Args())
 		keys := parseTagKeys(args)
 		if err := iterFiles(paths, func(p string) error { return read(p, *withProperties, keys) }); err != nil {
 			slog.Error("process read", "err", err)
 			return
 		}
 	case "write":
-		args, paths := splitPaths(args)
+		args, paths := splitArgPaths(args)
 		keys := parseTagKeyMap(args)
 		if err := iterFiles(paths, func(p string) error { return write(p, keys) }); err != nil {
 			slog.Error("process write", "err", err)
 			return
 		}
 	case "clear":
-		args, paths := splitPaths(args)
+		args, paths := splitArgPaths(args)
 		keys := parseTagKeys(args)
 		if err := iterFiles(paths, func(p string) error { return clear(p, keys) }); err != nil {
 			slog.Error("process clear", "err", err)
@@ -160,7 +160,7 @@ func clear(path string, keys map[string]struct{}) error {
 	return nil
 }
 
-func splitPaths(argPaths []string) ([]string, []string) {
+func splitArgPaths(argPaths []string) (args []string, paths []string) {
 	if i := slices.Index(argPaths, "--"); i >= 0 {
 		return argPaths[:i], argPaths[i+1:]
 	}
