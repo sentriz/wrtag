@@ -19,21 +19,23 @@ func init() {
 	flag := flag.CommandLine
 	flag.Usage = func() {
 		fmt.Fprintf(flag.Output(), "Usage:\n")
-		fmt.Fprintf(flag.Output(), "  $ %s [<options>] read  <tag>...                  -- <path>...\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s [<options>] read  <tag>... -- <path>...\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ %s [<options>] write ( <tag> <value>... , )... -- <path>...\n", flag.Name())
-		fmt.Fprintf(flag.Output(), "  $ %s [<options>] clear <tag>...                  -- <path>...\n", flag.Name())
-		fmt.Fprintf(flag.Output(), "\n")
-		fmt.Fprintf(flag.Output(), "Example:\n")
-		fmt.Fprintf(flag.Output(), "  $ %s read -- a.flac b.flac c.flac\n", flag.Name())
-		fmt.Fprintf(flag.Output(), "  $ %s read artist title -- a.flac\n", flag.Name())
-		fmt.Fprintf(flag.Output(), "  $ %s write album \"album name\" -- x.flac\n", flag.Name())
-		fmt.Fprintf(flag.Output(), "  $ %s write genres \"psy\" \"minimal\" \"techno\" , artist \"Sensient\" -- dir/*.flac\n", flag.Name())
-		fmt.Fprintf(flag.Output(), "  $ %s write genres \"psy\" \"minimal\" \"techno\" , artist \"Sensient\" -- dir/\n", flag.Name())
-		fmt.Fprintf(flag.Output(), "  $ %s clear -- a.flac\n", flag.Name())
-		fmt.Fprintf(flag.Output(), "  $ %s clear lyrics artist_credit -- *.flac\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s [<options>] clear <tag>... -- <path>...\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "\n")
 		fmt.Fprintf(flag.Output(), "Options:\n")
 		flag.PrintDefaults()
+		fmt.Fprintf(flag.Output(), "\n")
+		fmt.Fprintf(flag.Output(), "Examples:\n")
+		fmt.Fprintf(flag.Output(), "  $ %s read -- a.flac b.flac c.flac\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s read artist title -- a.flac\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s read -properties -- a.flac\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s read -properties title length -- a.flac\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s write album \"album name\" -- x.flac\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s write artist \"Sensient\" , genres \"psy\" \"minimal\" \"techno\" -- dir/*.flac\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s write artist \"Sensient\" , genres \"psy\" \"minimal\" \"techno\" -- dir/\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s clear -- a.flac\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s clear lyrics artist_credit -- *.flac\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "\n")
 		fmt.Fprintf(flag.Output(), "See also:\n")
 		fmt.Fprintf(flag.Output(), "  $ %s read -h\n", flag.Name())
@@ -53,7 +55,7 @@ func main() {
 	case "read":
 		flag := flag.NewFlagSet(command, flag.ExitOnError)
 		var (
-			withProperties = flag.Bool("properties", false, "show file properties like length and bitrate")
+			withProperties = flag.Bool("properties", false, "read file properties like length and bitrate")
 		)
 		flag.Parse(args)
 
@@ -65,8 +67,8 @@ func main() {
 		}
 	case "write":
 		args, paths := splitArgPaths(args)
-		keys := parseTagKeyMap(args)
-		if err := iterFiles(paths, func(p string) error { return write(p, keys) }); err != nil {
+		keyValues := parseTagKeyValues(args)
+		if err := iterFiles(paths, func(p string) error { return write(p, keyValues) }); err != nil {
 			slog.Error("process write", "err", err)
 			return
 		}
@@ -126,13 +128,13 @@ func read(path string, withProperties bool, keys map[string]struct{}) error {
 	return nil
 }
 
-func write(path string, raw map[string][]string) error {
+func write(path string, keyValues map[string][]string) error {
 	file, err := tags.Read(path)
 	if err != nil {
 		return fmt.Errorf("read: %w", err)
 	}
 	defer file.Close()
-	for k, vs := range raw {
+	for k, vs := range keyValues {
 		file.Write(k, vs...)
 	}
 	if err := file.Save(); err != nil {
@@ -164,18 +166,18 @@ func splitArgPaths(argPaths []string) (args []string, paths []string) {
 	if i := slices.Index(argPaths, "--"); i >= 0 {
 		return argPaths[:i], argPaths[i+1:]
 	}
-	return nil, argPaths // if no --, presume paths
+	return nil, argPaths // no "--", presume paths
 }
 
 func parseTagKeys(args []string) map[string]struct{} {
-	var keys = map[string]struct{}{}
+	var r = map[string]struct{}{}
 	for _, k := range args {
-		keys[k] = struct{}{}
+		r[k] = struct{}{}
 	}
-	return keys
+	return r
 }
 
-func parseTagKeyMap(args []string) map[string][]string {
+func parseTagKeyValues(args []string) map[string][]string {
 	r := make(map[string][]string)
 	var k string
 	for _, v := range args {
