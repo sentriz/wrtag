@@ -11,9 +11,7 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
-	"regexp"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -21,6 +19,7 @@ import (
 
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/musicbrainz"
+	"go.senan.xyz/wrtag/natcmp"
 	"go.senan.xyz/wrtag/notifications"
 	"go.senan.xyz/wrtag/originfile"
 	"go.senan.xyz/wrtag/pathformat"
@@ -294,12 +293,25 @@ func ReadReleaseDir(path string) (string, []*tags.File, error) {
 	}
 
 	slices.SortFunc(files, func(a, b *tags.File) int {
-		return cmp.Or(
-			naturalCompare(a.Read(tags.DiscNumber), b.Read(tags.DiscNumber)),
-			naturalCompare(filepath.Dir(a.Path()), filepath.Dir(b.Path())),     // maybe disc folder
-			naturalCompare(a.Read(tags.TrackNumber), b.Read(tags.TrackNumber)), // sort track nums like A1 B1, 1 10 100
-			naturalCompare(a.Path(), b.Path()),
-		)
+		// since natcmp.Compare can be expensive, avoid cmp.Or which doesn't short circuit
+
+		// disc mumbers like "1", "2", "disc 1", "disc 10"
+		if c := natcmp.Compare(a.Read(tags.DiscNumber), b.Read(tags.DiscNumber)); c != 0 {
+			return c
+		}
+		// might have disc folders instead of tags
+		if c := natcmp.Compare(filepath.Dir(a.Path()), filepath.Dir(b.Path())); c != 0 {
+			return c
+		}
+		// track numbers, could be "A1" "B1" "1" "10" "100" "1/10" "2/10"
+		if c := natcmp.Compare(a.Read(tags.TrackNumber), b.Read(tags.TrackNumber)); c != 0 {
+			return c
+		}
+		// fallback to paths
+		if c := natcmp.Compare(a.Path(), b.Path()); c != 0 {
+			return c
+		}
+		return 0
 	})
 
 	return cover, files, nil
@@ -589,29 +601,4 @@ func (km *keyedMutex) Lock(key string) func() {
 	mu := value.(*sync.Mutex)
 	mu.Lock()
 	return func() { mu.Unlock() }
-}
-
-var numExpr = regexp.MustCompile(`(\d+|\D+)`)
-
-func naturalCompare(a, b string) int {
-	aParts := numExpr.FindAllString(a, -1)
-	bParts := numExpr.FindAllString(b, -1)
-
-	for i := range min(len(aParts), len(bParts)) {
-		aPart, bPart := aParts[i], bParts[i]
-
-		aInt, aErr := strconv.Atoi(aPart)
-		bInt, bErr := strconv.Atoi(bPart)
-		if aErr == nil && bErr == nil {
-			if c := cmp.Compare(aInt, bInt); c != 0 {
-				return c
-			}
-		} else {
-			if c := cmp.Compare(aPart, bPart); c != 0 {
-				return c
-			}
-		}
-	}
-
-	return cmp.Compare(len(aParts), len(bParts))
 }
