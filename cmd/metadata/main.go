@@ -171,12 +171,15 @@ func clear(path string, keys map[string]struct{}) error {
 }
 
 func splitArgPaths(argPaths []string) (args []string, paths []string) {
+	if len(argPaths) == 0 {
+		return nil, nil
+	}
+	// UX exception for standalone "-", assume everything before is arg
+	if i := len(argPaths) - 1; argPaths[i] == "-" {
+		return argPaths[:i], argPaths[i:]
+	}
 	if i := slices.Index(argPaths, "--"); i >= 0 {
 		return argPaths[:i], argPaths[i+1:]
-	}
-	// UX exception for stdin, assume that it (and anything following) is a path
-	if i := slices.Index(argPaths, "-"); i >= 0 {
-		return argPaths[:i], argPaths[i:]
 	}
 	return nil, argPaths // no delimiter so presume paths
 }
