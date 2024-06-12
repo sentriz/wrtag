@@ -11,7 +11,9 @@ import (
 	"log/slog"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -294,8 +296,8 @@ func ReadReleaseDir(path string) (string, []*tags.File, error) {
 	slices.SortFunc(files, func(a, b *tags.File) int {
 		return cmp.Or(
 			cmp.Compare(a.ReadNum(tags.DiscNumber), b.ReadNum(tags.DiscNumber)),
-			cmp.Compare(filepath.Dir(a.Path()), filepath.Dir(b.Path())), // maybe disc folder
-			cmp.Compare(a.ReadNum(tags.TrackNumber), b.ReadNum(tags.TrackNumber)),
+			cmp.Compare(filepath.Dir(a.Path()), filepath.Dir(b.Path())),        // maybe disc folder
+			naturalCompare(a.Read(tags.TrackNumber), b.Read(tags.TrackNumber)), // sort track nums like A1 B1, 1 10 100
 			cmp.Compare(a.Path(), b.Path()),
 		)
 	})
@@ -587,4 +589,29 @@ func (km *keyedMutex) Lock(key string) func() {
 	mu := value.(*sync.Mutex)
 	mu.Lock()
 	return func() { mu.Unlock() }
+}
+
+var numExpr = regexp.MustCompile(`(\d+|\D+)`)
+
+func naturalCompare(aStr, bStr string) int {
+	aParts := numExpr.FindAllString(aStr, -1)
+	bParts := numExpr.FindAllString(bStr, -1)
+
+	for i := range min(len(aParts), len(bParts)) {
+		aPart, bPart := aParts[i], bParts[i]
+
+		aInt, aErr := strconv.Atoi(aPart)
+		bInt, bErr := strconv.Atoi(bPart)
+		if aErr == nil && bErr == nil {
+			if c := cmp.Compare(aInt, bInt); c != 0 {
+				return c
+			}
+		} else {
+			if c := cmp.Compare(aPart, bPart); c != 0 {
+				return c
+			}
+		}
+	}
+
+	return cmp.Compare(len(aParts), len(bParts))
 }
