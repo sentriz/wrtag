@@ -593,9 +593,9 @@ func (km *keyedMutex) Lock(key string) func() {
 
 var numExpr = regexp.MustCompile(`(\d+|\D+)`)
 
-func naturalCompare(aStr, bStr string) int {
-	aParts := numExpr.FindAllString(aStr, -1)
-	bParts := numExpr.FindAllString(bStr, -1)
+func naturalCompare(a, b string) int {
+	aParts := numExpr.FindAllString(a, -1)
+	bParts := numExpr.FindAllString(b, -1)
 
 	for i := range min(len(aParts), len(bParts)) {
 		aPart, bPart := aParts[i], bParts[i]

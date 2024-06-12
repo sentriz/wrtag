@@ -1,0 +1,21 @@
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+
+exec tag write kat_moda/x.flac title 'the bells fesitival mix'
+exec tag write kat_moda/y.flac title 'the bells'
+exec tag write kat_moda/z.flac title 'alarms'
+
+exec tag write 'kat_moda/*.flac' artist 'jeff mills'
+exec tag write 'kat_moda/*.flac' album 'kat moda'
+exec tag write 'kat_moda/*.flac' musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+
+# should do a natural sort A1, B2, B10
+exec tag write kat_moda/x.flac tracknumber B10
+exec tag write kat_moda/y.flac tracknumber B2
+exec tag write kat_moda/z.flac tracknumber A1
+exec wrtag copy -dry-run kat_moda
+
+# respect disc numbers too
+exec tag write kat_moda/x.flac discnumber 2 , tracknumber 2
+exec tag write kat_moda/y.flac discnumber 2 , tracknumber 1
+exec tag write kat_moda/z.flac discnumber 1 , tracknumber 1
+exec wrtag copy -dry-run kat_moda
