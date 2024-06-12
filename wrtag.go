@@ -295,10 +295,10 @@ func ReadReleaseDir(path string) (string, []*tags.File, error) {
 
 	slices.SortFunc(files, func(a, b *tags.File) int {
 		return cmp.Or(
-			cmp.Compare(a.ReadNum(tags.DiscNumber), b.ReadNum(tags.DiscNumber)),
-			cmp.Compare(filepath.Dir(a.Path()), filepath.Dir(b.Path())),        // maybe disc folder
+			naturalCompare(a.Read(tags.DiscNumber), b.Read(tags.DiscNumber)),
+			naturalCompare(filepath.Dir(a.Path()), filepath.Dir(b.Path())),     // maybe disc folder
 			naturalCompare(a.Read(tags.TrackNumber), b.Read(tags.TrackNumber)), // sort track nums like A1 B1, 1 10 100
-			cmp.Compare(a.Path(), b.Path()),
+			naturalCompare(a.Path(), b.Path()),
 		)
 	})
 
