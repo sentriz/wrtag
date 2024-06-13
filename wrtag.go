@@ -17,9 +17,9 @@ import (
 	"syscall"
 	"time"
 
+	"go.senan.xyz/natcmp"
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/musicbrainz"
-	"go.senan.xyz/wrtag/natcmp"
 	"go.senan.xyz/wrtag/notifications"
 	"go.senan.xyz/wrtag/originfile"
 	"go.senan.xyz/wrtag/pathformat"

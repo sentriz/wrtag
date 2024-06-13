@@ -16,6 +16,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	github.com/timshannon/bolthold v0.0.0-20240314194003-30aac6950928
 	go.senan.xyz/flagconf v0.1.9
+	go.senan.xyz/natcmp v0.0.0-20240613203725-42219efe1fae
 	go.senan.xyz/table v0.0.0-20240227175247-cf2c834b4c23
 	golang.org/x/net v0.26.0
 	golang.org/x/sync v0.7.0
