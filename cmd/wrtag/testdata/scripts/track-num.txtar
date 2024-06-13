@@ -1,5 +1,7 @@
-[!ci] exec tag write test-0.flac tracknumber 0 # gh ci is taglib v1
-[!ci] exec tag check test-0.flac tracknumber 0 # gh ci is taglib v1
+[ci] skip 'gh ci is taglib v1, handles tracknumbers weird'
+
+exec tag write test-0.flac tracknumber 0
+exec tag check test-0.flac tracknumber 0
 
 exec tag write test-1.flac tracknumber 1
 exec tag check test-1.flac tracknumber 1
