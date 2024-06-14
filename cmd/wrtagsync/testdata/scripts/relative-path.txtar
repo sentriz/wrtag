@@ -1,4 +1,5 @@
-env WRTAG_PATH_FORMAT='albums/{{ artistsString .Release.Artists }}/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+env ROOT=$WORK
+env WRTAG_PATH_FORMAT=$ROOT/'albums/{{ artistsString .Release.Artists }}/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
 
 exec tag write 'albums/Jeff Mills/Kat Moda/01.flac'
 exec tag write 'albums/Jeff Mills/Kat Moda/02.flac'
@@ -7,14 +8,13 @@ exec tag write 'albums/Jeff Mills/Kat Moda/03.flac'
 exec tag write 'albums/Jeff Mills/Kat Moda/*.flac' musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
 
 # can import relative with album dir
-cd 'albums/Jeff Mills/Kat Moda'
+cd $ROOT/'albums/Jeff Mills/Kat Moda'
 exec wrtagsync .
 stderr 'processed dir.*albums/Jeff Mills/Kat Moda'
 stderr 'dirs=1 errs=0'
 
-
 # can import relative with artist dir
-cd 'albums/Jeff Mills'
+cd $ROOT/'albums/Jeff Mills'
 exec wrtagsync .
 stderr 'processed dir.*albums/Jeff Mills/Kat Moda'
 stderr 'dirs=1 errs=0'

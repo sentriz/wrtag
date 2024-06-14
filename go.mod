@@ -5,6 +5,7 @@ go 1.22
 require (
 	github.com/andybalholm/cascadia v1.3.2
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
+	github.com/argusdusty/treelock v0.0.0-20180405040243-bde644eb4b53
 	github.com/containrrr/shoutrrr v0.8.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79

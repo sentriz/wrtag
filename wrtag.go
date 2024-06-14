@@ -13,10 +13,10 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
+	"github.com/argusdusty/treelock"
 	"go.senan.xyz/natcmp"
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/musicbrainz"
@@ -168,10 +168,10 @@ func ProcessDir(
 	destDir, _ = filepath.Abs(destDir)
 
 	// lock both source and destination directories
-	defer dirMu.Lock(srcDir)()
-	if srcDir != destDir {
-		defer dirMu.Lock(destDir)()
-	}
+	unlock := lockPaths(
+		srcDir,
+		destDir,
+	)
 
 	labelInfo := musicbrainz.AnyLabelInfo(release)
 	genres := musicbrainz.AnyGenres(release)
@@ -238,6 +238,8 @@ func ProcessDir(
 	if err := trimDir(dc, destDir, op.ReadOnly()); err != nil {
 		return nil, fmt.Errorf("trim: %w", err)
 	}
+
+	unlock()
 
 	if srcDir != destDir {
 		if err := op.CleanDir(dc, cfg.PathFormat.Root(), srcDir); err != nil {
@@ -386,24 +388,25 @@ func (m Move) CleanDir(dc DirContext, limit string, src string) error {
 		panic("empty limit dir")
 	}
 
-	if err := safeRemoveAll(src, m.DryRun); err != nil {
-		return fmt.Errorf("src dir: %w", err)
-	}
+	toRemove := []string{src}
+	toLock := []string{src}
 
-	if !strings.HasPrefix(src, limit) {
-		return nil
-	}
-
-	// clean all src's parents if this path is in our control
-
-	cleanMu.Lock()
-	defer cleanMu.Unlock()
-
-	for d := filepath.Dir(src); d != filepath.Clean(limit); d = filepath.Dir(d) {
-		if err := safeRemoveAll(d, m.DryRun); err != nil {
-			return fmt.Errorf("src dir parent: %w", err)
+	if strings.HasPrefix(src, limit) {
+		for d := filepath.Dir(src); d != filepath.Clean(limit); d = filepath.Dir(d) {
+			toRemove = append(toRemove, d)
+			toLock = []string{d} // only highest parent
 		}
 	}
+
+	unlock := lockPaths(toLock...)
+	defer unlock()
+
+	for _, p := range toRemove {
+		if err := safeRemoveAll(p, m.DryRun); err != nil {
+			return fmt.Errorf("safe remove all: %w", err)
+		}
+	}
+
 	return nil
 }
 
@@ -589,16 +592,18 @@ func extendQueryWithOriginFile(q *musicbrainz.ReleaseQuery, originFile *originfi
 	return nil
 }
 
-var cleanMu sync.Mutex
-var dirMu keyedMutex
+var trlock = treelock.NewTreeLock()
 
-type keyedMutex struct {
-	sync.Map
-}
-
-func (km *keyedMutex) Lock(key string) func() {
-	value, _ := km.LoadOrStore(key, &sync.Mutex{})
-	mu := value.(*sync.Mutex)
-	mu.Lock()
-	return func() { mu.Unlock() }
+func lockPaths(paths ...string) func() {
+	paths = slices.Compact(paths)
+	keys := make([][]string, 0, len(paths))
+	for _, p := range paths {
+		p, _ = filepath.Abs(p)
+		key := strings.Split(p, string(filepath.Separator))
+		keys = append(keys, key)
+	}
+	trlock.LockMany(keys...)
+	return func() {
+		trlock.UnlockMany(keys...)
+	}
 }
