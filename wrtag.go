@@ -169,15 +169,15 @@ func ProcessDir(
 		return nil, fmt.Errorf("gen dest dir: %w", err)
 	}
 
+	labelInfo := musicbrainz.AnyLabelInfo(release)
+	genres := musicbrainz.AnyGenres(release)
+	isCompilation := musicbrainz.IsCompilation(release.ReleaseGroup)
+
 	// lock both source and destination directories
 	unlock := lockPaths(
 		srcDir,
 		destDir,
 	)
-
-	labelInfo := musicbrainz.AnyLabelInfo(release)
-	genres := musicbrainz.AnyGenres(release)
-	isCompilation := musicbrainz.IsCompilation(release.ReleaseGroup)
 
 	dc := NewDirContext()
 
