@@ -79,7 +79,10 @@ func ProcessDir(
 	ctx context.Context, cfg *Config,
 	op FileSystemOperation, srcDir string, cond ImportCondition, useMBID string,
 ) (*SearchResult, error) {
-	srcDir, _ = filepath.Abs(srcDir)
+	if !filepath.IsAbs(srcDir) {
+		panic("src dir not abs") // this is a programmer error for now
+	}
+	srcDir = filepath.Clean(srcDir)
 
 	cover, files, err := ReadReleaseDir(srcDir)
 	if err != nil {
@@ -165,7 +168,6 @@ func ProcessDir(
 	if err != nil {
 		return nil, fmt.Errorf("gen dest dir: %w", err)
 	}
-	destDir, _ = filepath.Abs(destDir)
 
 	// lock both source and destination directories
 	unlock := lockPaths(
@@ -326,6 +328,7 @@ func DestDir(pathFormat *pathformat.Format, release *musicbrainz.Release) (strin
 		return "", fmt.Errorf("create path: %w", err)
 	}
 	dir := filepath.Dir(path)
+	dir = filepath.Clean(dir)
 	return dir, nil
 }
 
@@ -355,7 +358,6 @@ func (m Move) ReadOnly() bool {
 }
 
 func (m Move) ProcessFile(dc DirContext, src, dest string) error {
-	dest, _ = filepath.Abs(dest)
 	dc.knownDestPaths[dest] = struct{}{}
 
 	if filepath.Clean(src) == filepath.Clean(dest) {
@@ -419,7 +421,6 @@ func (c Copy) ReadOnly() bool {
 }
 
 func (c Copy) ProcessFile(dc DirContext, src, dest string) error {
-	dest, _ = filepath.Abs(dest)
 	dc.knownDestPaths[dest] = struct{}{}
 
 	if filepath.Clean(src) == filepath.Clean(dest) {
@@ -463,7 +464,6 @@ func trimDir(dc DirContext, dest string, dryRun bool) error {
 	var size uint64
 	for _, entry := range entries {
 		path := filepath.Join(dest, entry.Name())
-		path, _ = filepath.Abs(path)
 		if _, ok := dc.knownDestPaths[path]; ok {
 			continue
 		}
@@ -597,9 +597,9 @@ var trlock = treelock.NewTreeLock()
 func lockPaths(paths ...string) func() {
 	paths = slices.Compact(paths)
 	keys := make([][]string, 0, len(paths))
-	for _, p := range paths {
-		p, _ = filepath.Abs(p)
-		key := strings.Split(p, string(filepath.Separator))
+	for _, path := range paths {
+		path = filepath.Clean(path)
+		key := strings.Split(path, string(filepath.Separator))
 		keys = append(keys, key)
 	}
 	trlock.LockMany(keys...)

@@ -222,6 +222,11 @@ func main() {
 			http.Error(w, "no path provided", http.StatusBadRequest)
 			return
 		}
+		if !filepath.IsAbs(path) {
+			http.Error(w, "filepath not abs", http.StatusBadRequest)
+			return
+		}
+		path = filepath.Clean(path)
 		job := Job{SourcePath: path, Operation: operation, Time: time.Now()}
 		if err := db.Insert(bolthold.NextSequence(), &job); err != nil {
 			http.Error(w, fmt.Sprintf("error saving job: %v", err), http.StatusInternalServerError)
@@ -314,6 +319,11 @@ func main() {
 			http.Error(w, "no path provided", http.StatusBadRequest)
 			return
 		}
+		if !filepath.IsAbs(path) {
+			http.Error(w, "filepath not abs", http.StatusBadRequest)
+			return
+		}
+		path = filepath.Clean(path)
 		job := Job{SourcePath: path, Operation: operation, Time: time.Now()}
 		if err := db.Insert(bolthold.NextSequence(), &job); err != nil {
 			http.Error(w, fmt.Sprintf("error saving job: %v", err), http.StatusInternalServerError)

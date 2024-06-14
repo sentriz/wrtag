@@ -54,7 +54,7 @@ func (pf *Format) Parse(str string) error {
 	if !ok {
 		return fmt.Errorf("find root: %w", ErrInvalidFormat)
 	}
-	root, _ = filepath.Abs(root)
+	root = filepath.Clean(root)
 	*pf = Format{*tmpl, root}
 	return nil
 }

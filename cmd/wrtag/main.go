@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 
@@ -70,6 +71,11 @@ func main() {
 		defer cancel()
 
 		dir := flag.Arg(0)
+		dir, err := filepath.Abs(dir)
+		if err != nil {
+			slog.Error("making path abs", "err", err)
+			return
+		}
 		if err := run(ctx, cfg, operation(command, *dryRun), dir, importCondition, *useMBID); err != nil {
 			slog.Error("running", "command", command, "err", err)
 			return

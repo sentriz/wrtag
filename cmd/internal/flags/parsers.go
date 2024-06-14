@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"net/url"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -30,6 +31,10 @@ var _ flag.Value = (*addonsParser)(nil)
 type pathFormatParser struct{ *pathformat.Format }
 
 func (pf *pathFormatParser) Set(value string) error {
+	value, err := filepath.Abs(value)
+	if err != nil {
+		return fmt.Errorf("make abs: %w", err)
+	}
 	return pf.Parse(value)
 }
 func (pf pathFormatParser) String() string {

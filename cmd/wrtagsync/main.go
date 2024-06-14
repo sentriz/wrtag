@@ -48,12 +48,19 @@ func main() {
 	if flag.NArg() > 0 {
 		dirs = flag.Args()
 	}
+	for i := range dirs {
+		var err error
+		dirs[i], err = filepath.Abs(dirs[i])
+		if err != nil {
+			slog.Error("making path abs", "err", err)
+			return
+		}
+	}
 
 	start := time.Now()
 	leaves := make(chan string)
 	go func() {
 		for _, d := range dirs {
-			d, _ = filepath.Abs(d)
 			err := fileutil.WalkLeaves(d, func(path string, _ fs.DirEntry) error {
 				leaves <- path
 				return nil
@@ -66,12 +73,9 @@ func main() {
 		close(leaves)
 	}()
 
-	operation := wrtag.Move{DryRun: *dryRun}
-
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	var knownDests sync.Map
 	var doneN, errN atomic.Uint32
 	var wg sync.WaitGroup
 	for range *numWorkers {
@@ -79,7 +83,7 @@ func main() {
 		go func() {
 			defer wg.Done()
 			ctxConsume(ctx, leaves, func(dir string) {
-				if err := processDir(ctx, &knownDests, *interval, cfg, operation, dir); err != nil {
+				if err := processDir(ctx, *interval, cfg, wrtag.Move{DryRun: *dryRun}, dir); err != nil {
 					slog.ErrorContext(ctx, "processing dir", "dir", dir, "err", err)
 					errN.Add(1)
 					return
@@ -101,20 +105,7 @@ func main() {
 	slog.Info("sync finished")
 }
 
-func processDir(
-	ctx context.Context,
-	knownDests *sync.Map, interval time.Duration,
-	cfg *wrtag.Config,
-	op wrtag.FileSystemOperation, srcDir string,
-) error {
-	{
-		// make sure we don't try process a dir that was created while walking
-		srcDir, _ := filepath.Abs(srcDir)
-		if _, ok := knownDests.Load(srcDir); ok {
-			return nil
-		}
-	}
-
+func processDir(ctx context.Context, interval time.Duration, cfg *wrtag.Config, op wrtag.FileSystemOperation, srcDir string) error {
 	if interval > 0 {
 		info, err := os.Stat(srcDir)
 		if err != nil {
@@ -125,13 +116,8 @@ func processDir(
 		}
 	}
 
-	r, err := wrtag.ProcessDir(ctx, cfg, op, srcDir, wrtag.HighScoreOrMBID, "")
-	if err != nil {
+	if _, err := wrtag.ProcessDir(ctx, cfg, op, srcDir, wrtag.HighScoreOrMBID, ""); err != nil {
 		return err
-	}
-	{
-		destDir, _ := filepath.Abs(r.DestDir)
-		knownDests.Store(destDir, nil)
 	}
 
 	if err := os.Chtimes(srcDir, time.Time{}, time.Now()); err != nil && !errors.Is(err, os.ErrNotExist) {
