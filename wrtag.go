@@ -595,13 +595,17 @@ func extendQueryWithOriginFile(q *musicbrainz.ReleaseQuery, originFile *originfi
 var trlock = treelock.NewTreeLock()
 
 func lockPaths(paths ...string) func() {
+	for i := range paths {
+		paths[i] = filepath.Clean(paths[i])
+	}
 	paths = slices.Compact(paths)
+
 	keys := make([][]string, 0, len(paths))
 	for _, path := range paths {
-		path = filepath.Clean(path)
 		key := strings.Split(path, string(filepath.Separator))
 		keys = append(keys, key)
 	}
+
 	trlock.LockMany(keys...)
 	return func() {
 		trlock.UnlockMany(keys...)
