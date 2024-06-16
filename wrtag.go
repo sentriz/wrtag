@@ -391,16 +391,16 @@ func (m Move) CleanDir(dc DirContext, limit string, src string) error {
 	}
 
 	toRemove := []string{src}
-	toLock := []string{src}
+	toLock := src
 
 	if strings.HasPrefix(src, limit) {
 		for d := filepath.Dir(src); d != filepath.Clean(limit); d = filepath.Dir(d) {
 			toRemove = append(toRemove, d)
-			toLock = []string{d} // only highest parent
+			toLock = d // only highest parent
 		}
 	}
 
-	unlock := lockPaths(toLock...)
+	unlock := lockPaths(toLock)
 	defer unlock()
 
 	for _, p := range toRemove {
