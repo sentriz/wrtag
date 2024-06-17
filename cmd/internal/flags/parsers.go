@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"net/url"
 	"path/filepath"
-	"slices"
 	"strconv"
 	"strings"
 	"text/template"
@@ -149,10 +148,16 @@ func (a *addonsParser) Set(value string) error {
 			},
 		})
 	case "replaygain":
-		*a.addons = append(*a.addons, addon.ReplayGainAddon{
-			TruePeak: slices.Contains(args, "true-peak"),
-			Force:    slices.Contains(args, "force"),
-		})
+		var addon addon.ReplayGainAddon
+		for _, arg := range args {
+			switch arg {
+			case "true-peak":
+				addon.TruePeak = true
+			case "force":
+				addon.Force = true
+			}
+		}
+		*a.addons = append(*a.addons, addon)
 	default:
 		return fmt.Errorf("unknown addon %q", name)
 	}
