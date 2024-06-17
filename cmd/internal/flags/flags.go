@@ -12,23 +12,16 @@ import (
 	"go.senan.xyz/wrtag/tagmap"
 )
 
-func EnvPrefix(prefix string) {
-	flagconf.ReadEnvPrefix = func(_ *flag.FlagSet) string {
-		return prefix
-	}
-}
-
 func Parse() {
 	userConfig, _ := os.UserConfigDir()
-	defaultConfigPath := filepath.Join(userConfig, "wrtag", "config")
+	defaultConfigPath := filepath.Join(userConfig, wrtag.Name, "config")
 	configPath := flag.String("config-path", defaultConfigPath, "path config file")
 
 	printVersion := flag.Bool("version", false, "print the version")
 	printConfig := flag.Bool("config", false, "print the parsed config")
 
-	flag.TextVar(&logLevel, "log-level", &logLevel, "set the logging level")
-
 	flag.Parse()
+	flagconf.ReadEnvPrefix = func(_ *flag.FlagSet) string { return wrtag.Name }
 	flagconf.ParseEnv()
 	flagconf.ParseConfig(*configPath)
 

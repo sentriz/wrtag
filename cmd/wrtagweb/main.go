@@ -30,6 +30,7 @@ import (
 
 	"go.senan.xyz/wrtag"
 	"go.senan.xyz/wrtag/cmd/internal/flags"
+	"go.senan.xyz/wrtag/cmd/internal/mainlib"
 	"go.senan.xyz/wrtag/notifications"
 )
 
@@ -45,7 +46,8 @@ func init() {
 }
 
 func main() {
-	defer flags.ExitError()
+	defer mainlib.Logging()()
+	mainlib.WrapClient()
 	var (
 		cfg        = flags.Config()
 		listenAddr = flag.String("web-listen-addr", "", "listen addr for web interface")
@@ -53,7 +55,6 @@ func main() {
 		apiKey     = flag.String("web-api-key", "", "api key for web interface")
 		dbPath     = flag.String("web-db-path", "wrtag.db", "db path for web interface")
 	)
-	flags.EnvPrefix("wrtag") // reuse main binary's namespace
 	flags.Parse()
 
 	if *listenAddr == "" {

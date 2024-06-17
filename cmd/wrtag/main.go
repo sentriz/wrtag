@@ -17,6 +17,7 @@ import (
 
 	"go.senan.xyz/wrtag"
 	"go.senan.xyz/wrtag/cmd/internal/flags"
+	"go.senan.xyz/wrtag/cmd/internal/mainlib"
 )
 
 func init() {
@@ -36,7 +37,8 @@ func init() {
 }
 
 func main() {
-	defer flags.ExitError()
+	defer mainlib.Logging()()
+	mainlib.WrapClient()
 	var (
 		cfg = flags.Config()
 	)

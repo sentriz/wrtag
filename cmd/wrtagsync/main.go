@@ -17,6 +17,7 @@ import (
 
 	"go.senan.xyz/wrtag"
 	"go.senan.xyz/wrtag/cmd/internal/flags"
+	"go.senan.xyz/wrtag/cmd/internal/mainlib"
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/notifications"
 )
@@ -33,14 +34,14 @@ func init() {
 }
 
 func main() {
-	defer flags.ExitError()
+	defer mainlib.Logging()()
+	mainlib.WrapClient()
 	var (
 		cfg        = flags.Config()
 		interval   = flag.Duration("interval", 0, "max duration a release should be left unsynced")
 		dryRun     = flag.Bool("dry-run", false, "do a dry run of imports")
 		numWorkers = flag.Int("num-workers", 4, "number of directories to process concurrently")
 	)
-	flags.EnvPrefix("wrtag") // reuse main binary's namespace
 	flags.Parse()
 
 	// walk the whole root dir by default, or some user provided dirs

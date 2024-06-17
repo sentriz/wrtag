@@ -12,7 +12,7 @@ import (
 	"slices"
 	"time"
 
-	"go.senan.xyz/wrtag/cmd/internal/flags"
+	"go.senan.xyz/wrtag/cmd/internal/mainlib"
 	"go.senan.xyz/wrtag/tags"
 )
 
@@ -51,8 +51,8 @@ func init() {
 }
 
 func main() {
-	defer flags.ExitError()
-	flags.Parse()
+	defer mainlib.Logging()()
+	flag.Parse()
 
 	if flag.NArg() == 0 {
 		slog.Error("no command provided")
