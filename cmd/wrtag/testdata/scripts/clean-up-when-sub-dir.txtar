@@ -1,0 +1,28 @@
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+
+exec tag write 'kat_moda/1.flac'
+exec tag write 'kat_moda/2.flac'
+exec tag write 'kat_moda/3.flac'
+exec tag write 'kat_moda/*.flac' musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+
+exec wrtag move -yes kat_moda
+
+# src dir deleted
+! exists kat_moda
+
+# setup again, but with sub dir
+exec tag write 'kat_moda/1.flac'
+exec tag write 'kat_moda/2.flac'
+exec tag write 'kat_moda/3.flac'
+exec tag write 'kat_moda/*.flac' musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+exec mkdir 'kat_moda/something'
+
+# check the dir is still there, with log
+exec wrtag move -yes kat_moda
+stderr 'WARN.*not removing directory which has child directories'
+exec find kat_moda
+cmp stdout exp-find
+
+-- exp-find --
+kat_moda
+kat_moda/something
