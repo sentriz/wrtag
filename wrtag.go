@@ -468,6 +468,9 @@ func trimDestDir(dc DirContext, dest string, dryRun bool) error {
 		if _, ok := dc.knownDestPaths[path]; ok {
 			continue
 		}
+		if entry.IsDir() {
+			continue
+		}
 		info, err := entry.Info()
 		if err != nil {
 			return fmt.Errorf("get info: %w", err)
