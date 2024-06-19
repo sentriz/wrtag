@@ -237,14 +237,14 @@ func ProcessDir(
 		}
 	}
 
-	if err := trimDir(dc, destDir, op.ReadOnly()); err != nil {
+	if err := trimDestDir(dc, destDir, op.ReadOnly()); err != nil {
 		return nil, fmt.Errorf("trim: %w", err)
 	}
 
 	unlock()
 
 	if srcDir != destDir {
-		if err := op.CleanDir(dc, cfg.PathFormat.Root(), srcDir); err != nil {
+		if err := op.RemoveSrc(dc, cfg.PathFormat.Root(), srcDir); err != nil {
 			return nil, fmt.Errorf("clean: %w", err)
 		}
 	}
@@ -338,7 +338,7 @@ var _ FileSystemOperation = (*Copy)(nil)
 type FileSystemOperation interface {
 	ReadOnly() bool
 	ProcessFile(dc DirContext, src, dest string) error
-	CleanDir(dc DirContext, limit string, src string) error
+	RemoveSrc(dc DirContext, limit string, src string) error
 }
 
 type DirContext struct {
@@ -385,7 +385,7 @@ func (m Move) ProcessFile(dc DirContext, src, dest string) error {
 	return nil
 }
 
-func (m Move) CleanDir(dc DirContext, limit string, src string) error {
+func (m Move) RemoveSrc(dc DirContext, limit string, src string) error {
 	if limit == "" {
 		panic("empty limit dir")
 	}
@@ -450,11 +450,12 @@ func (c Copy) ProcessFile(dc DirContext, src, dest string) error {
 	return nil
 }
 
-func (Copy) CleanDir(dc DirContext, limit string, src string) error {
+func (Copy) RemoveSrc(dc DirContext, limit string, src string) error {
 	return nil
 }
 
-func trimDir(dc DirContext, dest string, dryRun bool) error {
+// trimDestDir deletes all items in a destination dir that don't look like they should be there
+func trimDestDir(dc DirContext, dest string, dryRun bool) error {
 	entries, err := os.ReadDir(dest)
 	if err != nil {
 		return fmt.Errorf("read dir: %w", err)
