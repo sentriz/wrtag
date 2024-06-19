@@ -5,9 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -46,29 +44,7 @@ func (c *CAAClient) request(ctx context.Context, r *http.Request, dest any) erro
 	return nil
 }
 
-func (c *CAAClient) GetCover(ctx context.Context, release *Release) ([]byte, string, error) {
-	coverURL, err := c.getCoverURL(ctx, release)
-	if err != nil {
-		return nil, "", err
-	}
-	if coverURL == "" {
-		return nil, "", nil
-	}
-
-	resp, err := c.HTTPClient.Get(coverURL)
-	if err != nil {
-		return nil, "", fmt.Errorf("download cover: %w", err)
-	}
-	defer resp.Body.Close()
-
-	cover, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, "", fmt.Errorf("read cover")
-	}
-	return cover, filepath.Ext(coverURL), nil
-}
-
-func (c *CAAClient) getCoverURL(ctx context.Context, release *Release) (string, error) {
+func (c *CAAClient) GetCoverURL(ctx context.Context, release *Release) (string, error) {
 	var candidateURLs []string
 	if release.CoverArtArchive.Front {
 		candidateURLs = append(candidateURLs, joinPath(c.BaseURL, "release", release.ID))

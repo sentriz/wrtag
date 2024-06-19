@@ -1,0 +1,22 @@
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+env WRTAG_LOG_LEVEL=debug
+
+exec tag write 'kat_moda/1.flac'
+exec tag write 'kat_moda/2.flac'
+exec tag write 'kat_moda/3.flac'
+exec tag write 'kat_moda/*.flac' musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+
+exec wrtag copy -yes kat_moda
+stderr 'wrote cover to tmp'
+! stderr 'deleting extra file.*cover'
+
+exec find albums
+cmp stdout exp-find
+
+-- exp-find --
+albums
+albums/Kat Moda
+albums/Kat Moda/1.flac
+albums/Kat Moda/2.flac
+albums/Kat Moda/3.flac
+albums/Kat Moda/cover.jpg

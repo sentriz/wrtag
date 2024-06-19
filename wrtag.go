@@ -1,7 +1,6 @@
 package wrtag
 
 import (
-	"bytes"
 	"cmp"
 	"context"
 	"errors"
@@ -10,6 +9,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"os"
+	"path"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -218,7 +218,7 @@ func ProcessDir(
 	}
 
 	if cover == "" {
-		cover, err = tryDownloadMusicbrainzCover(ctx, &cfg.CoverArtArchiveClient, destDir, release)
+		cover, err = tryDownloadMusicbrainzCover(ctx, &cfg.CoverArtArchiveClient, release)
 		if err != nil {
 			return nil, fmt.Errorf("try download mb cover: %w", err)
 		}
@@ -497,24 +497,33 @@ func trimDestDir(dc DirContext, dest string, dryRun bool) error {
 	return nil
 }
 
-func tryDownloadMusicbrainzCover(ctx context.Context, caa *musicbrainz.CAAClient, tmpDir string, release *musicbrainz.Release) (string, error) {
-	cover, ext, err := caa.GetCover(ctx, release)
-	if err != nil {
-		return "", fmt.Errorf("request cover url: %w", err)
-	}
-	if len(cover) == 0 {
-		return "", nil
-	}
-
-	tmpf, err := os.CreateTemp(tmpDir, ".wrtag-cover-tmp-*"+ext)
+func tryDownloadMusicbrainzCover(ctx context.Context, caa *musicbrainz.CAAClient, release *musicbrainz.Release) (string, error) {
+	coverURL, err := caa.GetCoverURL(ctx, release)
 	if err != nil {
 		return "", err
 	}
+	if coverURL == "" {
+		return "", nil
+	}
+
+	ext := path.Ext(coverURL)
+	tmpf, err := os.CreateTemp("", ".wrtag-cover-tmp-*"+ext)
+	if err != nil {
+		return "", fmt.Errorf("mktmp: %w", err)
+	}
 	defer tmpf.Close()
 
-	n, _ := io.Copy(tmpf, bytes.NewReader(cover))
-	slog.Debug("wrote cover to tmp", "size_bytes", n)
+	resp, err := caa.HTTPClient.Get(coverURL)
+	if err != nil {
+		return "", fmt.Errorf("request cover url: %w", err)
+	}
+	defer resp.Body.Close()
 
+	n, err := io.Copy(tmpf, resp.Body)
+	if err != nil {
+		return "", fmt.Errorf("copy to tmp: %w", err)
+	}
+	slog.Debug("wrote cover to tmp", "size_bytes", n)
 	return tmpf.Name(), nil
 }
 
