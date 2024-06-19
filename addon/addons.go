@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
 
 	"go.senan.xyz/wrtag/addon/lyrics"
 	"go.senan.xyz/wrtag/addon/replaygain"
@@ -15,23 +16,24 @@ type LyricsAddon struct {
 }
 
 func (l LyricsAddon) ProcessRelease(ctx context.Context, paths []string) error {
-	var trackErrs []error
-	for _, path := range paths {
-		err := tags.Write(path, func(f *tags.File) error {
-			lyricData, err := l.Search(ctx, f.Read(tags.ArtistCredit), f.Read(tags.Title))
-			if err != nil && !errors.Is(err, lyrics.ErrLyricsNotFound) {
-				return err
-			}
-
-			f.Write(tags.Lyrics, lyricData)
-			return nil
-		})
-		if err != nil {
-			trackErrs = append(trackErrs, err)
-			continue
-		}
+	var pathErrs = make([]error, len(paths))
+	var wg sync.WaitGroup
+	for i, path := range paths {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			pathErrs[i] = tags.Write(path, func(f *tags.File) error {
+				lyricData, err := l.Search(ctx, f.Read(tags.ArtistCredit), f.Read(tags.Title))
+				if err != nil && !errors.Is(err, lyrics.ErrLyricsNotFound) {
+					return err
+				}
+				f.Write(tags.Lyrics, lyricData)
+				return nil
+			})
+		}()
 	}
-	return errors.Join(trackErrs...)
+	wg.Wait()
+	return errors.Join(pathErrs...)
 }
 
 func (l LyricsAddon) Name() string {
