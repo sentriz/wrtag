@@ -82,9 +82,7 @@ func (mm *Musixmatch) Search(ctx context.Context, artist, song string) (string, 
 	}
 
 	var out strings.Builder
-	iterText(cascadia.Query(node, musixmatchSelectContent), func(s string) {
-		out.WriteString(s + "\n")
-	})
+	iterText(cascadia.Query(node, musixmatchSelectContent), &out)
 	for _, ig := range musixmatchIgnore {
 		if strings.Contains(out.String(), ig) {
 			return "", nil
@@ -141,20 +139,24 @@ func (g *Genius) Search(ctx context.Context, artist, song string) (string, error
 	}
 
 	var out strings.Builder
-	iterText(cascadia.Query(node, geniusSelectContent), func(s string) {
-		out.WriteString(s + "\n")
-	})
+	iterText(cascadia.Query(node, geniusSelectContent), &out)
 	return out.String(), nil
 }
 
-func iterText(n *html.Node, f func(string)) {
+func iterText(n *html.Node, buf *strings.Builder) {
 	if n == nil {
 		return
 	}
-	if n.Type == html.TextNode {
-		f(n.Data)
+	switch n.Type {
+	case html.TextNode:
+		buf.WriteString(n.Data)
+	case html.ElementNode:
+		switch n.Data {
+		case "p", "div", "h1", "h2", "h3", "h4", "h5", "h6", "br":
+			buf.WriteString("\n")
+		}
 	}
 	for c := n.FirstChild; c != nil; c = c.NextSibling {
-		iterText(c, f)
+		iterText(c, buf)
 	}
 }
