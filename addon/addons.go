@@ -23,6 +23,10 @@ func (l LyricsAddon) ProcessRelease(ctx context.Context, paths []string) error {
 		go func() {
 			defer wg.Done()
 			pathErrs[i] = tags.Write(path, func(f *tags.File) error {
+				if f.Read(tags.Lyrics) != "" {
+					return nil
+				}
+
 				lyricData, err := l.Search(ctx, f.Read(tags.ArtistCredit), f.Read(tags.Title))
 				if err != nil && !errors.Is(err, lyrics.ErrLyricsNotFound) {
 					return err
