@@ -60,7 +60,7 @@ const (
 	ReplayGainAlbumGain = "replaygain_album_gain"
 	ReplayGainAlbumPeak = "replaygain_album_peak"
 
-	Lyrics = "lyrics"
+	Lyrics = "lyrics" //tag: alts "lyrics:description" "uslt:description" "©lyr"
 )
 
 func CanRead(absPath string) bool {
