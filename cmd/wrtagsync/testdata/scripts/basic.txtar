@@ -48,8 +48,8 @@ stderr 'dirs=2 errs=0'
 exec find -max-depth 2 albums
 cmp stdout exp-shape
 
-# check we don't import after interval
-exec wrtagsync -interval 5m
+# check we don't import after age-older
+exec wrtagsync -age-older 5m
 ! stderr 'processed dir'
 
 -- exp-shape --

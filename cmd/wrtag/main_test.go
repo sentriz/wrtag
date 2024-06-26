@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/rogpeppe/go-internal/testscript"
-	"go.senan.xyz/wrtag/cmd/internal/testing/testcmds"
+	"go.senan.xyz/wrtag/cmd/internal/testcmds"
 )
 
 func TestMain(m *testing.M) {

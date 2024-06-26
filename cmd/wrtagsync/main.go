@@ -38,7 +38,8 @@ func main() {
 	mainlib.WrapClient()
 	var (
 		cfg        = flags.Config()
-		interval   = flag.Duration("interval", 0, "max duration a release should be left unsynced")
+		ageYounger = flag.Duration("age-younger", 0, "min duration a release should be left unsynced")
+		ageOlder   = flag.Duration("age-older", 0, "max duration a release should be left unsynced")
 		dryRun     = flag.Bool("dry-run", false, "do a dry run of imports")
 		numWorkers = flag.Int("num-workers", 4, "number of directories to process concurrently")
 	)
@@ -84,7 +85,7 @@ func main() {
 		go func() {
 			defer wg.Done()
 			ctxConsume(ctx, leaves, func(dir string) {
-				if err := processDir(ctx, *interval, cfg, wrtag.Move{DryRun: *dryRun}, dir); err != nil {
+				if err := processDir(ctx, *ageYounger, *ageOlder, cfg, wrtag.Move{DryRun: *dryRun}, dir); err != nil {
 					slog.ErrorContext(ctx, "processing dir", "dir", dir, "err", err)
 					errN.Add(1)
 					return
@@ -106,13 +107,16 @@ func main() {
 	slog.Info("sync finished")
 }
 
-func processDir(ctx context.Context, interval time.Duration, cfg *wrtag.Config, op wrtag.FileSystemOperation, srcDir string) error {
-	if interval > 0 {
+func processDir(ctx context.Context, ageYounger, ageOlder time.Duration, cfg *wrtag.Config, op wrtag.FileSystemOperation, srcDir string) error {
+	if ageYounger > 0 || ageOlder > 0 {
 		info, err := os.Stat(srcDir)
 		if err != nil {
 			return fmt.Errorf("stat dir: %w", err)
 		}
-		if time.Since(info.ModTime()) < interval {
+		if ageYounger > 0 && time.Since(info.ModTime()) > ageYounger {
+			return nil
+		}
+		if ageOlder > 0 && time.Since(info.ModTime()) < ageOlder {
 			return nil
 		}
 	}
