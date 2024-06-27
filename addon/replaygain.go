@@ -4,14 +4,28 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"go.senan.xyz/wrtag/addon/replaygain"
 	"go.senan.xyz/wrtag/tags"
 )
 
 type ReplayGainAddon struct {
-	TruePeak bool
-	Force    bool
+	truePeak bool
+	force    bool
+}
+
+func NewReplayGainAddon(conf string) (ReplayGainAddon, error) {
+	var a ReplayGainAddon
+	for _, arg := range strings.Fields(conf) {
+		switch arg {
+		case "true-peak":
+			a.truePeak = true
+		case "force":
+			a.force = true
+		}
+	}
+	return a, nil
 }
 
 func (a ReplayGainAddon) ProcessRelease(ctx context.Context, paths []string) error {
@@ -19,7 +33,7 @@ func (a ReplayGainAddon) ProcessRelease(ctx context.Context, paths []string) err
 		return nil
 	}
 
-	if !a.Force {
+	if !a.force {
 		existingTag, err := func() (string, error) {
 			f, err := tags.Read(paths[0])
 			if err != nil {
@@ -36,7 +50,7 @@ func (a ReplayGainAddon) ProcessRelease(ctx context.Context, paths []string) err
 		}
 	}
 
-	albumLev, trackLevs, err := replaygain.Calculate(ctx, a.TruePeak, paths)
+	albumLev, trackLevs, err := replaygain.Calculate(ctx, a.truePeak, paths)
 	if err != nil {
 		return fmt.Errorf("calculate: %w", err)
 	}
