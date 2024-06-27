@@ -29,8 +29,7 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	"go.senan.xyz/wrtag"
-	"go.senan.xyz/wrtag/cmd/internal/flags"
-	"go.senan.xyz/wrtag/cmd/internal/mainlib"
+	"go.senan.xyz/wrtag/cmd/internal/cmds"
 	"go.senan.xyz/wrtag/notifications"
 )
 
@@ -46,16 +45,16 @@ func init() {
 }
 
 func main() {
-	defer mainlib.Logging()()
-	mainlib.WrapClient()
+	defer cmds.Logging()()
+	cmds.WrapClient()
 	var (
-		cfg        = flags.Config()
+		cfg        = cmds.FlagConfig()
 		listenAddr = flag.String("web-listen-addr", "", "listen addr for web interface")
 		publicURL  = flag.String("web-public-url", "", "public url for web interface")
 		apiKey     = flag.String("web-api-key", "", "api key for web interface")
 		dbPath     = flag.String("web-db-path", "wrtag.db", "db path for web interface")
 	)
-	flags.Parse()
+	cmds.FlagParse()
 
 	if *listenAddr == "" {
 		slog.Error("need a listen addr")

@@ -16,8 +16,7 @@ import (
 	"go.senan.xyz/table/table"
 
 	"go.senan.xyz/wrtag"
-	"go.senan.xyz/wrtag/cmd/internal/flags"
-	"go.senan.xyz/wrtag/cmd/internal/mainlib"
+	"go.senan.xyz/wrtag/cmd/internal/cmds"
 )
 
 func init() {
@@ -37,12 +36,12 @@ func init() {
 }
 
 func main() {
-	defer mainlib.Logging()()
-	mainlib.WrapClient()
+	defer cmds.Logging()()
+	cmds.WrapClient()
 	var (
-		cfg = flags.Config()
+		cfg = cmds.FlagConfig()
 	)
-	flags.Parse()
+	cmds.FlagParse()
 
 	if flag.NArg() == 0 {
 		slog.Error("no command provided")

@@ -16,8 +16,7 @@ import (
 	"time"
 
 	"go.senan.xyz/wrtag"
-	"go.senan.xyz/wrtag/cmd/internal/flags"
-	"go.senan.xyz/wrtag/cmd/internal/mainlib"
+	"go.senan.xyz/wrtag/cmd/internal/cmds"
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/notifications"
 )
@@ -34,16 +33,16 @@ func init() {
 }
 
 func main() {
-	defer mainlib.Logging()()
-	mainlib.WrapClient()
+	defer cmds.Logging()()
+	cmds.WrapClient()
 	var (
-		cfg        = flags.Config()
+		cfg        = cmds.FlagConfig()
 		ageYounger = flag.Duration("age-younger", 0, "min duration a release should be left unsynced")
 		ageOlder   = flag.Duration("age-older", 0, "max duration a release should be left unsynced")
 		dryRun     = flag.Bool("dry-run", false, "do a dry run of imports")
 		numWorkers = flag.Int("num-workers", 4, "number of directories to process concurrently")
 	)
-	flags.Parse()
+	cmds.FlagParse()
 
 	// walk the whole root dir by default, or some user provided dirs
 	var dirs = []string{cfg.PathFormat.Root()}
