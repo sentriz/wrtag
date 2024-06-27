@@ -1,0 +1,27 @@
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+env WRTAG_LOG_LEVEL=debug
+env WRTAG_ADDON='subproc sh -c "true", subproc sh echo-script out <files>'
+
+exec wrtag -config
+stdout 'addon.*subproc \(sh\), subproc \(sh\)'
+
+exec tag write 'kat_moda/1.flac'
+exec tag write 'kat_moda/2.flac'
+exec tag write 'kat_moda/3.flac'
+exec tag write 'kat_moda/*.flac' musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+
+exec wrtag copy -yes kat_moda
+cmp out exp-out
+
+-- echo-script --
+out="$1"
+shift
+echo "got $# files" >"$out"
+for f in "$@"; do
+    echo "$(realpath --relative-to="$PWD" "$f")" >>"$out"
+done
+-- exp-out --
+got 3 files
+albums/Kat Moda/1.flac
+albums/Kat Moda/2.flac
+albums/Kat Moda/3.flac

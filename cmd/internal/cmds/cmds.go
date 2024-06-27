@@ -230,11 +230,13 @@ type addonsParser struct {
 func (a *addonsParser) Set(value string) error {
 	var addn wrtag.Addon
 	var err error
-	switch name, rest, _ := strings.Cut(value, " "); name {
+	switch name, rest, _ := strings.Cut(strings.TrimLeft(value, " "), " "); name {
 	case "lyrics":
 		addn, err = addon.NewLyricsAddon(rest)
 	case "replaygain":
 		addn, err = addon.NewReplayGainAddon(rest)
+	case "subproc":
+		addn, err = addon.NewSubprocAddon(rest)
 	default:
 		err = fmt.Errorf("unknown addon %q", name)
 	}
