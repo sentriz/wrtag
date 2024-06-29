@@ -18,6 +18,7 @@ import (
 
 	"github.com/argusdusty/treelock"
 	"go.senan.xyz/natcmp"
+	"go.senan.xyz/wrtag/coverselect"
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/musicbrainz"
 	"go.senan.xyz/wrtag/notifications"
@@ -262,22 +263,22 @@ func ReadReleaseDir(path string) (string, []*tags.File, error) {
 		return "", nil, fmt.Errorf("glob dir for discs: %w", err)
 	}
 
-	var cover string
+	var cover coverselect.Selection
 	var files []*tags.File
-	for _, path := range append(mainPaths, discPaths...) {
-		switch strings.ToLower(filepath.Ext(path)) {
-		case ".jpg", ".jpeg", ".png", ".bmp", ".gif":
-			cover = path
+	for _, p := range append(mainPaths, discPaths...) {
+		if coverselect.IsCover(p) {
+			cover.Update(p)
 			continue
 		}
 
-		if tags.CanRead(path) {
-			file, err := tags.Read(path)
+		if tags.CanRead(p) {
+			file, err := tags.Read(p)
 			if err != nil {
 				return "", nil, fmt.Errorf("read track: %w", err)
 			}
 			files = append(files, file)
 			file.Close()
+			continue
 		}
 	}
 	if len(files) == 0 {
@@ -318,7 +319,7 @@ func ReadReleaseDir(path string) (string, []*tags.File, error) {
 		return 0
 	})
 
-	return cover, files, nil
+	return string(cover), files, nil
 }
 
 func DestDir(pathFormat *pathformat.Format, release *musicbrainz.Release) (string, error) {
