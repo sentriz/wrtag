@@ -18,7 +18,7 @@ import (
 
 	"github.com/argusdusty/treelock"
 	"go.senan.xyz/natcmp"
-	"go.senan.xyz/wrtag/coverselect"
+	"go.senan.xyz/wrtag/coverparse"
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/musicbrainz"
 	"go.senan.xyz/wrtag/notifications"
@@ -263,11 +263,11 @@ func ReadReleaseDir(path string) (string, []*tags.File, error) {
 		return "", nil, fmt.Errorf("glob dir for discs: %w", err)
 	}
 
-	var cover coverselect.Selection
+	var cover coverparse.Front
 	var files []*tags.File
 	for _, p := range append(mainPaths, discPaths...) {
-		if coverselect.IsCover(p) {
-			cover.Update(p)
+		if coverparse.IsCover(p) {
+			cover.Compare(p)
 			continue
 		}
 

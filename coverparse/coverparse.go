@@ -1,4 +1,4 @@
-package coverselect
+package coverparse
 
 import (
 	"path/filepath"
@@ -29,15 +29,16 @@ func IsCover(p string) bool {
 	return ok
 }
 
-type Selection string
+type Front string
 
-func (h *Selection) Update(other string) {
+// Compare updates the current best candidate if the new path is better.
+func (h *Front) Compare(other string) {
 	if *h == "" {
-		*h = Selection(other)
+		*h = Front(other)
 		return
 	}
 	if Compare(string(*h), other) > 0 {
-		*h = Selection(other)
+		*h = Front(other)
 	}
 }
 

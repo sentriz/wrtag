@@ -1,9 +1,9 @@
-package coverselect_test
+package coverparse_test
 
 import (
 	"testing"
 
-	"go.senan.xyz/wrtag/coverselect"
+	"go.senan.xyz/wrtag/coverparse"
 )
 
 func TestSelection(t *testing.T) {
@@ -76,9 +76,9 @@ func TestSelection(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			var s coverselect.Selection
+			var s coverparse.Front
 			for _, c := range test.covers {
-				s.Update(c)
+				s.Compare(c)
 			}
 			if string(s) != test.expected {
 				t.Errorf("with covers %v expected %q got %q", test.covers, test.expected, s)
