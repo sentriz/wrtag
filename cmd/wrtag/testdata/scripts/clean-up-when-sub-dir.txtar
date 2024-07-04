@@ -19,7 +19,6 @@ exec mkdir 'kat_moda/something'
 
 # check the dir is still there, with log
 exec wrtag move -yes kat_moda
-stderr 'WARN.*not removing directory which has child directories'
 exec find kat_moda
 cmp stdout exp-find
 

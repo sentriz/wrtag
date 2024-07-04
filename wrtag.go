@@ -560,7 +560,6 @@ func safeRemoveAll(src string, dryRun bool) error {
 	for _, entry := range entries {
 		// skip if we have any child directories
 		if entry.IsDir() {
-			slog.Warn("not removing directory which has child directories", "dir", src)
 			return nil
 		}
 	}
