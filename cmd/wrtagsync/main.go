@@ -139,10 +139,10 @@ func processDir(ctx context.Context, ageYounger, ageOlder time.Duration, cfg *wr
 			return nil, fmt.Errorf("stat dir: %w", err)
 		}
 		if ageYounger > 0 && time.Since(info.ModTime()) > ageYounger {
-			return nil, err
+			return nil, nil
 		}
 		if ageOlder > 0 && time.Since(info.ModTime()) < ageOlder {
-			return nil, err
+			return nil, nil
 		}
 	}
 
