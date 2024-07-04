@@ -60,7 +60,7 @@ func Calculate(ctx context.Context, truePeak bool, trackPaths []string) (album L
 	reader.Comma = '\t'
 	reader.ReuseRecord = true
 
-	if _, err := reader.Read(); err != nil {
+	if _, err := reader.Read(); err != nil && !errors.Is(err, io.EOF) {
 		return Level{}, nil, fmt.Errorf("read header: %w", err)
 	}
 
