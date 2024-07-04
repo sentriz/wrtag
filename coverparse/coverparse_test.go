@@ -164,10 +164,11 @@ func TestCoverSorting(t *testing.T) {
 		},
 	}
 
+	r := rand.New(rand.NewPCG(1, 2))
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			inp := slices.Clone(tc.expected)
-			rand.Shuffle(len(inp), func(i, j int) {
+			r.Shuffle(len(inp), func(i, j int) {
 				inp[i], inp[j] = inp[j], inp[i]
 			})
 			slices.SortFunc(inp, coverparse.Compare)
