@@ -298,25 +298,12 @@ func ReadReleaseDir(path string) (string, []*tags.File, error) {
 	}
 
 	slices.SortFunc(files, func(a, b *tags.File) int {
-		// since natcmp.Compare can be expensive, avoid cmp.Or which doesn't short circuit
-
-		// disc mumbers like "1", "2", "disc 1", "disc 10"
-		if c := natcmp.Compare(a.Read(tags.DiscNumber), b.Read(tags.DiscNumber)); c != 0 {
-			return c
-		}
-		// might have disc folders instead of tags
-		if c := natcmp.Compare(filepath.Dir(a.Path()), filepath.Dir(b.Path())); c != 0 {
-			return c
-		}
-		// track numbers, could be "A1" "B1" "1" "10" "100" "1/10" "2/10"
-		if c := natcmp.Compare(a.Read(tags.TrackNumber), b.Read(tags.TrackNumber)); c != 0 {
-			return c
-		}
-		// fallback to paths
-		if c := natcmp.Compare(a.Path(), b.Path()); c != 0 {
-			return c
-		}
-		return 0
+		return cmp.Or(
+			natcmp.Compare(a.Read(tags.DiscNumber), b.Read(tags.DiscNumber)),   // disc mumbers like "1", "2", "disc 1", "disc 10"
+			natcmp.Compare(filepath.Dir(a.Path()), filepath.Dir(b.Path())),     // might have disc folders instead of tags
+			natcmp.Compare(a.Read(tags.TrackNumber), b.Read(tags.TrackNumber)), // track numbers, could be "A1" "B1" "1" "10" "100" "1/10" "2/10"
+			natcmp.Compare(a.Path(), b.Path()),                                 // fallback to paths
+		)
 	})
 
 	return string(cover), files, nil
