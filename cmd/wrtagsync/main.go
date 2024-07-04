@@ -77,36 +77,66 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 
-	var doneN, errN atomic.Uint32
+	var st stats
 	var wg sync.WaitGroup
 	for range *numWorkers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			ctxConsume(ctx, leaves, func(dir string) {
-				if err := processDir(ctx, *ageYounger, *ageOlder, cfg, wrtag.Move{DryRun: *dryRun}, dir); err != nil {
+				if err := processDir(ctx, &st, *ageYounger, *ageOlder, cfg, wrtag.Move{DryRun: *dryRun}, dir); err != nil {
 					slog.ErrorContext(ctx, "processing dir", "dir", dir, "err", err)
-					errN.Add(1)
 					return
 				}
-				doneN.Add(1)
 			})
 		}()
 	}
 
 	wg.Wait()
 
-	slog := slog.With("took", time.Since(start), "dirs", doneN.Load(), "errs", errN.Load())
-	if errN.Load() > 0 {
-		cfg.Notifications.Send(ctx, notifications.SyncError, "sync finished with errors")
-		slog.Error("sync finished with errors")
+	st.took = time.Since(start)
+
+	if st.errors.Load() > 0 {
+		slog.Error("sync finished", "", &st)
+		cfg.Notifications.Sendf(ctx, notifications.SyncError, "sync finished %v", &st)
 		return
 	}
-	cfg.Notifications.Send(ctx, notifications.Complete, "sync finished")
-	slog.Info("sync finished")
+	slog.Info("sync finished", "", &st)
+	cfg.Notifications.Sendf(ctx, notifications.Complete, "sync finished %v", &st)
 }
 
-func processDir(ctx context.Context, ageYounger, ageOlder time.Duration, cfg *wrtag.Config, op wrtag.FileSystemOperation, srcDir string) error {
+type stats struct {
+	took      time.Duration
+	saw       atomic.Uint64
+	processed atomic.Uint64
+	errors    atomic.Uint64
+}
+
+func (s *stats) LogValue() slog.Value {
+	return slog.GroupValue(
+		slog.Duration("took", s.took.Truncate(time.Millisecond)),
+		slog.Uint64("saw", s.saw.Load()),
+		slog.Uint64("processed", s.processed.Load()),
+		slog.Uint64("errors", s.errors.Load()),
+	)
+}
+
+func (s *stats) String() string {
+	return s.LogValue().String()
+}
+
+func processDir(ctx context.Context, stats *stats, ageYounger, ageOlder time.Duration, cfg *wrtag.Config, op wrtag.FileSystemOperation, srcDir string) (err error) {
+	stats.saw.Add(1)
+
+	defer func() {
+		if errors.Is(err, context.Canceled) {
+			err = nil
+		}
+		if err != nil {
+			stats.errors.Add(1)
+		}
+	}()
+
 	if ageYounger > 0 || ageOlder > 0 {
 		info, err := os.Stat(srcDir)
 		if err != nil {
@@ -123,6 +153,8 @@ func processDir(ctx context.Context, ageYounger, ageOlder time.Duration, cfg *wr
 	if _, err := wrtag.ProcessDir(ctx, cfg, op, srcDir, wrtag.HighScoreOrMBID, ""); err != nil {
 		return err
 	}
+
+	stats.processed.Add(1)
 
 	if err := os.Chtimes(srcDir, time.Time{}, time.Now()); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("chtimes %q: %v", srcDir, err)

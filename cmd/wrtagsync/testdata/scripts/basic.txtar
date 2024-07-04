@@ -43,7 +43,7 @@ cmp stdout exp-shape
 exec wrtagsync
 stderr 'processed dir.*albums/Jeff Mills/Kat Moda'
 stderr 'processed dir.*albums/Khruangbin/A LA SALA'
-stderr 'dirs=2 errs=0'
+stderr 'saw=2 processed=2 errors=0'
 
 exec find -max-depth 2 albums
 cmp stdout exp-shape

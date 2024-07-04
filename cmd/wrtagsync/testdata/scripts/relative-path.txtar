@@ -11,10 +11,10 @@ exec tag write 'albums/Jeff Mills/Kat Moda/*.flac' musicbrainz_albumid 'e47d04a4
 cd $ROOT/'albums/Jeff Mills/Kat Moda'
 exec wrtagsync .
 stderr 'processed dir.*albums/Jeff Mills/Kat Moda'
-stderr 'dirs=1 errs=0'
+stderr ' saw=1 processed=1 errors=0'
 
 # can import relative with artist dir
 cd $ROOT/'albums/Jeff Mills'
 exec wrtagsync .
 stderr 'processed dir.*albums/Jeff Mills/Kat Moda'
-stderr 'dirs=1 errs=0'
+stderr 'saw=1 processed=1 errors=0'
