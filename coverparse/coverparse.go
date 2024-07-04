@@ -1,32 +1,29 @@
 package coverparse
 
 import (
+	"cmp"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 )
-
-// Compare ranks two potential cover paths, suitable for [slices.SortFunc].
-func Compare(a, b string) int {
-	a, b = strings.ToLower(a), strings.ToLower(b)
-	if a, b := artTypePos(a), artTypePos(b); a != b {
-		return a - b
-	}
-	if a, b := num(a), num(b); a != b {
-		return a - b
-	}
-	if a, b := filetypePos(a), filetypePos(b); a != b {
-		return a - b
-	}
-	return 0
-}
 
 func IsCover(p string) bool {
 	p = filepath.Ext(p)
 	p = strings.ToLower(p)
 	_, ok := filetypePriorities[p]
 	return ok
+}
+
+// Compare ranks two potential cover paths, suitable for [slices.SortFunc].
+func Compare(a, b string) int {
+	a, b = strings.ToLower(a), strings.ToLower(b)
+	return cmp.Or(
+		slices.Compare(posArtTypes(a), posArtTypes(b)),
+		slices.Compare(posNumbers(a), posNumbers(b)),
+		cmp.Compare(posFiletype(a), posFiletype(b)),
+	)
 }
 
 type Front string
@@ -40,18 +37,6 @@ func (h *Front) Compare(other string) {
 	if Compare(string(*h), other) > 0 {
 		*h = Front(other)
 	}
-}
-
-var filetypePriorities = map[string]int{
-	".png":  2,
-	".jpg":  1,
-	".jpeg": 1,
-	".bmp":  1,
-	".gif":  1,
-}
-
-func filetypePos(path string) int {
-	return -filetypePriorities[filepath.Ext(path)]
 }
 
 var artTypePriorities = map[string]int{
@@ -76,29 +61,34 @@ func init() {
 	artTypeExpr = regexp.MustCompile(quoteExpr)
 }
 
-func artTypePos(path string) int {
-	m := artTypeExpr.FindAllString(path, -1)
-	if len(m) == 0 {
-		return 0
+func posArtTypes(path string) []int {
+	matches := artTypeExpr.FindAllString(path, -1)
+	r := make([]int, len(matches))
+	for i, m := range matches {
+		r[i] = -artTypePriorities[m]
 	}
-	var p int
-	for _, artType := range m {
-		p += artTypePriorities[artType]
-	}
-	return -p
+	return r
 }
 
-var numExpr = regexp.MustCompile(`\d+`)
+var numbersExpr = regexp.MustCompile(`\d+`)
 
-func num(path string) int {
-	m := numExpr.FindAllString(path, -1)
-	if len(m) == 0 {
-		return 0
+func posNumbers(path string) []int {
+	matches := numbersExpr.FindAllString(path, -1)
+	r := make([]int, len(matches))
+	for i, m := range matches {
+		r[i], _ = strconv.Atoi(m)
 	}
-	var p int = 1
-	for _, nstr := range m {
-		n, _ := strconv.Atoi(nstr)
-		p *= n
-	}
-	return p
+	return r
+}
+
+var filetypePriorities = map[string]int{
+	".png":  2,
+	".jpg":  1,
+	".jpeg": 1,
+	".bmp":  1,
+	".gif":  1,
+}
+
+func posFiletype(path string) int {
+	return -filetypePriorities[filepath.Ext(path)]
 }
