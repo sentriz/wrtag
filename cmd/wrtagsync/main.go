@@ -84,9 +84,16 @@ func main() {
 		go func() {
 			defer wg.Done()
 			ctxConsume(ctx, leaves, func(dir string) {
-				if err := processDir(ctx, &st, *ageYounger, *ageOlder, cfg, wrtag.Move{DryRun: *dryRun}, dir); err != nil {
+				st.saw.Add(1)
+				r, err := processDir(ctx, *ageYounger, *ageOlder, cfg, wrtag.Move{DryRun: *dryRun}, dir)
+				if err != nil && !errors.Is(err, context.Canceled) {
+					st.errors.Add(1)
 					slog.ErrorContext(ctx, "processing dir", "dir", dir, "err", err)
 					return
+				}
+				if r != nil {
+					st.processed.Add(1)
+					slog.InfoContext(ctx, "processed dir", "dir", dir, "score", r.Score)
 				}
 			})
 		}()
@@ -125,43 +132,29 @@ func (s *stats) String() string {
 	return s.LogValue().String()
 }
 
-func processDir(ctx context.Context, stats *stats, ageYounger, ageOlder time.Duration, cfg *wrtag.Config, op wrtag.FileSystemOperation, srcDir string) (err error) {
-	stats.saw.Add(1)
-
-	defer func() {
-		if errors.Is(err, context.Canceled) {
-			err = nil
-		}
-		if err != nil {
-			stats.errors.Add(1)
-		}
-	}()
-
+func processDir(ctx context.Context, ageYounger, ageOlder time.Duration, cfg *wrtag.Config, op wrtag.FileSystemOperation, srcDir string) (*wrtag.SearchResult, error) {
 	if ageYounger > 0 || ageOlder > 0 {
 		info, err := os.Stat(srcDir)
 		if err != nil {
-			return fmt.Errorf("stat dir: %w", err)
+			return nil, fmt.Errorf("stat dir: %w", err)
 		}
 		if ageYounger > 0 && time.Since(info.ModTime()) > ageYounger {
-			return nil
+			return nil, err
 		}
 		if ageOlder > 0 && time.Since(info.ModTime()) < ageOlder {
-			return nil
+			return nil, err
 		}
 	}
 
-	if _, err := wrtag.ProcessDir(ctx, cfg, op, srcDir, wrtag.HighScoreOrMBID, ""); err != nil {
-		return err
+	r, err := wrtag.ProcessDir(ctx, cfg, op, srcDir, wrtag.HighScoreOrMBID, "")
+	if err != nil {
+		return nil, err
 	}
-
-	stats.processed.Add(1)
 
 	if err := os.Chtimes(srcDir, time.Time{}, time.Now()); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("chtimes %q: %v", srcDir, err)
+		return nil, fmt.Errorf("chtimes %q: %v", srcDir, err)
 	}
-
-	slog.InfoContext(ctx, "processed dir", "dir", srcDir)
-	return nil
+	return r, nil
 }
 
 func ctxConsume[T any](ctx context.Context, work <-chan T, f func(T)) {
