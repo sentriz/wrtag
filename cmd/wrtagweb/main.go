@@ -82,10 +82,13 @@ func main() {
 		eventAllJobs = func() string { return "jobs" }
 		eventJob     = func(id uint64) string { return fmt.Sprintf("job-%d", id) }
 	)
+
 	emit := func(events ...string) {
-		for _, event := range events {
-			sseServ.TryPublish(jobStream.ID, &sse.Event{Event: []byte(event), Data: []byte{0}})
+		for _, eventName := range events {
+			sseServ.Publish(jobStream.ID, &sse.Event{Event: []byte(eventName), Data: []byte{0}})
 		}
+		// remove when hx-trigger="sse:jobs queue:all" works again
+		time.Sleep(100 * time.Millisecond)
 	}
 
 	processJob := func(ctx context.Context, job *Job, ic wrtag.ImportCondition) error {
