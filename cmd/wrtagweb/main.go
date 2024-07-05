@@ -84,17 +84,18 @@ func main() {
 	)
 	emit := func(events ...string) {
 		for _, event := range events {
-			sseServ.Publish(jobStream.ID, &sse.Event{Event: []byte(event), Data: []byte{0}})
+			sseServ.TryPublish(jobStream.ID, &sse.Event{Event: []byte(event), Data: []byte{0}})
 		}
 	}
 
 	processJob := func(ctx context.Context, job *Job, ic wrtag.ImportCondition) error {
 		job.Status = StatusInProgress
+
 		if err := db.Update(job.ID, &job); err != nil {
 			return fmt.Errorf("update job: %w", err)
 		}
-
 		emit(eventJob(job.ID), eventAllJobs())
+
 		defer func() {
 			if err := db.Update(job.ID, &job); err != nil {
 				slog.Error("update job", "job_id", job.ID, "err", err)
@@ -265,10 +266,6 @@ func main() {
 		job.UseMBID = useMBID
 		if err := processJob(r.Context(), &job, ic); err != nil {
 			respErrf(w, http.StatusInternalServerError, "error in job")
-			return
-		}
-		if err := db.Update(uint64(id), &job); err != nil {
-			respErrf(w, http.StatusInternalServerError, "save job")
 			return
 		}
 		respTmpl(w, "job", job)
