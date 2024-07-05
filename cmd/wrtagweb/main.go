@@ -114,7 +114,7 @@ func main() {
 			job.Error = err.Error()
 			if errors.Is(err, wrtag.ErrScoreTooLow) {
 				job.Status = StatusNeedsInput
-				go cfg.Notifications.Send(ctx, notifications.NeedsInput, jobNotificationMessage(*publicURL, job))
+				go cfg.Notifications.Send(ctx, notifications.NeedsInput, jobNotificationMessage(*publicURL, *job))
 			}
 			return nil
 		}
@@ -124,7 +124,7 @@ func main() {
 			return fmt.Errorf("gen dest dir: %w", err)
 		}
 
-		go cfg.Notifications.Send(ctx, notifications.Complete, jobNotificationMessage(*publicURL, job))
+		go cfg.Notifications.Send(ctx, notifications.Complete, jobNotificationMessage(*publicURL, *job))
 
 		// either if this was a copy or move job, subsequent re-imports should just be a move so we can retag
 		job.Operation = OperationMove
@@ -426,7 +426,7 @@ type Job struct {
 	SearchResult         *wrtag.SearchResult
 }
 
-func jobNotificationMessage(publicURL string, job *Job) string {
+func jobNotificationMessage(publicURL string, job Job) string {
 	var status string
 	if job.Error != "" {
 		status = job.Error
