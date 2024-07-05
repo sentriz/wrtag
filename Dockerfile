@@ -1,4 +1,4 @@
-FROM alpine:3.18 AS builder-taglib
+FROM alpine:3.20 AS builder-taglib
 WORKDIR /tmp
 COPY alpine/taglib/APKBUILD .
 RUN apk update && \
@@ -26,7 +26,7 @@ RUN  \
     --mount=type=cache,target=/root/.cache/go-build \
     GOOS=linux go build -o /usr/local/bin/ ./cmd/...
 
-FROM alpine:3.19
+FROM alpine:3.20
 LABEL org.opencontainers.image.source https://github.com/sentriz/wrtag
 RUN apk add -U --no-cache \
     rsgain \
