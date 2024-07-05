@@ -157,9 +157,9 @@ origin file info
         <span class="hidden sm:inline text-gray-600">manual import</span>
         <input name="path" placeholder="/mnt/media/music/The Fall - Dragnet" class="border px-3 py-1 w-full sm:w-auto shadow-sm" />
         <fieldset class="whitespace-nowrap">
-          <input type="radio" name="operation" value="copy" checked />
+          <input type="radio" name="operation" value="copy" {{ if eq .Operation "copy" }}checked{{ end }} />
           <label>copy</label>
-          <input type="radio" name="operation" value="move" />
+          <input type="radio" name="operation" value="move" {{ if eq .Operation "move" }}checked{{ end }} />
           <label>move</label>
         </fieldset>
       </div>

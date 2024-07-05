@@ -216,18 +216,19 @@ func main() {
 	})
 
 	mux.HandleFunc("POST /jobs", func(w http.ResponseWriter, r *http.Request) {
-		operation, err := parseOperation(r.FormValue("operation"))
+		operationStr := r.FormValue("operation")
+		operation, err := parseOperation(operationStr)
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
 		path := r.FormValue("path")
 		if path == "" {
-			http.Error(w, "no path provided", http.StatusBadRequest)
+			respErrf(w, http.StatusBadRequest, "no path provided")
 			return
 		}
 		if !filepath.IsAbs(path) {
-			http.Error(w, "filepath not abs", http.StatusBadRequest)
+			respErrf(w, http.StatusInternalServerError, "filepath not abs")
 			return
 		}
 		path = filepath.Clean(path)
@@ -236,7 +237,7 @@ func main() {
 			http.Error(w, fmt.Sprintf("error saving job: %v", err), http.StatusInternalServerError)
 			return
 		}
-		respTmpl(w, "job-import", nil)
+		respTmpl(w, "job-import", struct{ Operation string }{Operation: operationStr})
 		emit(eventAllJobs())
 	})
 
@@ -302,7 +303,12 @@ func main() {
 			respErrf(w, http.StatusInternalServerError, "error listing jobs: %v", err)
 			return
 		}
-		respTmpl(w, "index", jl)
+		respTmpl(w, "index", struct {
+			jobsListing
+			Operation string
+		}{
+			jl, "copy",
+		})
 	})
 
 	mux.Handle("/", http.FileServer(http.FS(ui)))
