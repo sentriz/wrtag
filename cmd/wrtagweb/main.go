@@ -113,8 +113,8 @@ func main() {
 			job.Status = StatusError
 			job.Error = err.Error()
 			if errors.Is(err, wrtag.ErrScoreTooLow) {
-				cfg.Notifications.Send(ctx, notifications.NeedsInput, jobNotificationMessage(*publicURL, job))
 				job.Status = StatusNeedsInput
+				go cfg.Notifications.Send(ctx, notifications.NeedsInput, jobNotificationMessage(*publicURL, job))
 			}
 			return nil
 		}
@@ -124,7 +124,7 @@ func main() {
 			return fmt.Errorf("gen dest dir: %w", err)
 		}
 
-		cfg.Notifications.Send(ctx, notifications.Complete, jobNotificationMessage(*publicURL, job))
+		go cfg.Notifications.Send(ctx, notifications.Complete, jobNotificationMessage(*publicURL, job))
 
 		// either if this was a copy or move job, subsequent re-imports should just be a move so we can retag
 		job.Operation = OperationMove
