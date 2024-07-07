@@ -30,7 +30,6 @@ import (
 
 	"go.senan.xyz/wrtag"
 	"go.senan.xyz/wrtag/cmd/internal/cmds"
-	"go.senan.xyz/wrtag/notifications"
 )
 
 func init() {
@@ -43,6 +42,11 @@ func init() {
 		flag.PrintDefaults()
 	}
 }
+
+const (
+	notifComplete   = "complete"
+	notifNeedsInput = "needs-input"
+)
 
 func main() {
 	defer cmds.Logging()()
@@ -117,7 +121,7 @@ func main() {
 			job.Error = err.Error()
 			if errors.Is(err, wrtag.ErrScoreTooLow) {
 				job.Status = StatusNeedsInput
-				go cfg.Notifications.Send(ctx, notifications.NeedsInput, jobNotificationMessage(*publicURL, *job))
+				go cfg.Notifications.Send(ctx, notifNeedsInput, jobNotificationMessage(*publicURL, *job))
 			}
 			return nil
 		}
@@ -127,7 +131,7 @@ func main() {
 			return fmt.Errorf("gen dest dir: %w", err)
 		}
 
-		go cfg.Notifications.Send(ctx, notifications.Complete, jobNotificationMessage(*publicURL, *job))
+		go cfg.Notifications.Send(ctx, notifComplete, jobNotificationMessage(*publicURL, *job))
 
 		// either if this was a copy or move job, subsequent re-imports should just be a move so we can retag
 		job.Operation = OperationMove

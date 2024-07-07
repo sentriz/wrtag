@@ -18,7 +18,6 @@ import (
 	"go.senan.xyz/wrtag"
 	"go.senan.xyz/wrtag/cmd/internal/cmds"
 	"go.senan.xyz/wrtag/fileutil"
-	"go.senan.xyz/wrtag/notifications"
 )
 
 func init() {
@@ -31,6 +30,11 @@ func init() {
 		flag.PrintDefaults()
 	}
 }
+
+const (
+	notifSyncComplete = "sync-complete"
+	notifSyncError    = "sync-error"
+)
 
 func main() {
 	defer cmds.Logging()()
@@ -105,11 +109,11 @@ func main() {
 
 	if st.errors.Load() > 0 {
 		slog.Error("sync finished", "", &st)
-		cfg.Notifications.Sendf(ctx, notifications.SyncError, "sync finished %v", &st)
+		cfg.Notifications.Sendf(ctx, notifSyncError, "sync finished %v", &st)
 		return
 	}
 	slog.Info("sync finished", "", &st)
-	cfg.Notifications.Sendf(ctx, notifications.Complete, "sync finished %v", &st)
+	cfg.Notifications.Sendf(ctx, notifSyncComplete, "sync finished %v", &st)
 }
 
 type stats struct {

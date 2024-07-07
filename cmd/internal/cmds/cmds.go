@@ -167,7 +167,7 @@ func (n *notificationsParser) Set(value string) error {
 	var lineErrs []error
 	for _, ev := range strings.Split(eventsRaw, ",") {
 		ev, uri = strings.TrimSpace(ev), strings.TrimSpace(uri)
-		err := n.AddURI(notifications.Event(ev), uri)
+		err := n.AddURI(ev, uri)
 		lineErrs = append(lineErrs, err)
 	}
 	return errors.Join(lineErrs...)
@@ -177,7 +177,7 @@ func (n notificationsParser) String() string {
 		return ""
 	}
 	var parts []string
-	n.Notifications.IterMappings(func(e notifications.Event, uri string) {
+	n.Notifications.IterMappings(func(e string, uri string) {
 		url, _ := url.Parse(uri)
 		parts = append(parts, fmt.Sprintf("%s: %s://%s/...", e, url.Scheme, url.Host))
 	})
