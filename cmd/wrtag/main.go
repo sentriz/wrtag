@@ -39,9 +39,9 @@ func main() {
 	defer cmds.Logging()()
 	cmds.WrapClient()
 	var (
-		cfg = cmds.FlagConfig()
+		cfg = cmds.WrtagConfig()
 	)
-	cmds.FlagParse()
+	cmds.Parse()
 
 	if flag.NArg() == 0 {
 		slog.Error("no command provided")

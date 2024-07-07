@@ -67,7 +67,7 @@ func WrapClient() {
 	http.DefaultTransport = chain(http.DefaultTransport)
 }
 
-func FlagParse() {
+func Parse() {
 	userConfig, _ := os.UserConfigDir()
 	defaultConfigPath := filepath.Join(userConfig, wrtag.Name, "config")
 	configPath := flag.String("config-path", defaultConfigPath, "path config file")
@@ -92,7 +92,7 @@ func FlagParse() {
 	}
 }
 
-func FlagConfig() *wrtag.Config {
+func WrtagConfig() *wrtag.Config {
 	var cfg wrtag.Config
 
 	flag.Var(&pathFormatParser{&cfg.PathFormat}, "path-format", "music directory and go templated path format to define music library layout")

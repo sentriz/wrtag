@@ -40,13 +40,13 @@ func main() {
 	defer cmds.Logging()()
 	cmds.WrapClient()
 	var (
-		cfg        = cmds.FlagConfig()
+		cfg        = cmds.WrtagConfig()
 		ageYounger = flag.Duration("age-younger", 0, "min duration a release should be left unsynced")
 		ageOlder   = flag.Duration("age-older", 0, "max duration a release should be left unsynced")
 		dryRun     = flag.Bool("dry-run", false, "do a dry run of imports")
 		numWorkers = flag.Int("num-workers", 4, "number of directories to process concurrently")
 	)
-	cmds.FlagParse()
+	cmds.Parse()
 
 	// walk the whole root dir by default, or some user provided dirs
 	var dirs = []string{cfg.PathFormat.Root()}
