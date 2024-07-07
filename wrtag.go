@@ -144,12 +144,7 @@ func ProcessDir(
 		return &SearchResult{release, 0, "", nil, researchLinks, originFile}, fmt.Errorf("%w: %d remote / %d local", ErrTrackCountMismatch, len(releaseTracks), len(files))
 	}
 
-	tracks := make([]tagmap.MatchedTrack, 0, len(releaseTracks))
-	for i := range releaseTracks {
-		tracks = append(tracks, tagmap.MatchedTrack{Track: &releaseTracks[i], File: files[i]})
-	}
-
-	score, diff := tagmap.DiffRelease(cfg.TagWeights, release, tracks)
+	score, diff := tagmap.DiffRelease(cfg.TagWeights, release, releaseTracks, files)
 
 	var shouldImport bool
 	switch cond {
@@ -182,9 +177,10 @@ func ProcessDir(
 
 	dc := NewDirContext()
 
-	destPaths := make([]string, 0, len(tracks))
-	for i, t := range tracks {
-		pathFormatData := pathformat.Data{Release: release, Track: t.Track, TrackNum: i + 1, Ext: strings.ToLower(filepath.Ext(t.Path())), IsCompilation: isCompilation}
+	destPaths := make([]string, 0, len(releaseTracks))
+	for i, t := range releaseTracks {
+		file := files[i]
+		pathFormatData := pathformat.Data{Release: release, Track: &t, TrackNum: i + 1, Ext: strings.ToLower(filepath.Ext(file.Path())), IsCompilation: isCompilation}
 		destPath, err := cfg.PathFormat.Execute(pathFormatData)
 		if err != nil {
 			return nil, fmt.Errorf("create path: %w", err)
@@ -192,13 +188,13 @@ func ProcessDir(
 		if err := os.MkdirAll(filepath.Dir(destPath), os.ModePerm); err != nil {
 			return nil, fmt.Errorf("create dest path: %w", err)
 		}
-		if err := op.ProcessFile(dc, t.Path(), destPath); err != nil {
-			return nil, fmt.Errorf("process path %q: %w", filepath.Base(t.Path()), err)
+		if err := op.ProcessFile(dc, file.Path(), destPath); err != nil {
+			return nil, fmt.Errorf("process path %q: %w", filepath.Base(file.Path()), err)
 		}
 
 		if !op.ReadOnly() {
 			err = tags.Write(destPath, func(f *tags.File) error {
-				tagmap.WriteTo(release, labelInfo, genres, i, t.Track, f)
+				tagmap.WriteTo(release, labelInfo, genres, i, &t, f)
 				return nil
 			})
 			if err != nil {

@@ -34,12 +34,7 @@ func (tw TagWeights) For(field string) float64 {
 	return 1
 }
 
-type MatchedTrack struct {
-	*musicbrainz.Track
-	*tags.File
-}
-
-func DiffRelease(weights TagWeights, release *musicbrainz.Release, tracks []MatchedTrack) (float64, []Diff) {
+func DiffRelease(weights TagWeights, release *musicbrainz.Release, tracks []musicbrainz.Track, files []*tags.File) (float64, []Diff) {
 	if len(tracks) == 0 {
 		return 0, nil
 	}
@@ -51,20 +46,24 @@ func DiffRelease(weights TagWeights, release *musicbrainz.Release, tracks []Matc
 
 	var diffs []Diff
 	{
-		firstTr := tracks[0]
+		firstFile := files[0]
 		diffs = append(diffs,
-			diff("release", firstTr.Read(tags.Album), release.Title),
-			diff("artist", firstTr.Read(tags.AlbumArtist), musicbrainz.ArtistsString(release.Artists)),
-			diff("label", firstTr.Read(tags.Label), labelInfo.Label.Name),
-			diff("catalogue num", firstTr.Read(tags.CatalogueNum), labelInfo.CatalogNumber),
-			diff("media format", firstTr.Read(tags.MediaFormat), release.Media[0].Format),
+			diff("release", firstFile.Read(tags.Album), release.Title),
+			diff("artist", firstFile.Read(tags.AlbumArtist), musicbrainz.ArtistsString(release.Artists)),
+			diff("label", firstFile.Read(tags.Label), labelInfo.Label.Name),
+			diff("catalogue num", firstFile.Read(tags.CatalogueNum), labelInfo.CatalogNumber),
+			diff("media format", firstFile.Read(tags.MediaFormat), release.Media[0].Format),
 		)
 	}
 
-	for i, track := range tracks {
+	for i, file := range files {
+		var track musicbrainz.Track
+		if i < len(tracks) {
+			track = tracks[i]
+		}
 		diffs = append(diffs, diff(
 			fmt.Sprintf("track %d", i+1),
-			strings.Join(deleteZero(track.Read(tags.Artist), track.Read(tags.Title)), " – "),
+			strings.Join(deleteZero(file.Read(tags.Artist), file.Read(tags.Title)), " – "),
 			strings.Join(deleteZero(musicbrainz.ArtistsString(track.Artists), track.Title), " – "),
 		))
 	}
