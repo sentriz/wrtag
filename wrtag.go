@@ -140,11 +140,12 @@ func ProcessDir(
 	}
 
 	releaseTracks := musicbrainz.FlatTracks(release.Media)
-	if len(releaseTracks) != len(files) {
-		return &SearchResult{release, 0, "", nil, researchLinks, originFile}, fmt.Errorf("%w: %d remote / %d local", ErrTrackCountMismatch, len(releaseTracks), len(files))
-	}
 
 	score, diff := tagmap.DiffRelease(cfg.TagWeights, release, releaseTracks, files)
+
+	if len(releaseTracks) != len(files) {
+		return &SearchResult{release, 0, "", diff, researchLinks, originFile}, fmt.Errorf("%w: %d remote / %d local", ErrTrackCountMismatch, len(releaseTracks), len(files))
+	}
 
 	var shouldImport bool
 	switch cond {

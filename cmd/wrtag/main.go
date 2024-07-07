@@ -102,7 +102,7 @@ func run(
 	op wrtag.FileSystemOperation, srcDir string, cond wrtag.ImportCondition, useMBID string,
 ) error {
 	r, err := wrtag.ProcessDir(ctx, cfg, op, srcDir, cond, useMBID)
-	if err != nil && !errors.Is(err, wrtag.ErrScoreTooLow) {
+	if err != nil && !errors.Is(err, wrtag.ErrScoreTooLow) && !errors.Is(err, wrtag.ErrTrackCountMismatch) {
 		return fmt.Errorf("processing: %w", err)
 	}
 

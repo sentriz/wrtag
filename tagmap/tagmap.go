@@ -56,16 +56,15 @@ func DiffRelease(weights TagWeights, release *musicbrainz.Release, tracks []musi
 		)
 	}
 
-	for i, file := range files {
-		var track musicbrainz.Track
-		if i < len(tracks) {
-			track = tracks[i]
+	for i := range max(len(files), len(tracks)) {
+		var a, b string
+		if i < len(files) {
+			a = strings.Join(deleteZero(files[i].Read(tags.Artist), files[i].Read(tags.Title)), " – ")
 		}
-		diffs = append(diffs, diff(
-			fmt.Sprintf("track %d", i+1),
-			strings.Join(deleteZero(file.Read(tags.Artist), file.Read(tags.Title)), " – "),
-			strings.Join(deleteZero(musicbrainz.ArtistsString(track.Artists), track.Title), " – "),
-		))
+		if i < len(tracks) {
+			b = strings.Join(deleteZero(musicbrainz.ArtistsString(tracks[i].Artists), tracks[i].Title), " – ")
+		}
+		diffs = append(diffs, diff(fmt.Sprintf("track %d", i+1), a, b))
 	}
 
 	return score, diffs
