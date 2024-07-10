@@ -21,7 +21,7 @@ mv kat_moda/big-file 'albums/Kat Moda/big-file'
 
 # test trim dest, works since 21MB < 3000MB
 exec wrtag move -yes 'albums/Kat Moda'
-stderr 'deleting extra file.*big-file'
+stderr 'deleted extra file.*big-file'
 
 -- exp-find --
 kat_moda

@@ -8,7 +8,7 @@ exec tag write 'kat_moda/*.flac' musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc
 
 exec wrtag copy -yes kat_moda
 stderr 'wrote cover to tmp'
-! stderr 'deleting extra file.*cover'
+! stderr 'deleted extra file.*cover'
 
 exec find albums
 cmp stdout exp-find

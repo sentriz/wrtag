@@ -350,7 +350,7 @@ func (m Move) ProcessFile(dc DirContext, src, dest string) error {
 	}
 
 	if m.DryRun {
-		slog.Info("[dry run] move", "src", src, "dest", dest)
+		slog.Info("[dry run] move", "from", src, "to", dest)
 		return nil
 	}
 
@@ -363,10 +363,14 @@ func (m Move) ProcessFile(dc DirContext, src, dest string) error {
 			if err := os.Remove(src); err != nil {
 				return fmt.Errorf("remove from move: %w", err)
 			}
+
+			slog.Debug("moved path", "from", src, "to", dest)
 			return nil
 		}
 		return fmt.Errorf("rename: %w", err)
 	}
+
+	slog.Debug("moved path", "from", src, "to", dest)
 	return nil
 }
 
@@ -413,7 +417,7 @@ func (c Copy) ProcessFile(dc DirContext, src, dest string) error {
 	}
 
 	if c.DryRun {
-		slog.Info("[dry run] copy", "src", src, "dest", dest)
+		slog.Info("[dry run] copy", "from", src, "to", dest)
 		return nil
 	}
 
@@ -432,6 +436,8 @@ func (c Copy) ProcessFile(dc DirContext, src, dest string) error {
 	if _, err := io.Copy(destf, srcf); err != nil {
 		return fmt.Errorf("do copy: %w", err)
 	}
+
+	slog.Debug("copied path", "from", src, "to", dest)
 	return nil
 }
 
@@ -470,13 +476,13 @@ func trimDestDir(dc DirContext, dest string, dryRun bool) error {
 	var deleteErrs []error
 	for _, p := range toDelete {
 		if dryRun {
-			slog.Info("[dry run] delete extra file", "file", p)
+			slog.Info("[dry run] delete extra file", "path", p)
 			continue
 		}
-		slog.Info("deleting extra file", "file", p)
 		if err := os.Remove(p); err != nil {
 			deleteErrs = append(deleteErrs, err)
 		}
+		slog.Info("deleted extra file", "path", p)
 	}
 	if err := errors.Join(deleteErrs...); err != nil {
 		return fmt.Errorf("delete extra files: %w", err)
@@ -564,6 +570,8 @@ func safeRemoveAll(src string, dryRun bool) error {
 	if err := os.RemoveAll(src); err != nil {
 		return fmt.Errorf("error cleaning up folder: %w", err)
 	}
+
+	slog.Debug("removed path", "path", src)
 	return nil
 }
 
