@@ -357,7 +357,7 @@ func (m Move) ProcessFile(dc DirContext, src, dest string) error {
 	if err := os.Rename(src, dest); err != nil {
 		if errNo := syscall.Errno(0); errors.As(err, &errNo) && errNo == 18 /*  invalid cross-device link */ {
 			// we tried to rename across filesystems, copy and delete instead
-			if err := (Copy{}).ProcessFile(dc, src, dest); err != nil {
+			if err := copyFile(src, dest); err != nil {
 				return fmt.Errorf("copy from move: %w", err)
 			}
 			if err := os.Remove(src); err != nil {
@@ -421,20 +421,8 @@ func (c Copy) ProcessFile(dc DirContext, src, dest string) error {
 		return nil
 	}
 
-	srcf, err := os.Open(src)
-	if err != nil {
-		return fmt.Errorf("open src: %w", err)
-	}
-	defer srcf.Close()
-
-	destf, err := os.Create(dest)
-	if err != nil {
-		return fmt.Errorf("open dest: %w", err)
-	}
-	defer destf.Close()
-
-	if _, err := io.Copy(destf, srcf); err != nil {
-		return fmt.Errorf("do copy: %w", err)
+	if err := copyFile(src, dest); err != nil {
+		return err
 	}
 
 	slog.Debug("copied path", "from", src, "to", dest)
@@ -488,6 +476,25 @@ func trimDestDir(dc DirContext, dest string, dryRun bool) error {
 		return fmt.Errorf("delete extra files: %w", err)
 	}
 
+	return nil
+}
+
+func copyFile(src, dest string) error {
+	srcf, err := os.Open(src)
+	if err != nil {
+		return fmt.Errorf("open src: %w", err)
+	}
+	defer srcf.Close()
+
+	destf, err := os.Create(dest)
+	if err != nil {
+		return fmt.Errorf("open dest: %w", err)
+	}
+	defer destf.Close()
+
+	if _, err := io.Copy(destf, srcf); err != nil {
+		return fmt.Errorf("do copy: %w", err)
+	}
 	return nil
 }
 
