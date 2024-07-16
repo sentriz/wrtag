@@ -99,7 +99,10 @@ func (f *File) initProperties() {
 
 func (f *File) Read(t string) string        { return first(f.raw[t]) }
 func (f *File) ReadMulti(t string) []string { return f.raw[t] }
-func (f *File) ReadNum(t string) int        { return anyNum(first(f.raw[t])) }
+
+func (f *File) ReadNum(t string) int       { return anyNum(first(f.raw[t])) }
+func (f *File) ReadFloat(t string) float64 { return anyFloat(first(f.raw[t])) }
+
 func (f *File) ReadTime(t string) time.Time { return anyTime(first(f.raw[t])) }
 
 func (f *File) ReadAll(fn func(k string, vs []string) bool) {
@@ -123,9 +126,8 @@ func (f *File) Write(t string, v ...string) {
 	}
 	f.raw[t] = v
 }
-func (f *File) WriteNum(t string, v int)       { f.Write(t, intStr(v)) }
-func (f *File) WriteFloat(t string, v float64) { f.Write(t, floatStr(v, 6)) }
-func (f *File) WritedB(t string, v float64)    { f.Write(t, floatStr(v, 2)+" dB") }
+func (f *File) WriteNum(t string, v int)       { f.Write(t, fmtInt(v)) }
+func (f *File) WriteFloat(t string, v float64) { f.Write(t, fmtFloat(v, 6)) }
 
 func (f *File) Clear(t string) { delete(f.raw, t) }
 func (f *File) ClearAll()      { clear(f.raw) }
@@ -199,14 +201,14 @@ func first(vs []string) string {
 	return vs[0]
 }
 
-func intStr(v int) string {
+func fmtInt(v int) string {
 	if v == 0 {
 		return ""
 	}
 	return strconv.Itoa(v)
 }
 
-func floatStr(v float64, p int) string {
+func fmtFloat(v float64, p int) string {
 	return strconv.FormatFloat(v, 'f', p, 64)
 }
 
@@ -215,6 +217,14 @@ var numExpr = regexp.MustCompile(`\d+`)
 func anyNum(in string) int {
 	match := numExpr.FindString(in)
 	i, _ := strconv.Atoi(match)
+	return i
+}
+
+var floatExpr = regexp.MustCompile(`[+-]?([0-9]*[.])?[0-9]+`)
+
+func anyFloat(in string) float64 {
+	match := floatExpr.FindString(in)
+	i, _ := strconv.ParseFloat(match, 64)
 	return i
 }
 

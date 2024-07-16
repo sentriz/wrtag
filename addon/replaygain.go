@@ -59,9 +59,9 @@ func (a ReplayGainAddon) ProcessRelease(ctx context.Context, paths []string) err
 	for i := range paths {
 		trackL, path := trackLevs[i], paths[i]
 		err := tags.Write(path, func(f *tags.File) error {
-			f.WritedB(tags.ReplayGainTrackGain, trackL.GaindB)
+			f.Write(tags.ReplayGainTrackGain, fmtdB(trackL.GaindB))
 			f.WriteFloat(tags.ReplayGainTrackPeak, trackL.Peak)
-			f.WritedB(tags.ReplayGainAlbumGain, albumLev.GaindB)
+			f.Write(tags.ReplayGainAlbumGain, fmtdB(albumLev.GaindB))
 			f.WriteFloat(tags.ReplayGainAlbumPeak, albumLev.Peak)
 			return nil
 		})
@@ -75,4 +75,8 @@ func (a ReplayGainAddon) ProcessRelease(ctx context.Context, paths []string) err
 
 func (a ReplayGainAddon) Name() string {
 	return "replaygain"
+}
+
+func fmtdB(v float64) string {
+	return fmt.Sprintf("%.2f dB", v)
 }

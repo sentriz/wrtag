@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -130,4 +131,20 @@ func TestDoubleSave(t *testing.T) {
 	require.NoError(t, f.Save())
 	f.Write(Album, "c")
 	require.NoError(t, f.Save())
+}
+
+func TestExtract(t *testing.T) {
+	path := newFile(t, emptyFlac, ".flac")
+	f, err := Read(path)
+	require.NoError(t, err)
+	defer f.Close()
+
+	f.Write("v", "it's -0.244!")
+	require.Equal(t, -0.244, f.ReadFloat("v"))
+
+	f.Write("v", "2010-09-08")
+	require.Equal(t, time.Date(2010, time.September, 8, 0, 0, 0, 0, time.UTC), f.ReadTime("v"))
+
+	f.Write("v", "2/12")
+	require.Equal(t, 2, f.ReadNum("v"))
 }
