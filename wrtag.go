@@ -33,6 +33,7 @@ var (
 	ErrScoreTooLow        = errors.New("score too low")
 	ErrTrackCountMismatch = errors.New("track count mismatch")
 	ErrNoTracks           = errors.New("no tracks in dir")
+	ErrNotSortable        = errors.New("tracks in dir can't be sorted")
 	ErrSelfCopy           = errors.New("can't copy self to self")
 )
 
@@ -291,6 +292,23 @@ func ReadReleaseDir(path string) (string, []*tags.File, error) {
 		}
 		if len(discDirs) == 1 && filepath.Dir(files[0].Path()) != filepath.Clean(path) {
 			return "", nil, fmt.Errorf("validate tree: %w", ErrNoTracks)
+		}
+	}
+
+	{
+		// validate that we have track numbers, or track numbers in filenames to sort on. if we don't any
+		// then releases that consist only of untitled tracks may get mixed up
+		var haveNum, havePath bool = true, true
+		for _, f := range files {
+			if haveNum && f.Read(tags.TrackNumber) == "" {
+				haveNum = false
+			}
+			if havePath && !strings.ContainsFunc(filepath.Base(f.Path()), func(r rune) bool { return '0' <= r && r <= '9' }) {
+				havePath = false
+			}
+		}
+		if !haveNum && !havePath {
+			return "", nil, fmt.Errorf("no track numbers or numbers in filenames present: %w", ErrNotSortable)
 		}
 	}
 

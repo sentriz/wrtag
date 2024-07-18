@@ -1,0 +1,9 @@
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+
+exec tag write kat_moda/a.flac
+exec tag write kat_moda/b.flac
+exec tag write kat_moda/c.flac
+exec tag write kat_moda/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+
+! exec wrtag move kat_moda
+stderr 'tracks in dir can''t be sorted'
