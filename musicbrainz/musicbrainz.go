@@ -355,6 +355,10 @@ func IsCompilation(rg ReleaseGroup) bool {
 func FlatTracks(media []Media) []Track {
 	var tracks []Track
 	for _, media := range media {
+		if strings.Contains(media.Format, "DVD") {
+			// not supported for now
+			continue
+		}
 		if media.Pregap != nil {
 			tracks = append(tracks, *media.Pregap)
 		}

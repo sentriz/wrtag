@@ -1,0 +1,21 @@
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+
+exec tag write tghnp/01.flac title 'Till the Living Flesh Is Burned'
+exec tag write tghnp/02.flac title 'All Alone in Her Nirvana'
+exec tag write tghnp/03.flac title 'State Laughter'
+exec tag write tghnp/04.flac title 'Nothing Changes'
+exec tag write tghnp/05.flac title 'Nation'
+exec tag write tghnp/06.flac title 'Heaven Street mkII'
+exec tag write tghnp/07.flac title 'The Guilty Have No Pride'
+exec tag write tghnp/08.flac title 'Heaven Street'
+exec tag write tghnp/09.flac title 'In the Night Time'
+exec tag write tghnp/10.flac title 'We Drive East'
+exec tag write tghnp/11.flac title 'Holy Water'
+
+exec tag write tghnp/*.flac musicbrainz_albumid 'a99c577f-027d-4f96-8c47-d2b113fc0f2f'
+exec tag write tghnp/*.flac album               'The Guilty Have No Pride'
+exec tag write tghnp/*.flac artist              'Death in June'
+exec tag write tghnp/*.flac albumartist         'Death in June'
+
+exec wrtag move tghnp
+stderr 'score=100.00%'
