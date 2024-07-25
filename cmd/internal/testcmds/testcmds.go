@@ -58,7 +58,7 @@ func Tag() {
 	for _, p := range paths {
 		switch op {
 		case "write":
-			if err := ensureFlac(p); err != nil {
+			if err := ensureFile(p); err != nil {
 				log.Fatalf("ensure flac: %v", err)
 			}
 		}
@@ -87,6 +87,20 @@ func Tag() {
 	}
 
 	os.Exit(exit)
+}
+
+func CreateAudioFiles() {
+	flag.Parse()
+
+	paths := flag.Args()
+	for _, p := range paths {
+		if _, err := os.Stat(p); err == nil {
+			log.Fatalf("already exists: %q", p)
+		}
+		if err := ensureFile(p); err != nil {
+			log.Fatalf("ensure file: %v", err)
+		}
+	}
 }
 
 func Find() {
@@ -204,21 +218,38 @@ func parseTagMap(args []string) map[string][]string {
 }
 
 //go:embed testdata/empty.flac
-var emptyFlac []byte
+var emptyFLAC []byte
 
-func ensureFlac(path string) error {
+//go:embed testdata/empty.m4a
+var emptyM4A []byte
+
+//go:embed testdata/empty.mp3
+var emptyMP3 []byte
+
+func ensureFile(path string) error {
 	if _, err := os.Stat(path); err == nil {
 		return nil
 	}
 	if err := os.MkdirAll(filepath.Dir(path), os.ModePerm); err != nil {
 		return fmt.Errorf("make parents: %w", err)
 	}
+
+	var d []byte
+	switch ext := filepath.Ext(path); ext {
+	case ".flac":
+		d = emptyFLAC
+	case ".m4a":
+		d = emptyM4A
+	case ".mp3":
+		d = emptyMP3
+	}
+
 	f, err := os.Create(path)
 	if err != nil {
 		return fmt.Errorf("open and trunc file: %w", err)
 	}
 	defer f.Close()
-	if _, err := f.Write(emptyFlac); err != nil {
+	if _, err := f.Write(d); err != nil {
 		return fmt.Errorf("write empty file: %w", err)
 	}
 	return nil

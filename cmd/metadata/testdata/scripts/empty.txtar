@@ -1,6 +1,6 @@
 env METADATA_NO_PROPERTIES=1
 
-exec flac a.flac
+exec create-audio-files a.flac
 
 exec metadata clear -- a.flac
 exec metadata write a '' -- a.flac

@@ -2,21 +2,19 @@ package main
 
 import (
 	_ "embed"
-	"flag"
-	"log"
 	"os"
 	"testing"
 	"time"
 
 	"github.com/rogpeppe/go-internal/testscript"
 	"github.com/stretchr/testify/assert"
+	"go.senan.xyz/wrtag/cmd/internal/testcmds"
 )
 
 func TestMain(m *testing.M) {
 	os.Exit(testscript.RunMain(m, map[string]func() int{
-		"metadata": func() int { main(); return 0 },
-		"flac":     func() int { mainFile(); return 0 },
-		"mp3":      func() int { mainFile(); return 0 },
+		"metadata":           func() int { main(); return 0 },
+		"create-audio-files": func() int { testcmds.CreateAudioFiles(); return 0 },
 	}))
 }
 
@@ -27,35 +25,6 @@ func TestScripts(t *testing.T) {
 		Dir:                 "testdata/scripts",
 		RequireExplicitExec: true,
 	})
-}
-
-//go:embed testdata/empty.flac
-var emptyFlac []byte
-
-//go:embed testdata/empty.mp3
-var emptyMP3 []byte
-
-func mainFile() {
-	var d []byte
-	switch name := os.Args[0]; name {
-	case "mp3":
-		d = emptyMP3
-	case "flac":
-		d = emptyFlac
-	default:
-		log.Fatalf("unknown filetype %q\n", name)
-	}
-
-	flag.Parse()
-
-	path := flag.Arg(0)
-	if path == "" {
-		log.Fatalf("no path provided")
-	}
-
-	if err := os.WriteFile(path, d, 0666); err != nil {
-		log.Fatalf("write file: %v\n", err)
-	}
 }
 
 func TestParseTagMap(t *testing.T) {

@@ -1,6 +1,6 @@
 env METADATA_NO_PROPERTIES=1
 
-exec mp3 a.mp3
+exec create-audio-files a.mp3
 
 exec metadata write a 1 2 , b 3 4 -- a.mp3
 
