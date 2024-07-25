@@ -12,64 +12,23 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-//go:embed testdata/empty.flac
-var emptyFlac []byte
-
-//go:embed testdata/empty.mp3
-var emptyMP3 []byte
-
-func newFile(t *testing.T, data []byte, ext string) string {
-	t.Helper()
-
-	f, err := os.CreateTemp("", "*"+ext)
-	require.NoError(t, err)
-	t.Cleanup(func() {
-		os.Remove(f.Name())
-	})
-
-	_, err = io.Copy(f, bytes.NewReader(data))
-	require.NoError(t, err)
-
-	return f.Name()
-}
-
 func TestTrackNum(t *testing.T) {
 	t.Parallel()
 
-	path := newFile(t, emptyFlac, ".flac")
-	withf := func(fn func(*File)) {
-		t.Helper()
-
-		f, err := Read(path)
-		require.NoError(t, err)
-		fn(f)
-		require.NoError(t, f.Save())
-		f.Close()
-	}
-
-	withf(func(f *File) {
+	path := newFile(t, emptyFLAC, ".flac")
+	withf(t, path, func(f *File) {
 		f.WriteNum(TrackNumber, 69)
 	})
-	withf(func(f *File) {
+	withf(t, path, func(f *File) {
 		f.WriteNum(TrackNumber, 69)
 	})
-	withf(func(f *File) {
-		require.Equal(t, 69, f.ReadNum(TrackNumber))
+	withf(t, path, func(f *File) {
+		assert.Equal(t, 69, f.ReadNum(TrackNumber))
 	})
 }
 
 func TestZero(t *testing.T) {
 	t.Parallel()
-
-	withf := func(path string, fn func(*File)) {
-		t.Helper()
-
-		f, err := Read(path)
-		require.NoError(t, err)
-		fn(f)
-		require.NoError(t, f.Save())
-		f.Close()
-	}
 
 	check := func(f *File) {
 		var n int
@@ -83,17 +42,17 @@ func TestZero(t *testing.T) {
 	run := func(name string, data []byte, ext string) {
 		t.Run(name, func(t *testing.T) {
 			path := newFile(t, data, ext)
-			withf(path, func(f *File) {
+			withf(t, path, func(f *File) {
 				f.Write("catalognumber", "")
 				check(f)
 			})
-			withf(path, func(f *File) {
+			withf(t, path, func(f *File) {
 				check(f)
 			})
 		})
 	}
 
-	run("flac", emptyFlac, ".flac")
+	run("flac", emptyFLAC, ".flac")
 	run("mp3", emptyMP3, ".mp3")
 }
 
@@ -120,7 +79,7 @@ func TestNormalise(t *testing.T) {
 func TestDoubleSave(t *testing.T) {
 	t.Parallel()
 
-	path := newFile(t, emptyFlac, ".flac")
+	path := newFile(t, emptyFLAC, ".flac")
 	f, err := Read(path)
 	require.NoError(t, err)
 	defer f.Close()
@@ -134,7 +93,7 @@ func TestDoubleSave(t *testing.T) {
 }
 
 func TestExtract(t *testing.T) {
-	path := newFile(t, emptyFlac, ".flac")
+	path := newFile(t, emptyFLAC, ".flac")
 	f, err := Read(path)
 	require.NoError(t, err)
 	defer f.Close()
@@ -147,4 +106,38 @@ func TestExtract(t *testing.T) {
 
 	f.Write("v", "2/12")
 	require.Equal(t, 2, f.ReadNum("v"))
+}
+
+//go:embed testdata/empty.flac
+var emptyFLAC []byte
+
+//go:embed testdata/empty.mp3
+var emptyMP3 []byte
+
+//go:embed testdata/empty.m4a
+var emptyM4A []byte
+
+func newFile(t *testing.T, data []byte, ext string) string {
+	t.Helper()
+
+	f, err := os.CreateTemp("", "*"+ext)
+	require.NoError(t, err)
+	t.Cleanup(func() {
+		os.Remove(f.Name())
+	})
+
+	_, err = io.Copy(f, bytes.NewReader(data))
+	require.NoError(t, err)
+
+	return f.Name()
+}
+
+func withf(t *testing.T, path string, fn func(*File)) {
+	t.Helper()
+
+	f, err := Read(path)
+	require.NoError(t, err)
+	fn(f)
+	require.NoError(t, f.Save())
+	f.Close()
 }
