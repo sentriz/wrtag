@@ -3,7 +3,7 @@ env WRTAG_LOG_LEVEL=debug
 env WRTAG_ADDON='subproc sh -c "true", subproc sh echo-script out <files>'
 
 exec wrtag -config
-stdout 'addon.*subproc \(sh\), subproc \(sh\)'
+stdout 'addon.*subproc \("sh" "-c" "true"\), subproc \("sh" "echo-script" "out" "<files>"\)'
 
 exec tag write 'kat_moda/1.flac'
 exec tag write 'kat_moda/2.flac'

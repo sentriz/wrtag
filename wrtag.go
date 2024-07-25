@@ -63,7 +63,6 @@ const (
 
 type Addon interface {
 	ProcessRelease(context.Context, []string) error
-	Name() string
 }
 
 type Config struct {
@@ -211,7 +210,7 @@ func ProcessDir(
 	if !op.ReadOnly() {
 		for _, addon := range cfg.Addons {
 			if err := addon.ProcessRelease(ctx, destPaths); err != nil {
-				return nil, fmt.Errorf("process addon %q: %w", addon.Name(), err)
+				return nil, fmt.Errorf("process addon: %w", err)
 			}
 		}
 	}

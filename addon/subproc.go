@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os/exec"
+	"strings"
 
 	"github.com/google/shlex"
 )
@@ -49,6 +50,9 @@ func (s SubprocAddon) ProcessRelease(ctx context.Context, paths []string) error 
 	return nil
 }
 
-func (s SubprocAddon) Name() string {
-	return fmt.Sprintf("subproc (%s)", s.command)
+func (s SubprocAddon) String() string {
+	args := fmt.Sprintf("%q", append([]string{s.command}, s.args...))
+	args = strings.TrimPrefix(args, "[")
+	args = strings.TrimSuffix(args, "]")
+	return fmt.Sprintf("subproc (%s)", args)
 }

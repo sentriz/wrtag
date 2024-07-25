@@ -61,6 +61,6 @@ func (l LyricsAddon) ProcessRelease(ctx context.Context, paths []string) error {
 	return errors.Join(pathErrs...)
 }
 
-func (l LyricsAddon) Name() string {
-	return "lyrics"
+func (l LyricsAddon) String() string {
+	return fmt.Sprintf("lyrics (%s)", l.source)
 }

@@ -73,8 +73,8 @@ func (a ReplayGainAddon) ProcessRelease(ctx context.Context, paths []string) err
 	return errors.Join(trackErrs...)
 }
 
-func (a ReplayGainAddon) Name() string {
-	return "replaygain"
+func (a ReplayGainAddon) String() string {
+	return fmt.Sprintf("replaygain (force: %t, true peak: %t)", a.force, a.truePeak)
 }
 
 func fmtdB(v float64) string {

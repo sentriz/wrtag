@@ -36,6 +36,14 @@ func (ms MultiSource) Search(ctx context.Context, artist, song string) (string, 
 	return "", ErrLyricsNotFound
 }
 
+func (ms MultiSource) String() string {
+	var parts []string
+	for _, s := range ms {
+		parts = append(parts, fmt.Sprint(s))
+	}
+	return strings.Join(parts, ", ")
+}
+
 var musixmatchBaseURL = `https://www.musixmatch.com/lyrics`
 var musixmatchSelectContent = cascadia.MustCompile(`div.r-1v1z2uz:nth-child(1)`)
 var musixmatchIgnore = []string{"Still no lyrics here"}
@@ -91,6 +99,10 @@ func (mm *Musixmatch) Search(ctx context.Context, artist, song string) (string, 
 	return out.String(), nil
 }
 
+func (mm *Musixmatch) String() string {
+	return "musixmatch"
+}
+
 var geniusBaseURL = `https://genius.com`
 var geniusSelectContent = cascadia.MustCompile(`div[class^="Lyrics__Container-"]`)
 var geniusEsc = strings.NewReplacer(
@@ -141,6 +153,10 @@ func (g *Genius) Search(ctx context.Context, artist, song string) (string, error
 	var out strings.Builder
 	iterText(cascadia.Query(node, geniusSelectContent), &out)
 	return out.String(), nil
+}
+
+func (g *Genius) String() string {
+	return "genius"
 }
 
 func iterText(n *html.Node, buf *strings.Builder) {
