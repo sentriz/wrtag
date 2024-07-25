@@ -108,6 +108,46 @@ func TestExtract(t *testing.T) {
 	require.Equal(t, 2, f.ReadNum("v"))
 }
 
+func TestExtendedTags(t *testing.T) {
+	t.Run("m4a", func(t *testing.T) {
+		p := newFile(t, emptyM4A, ".m4a")
+		// AlbumArtist works
+		withf(t, p, func(f *File) {
+			f.Write(AlbumArtist, "steely dan")
+		})
+		withf(t, p, func(f *File) {
+			assert.Equal(t, "steely dan", f.Read(AlbumArtist))
+		})
+
+		// AlbumArtistCredit doesn't. see taglib/mp4/mp4itemfactory.cpp
+		withf(t, p, func(f *File) {
+			f.Write(AlbumArtistCredit, "steely dan")
+		})
+		withf(t, p, func(f *File) {
+			assert.Empty(t, f.Read(AlbumArtistCredit))
+		})
+	})
+
+	t.Run("flac", func(t *testing.T) {
+		p := newFile(t, emptyFLAC, ".flac")
+		// AlbumArtist works
+		withf(t, p, func(f *File) {
+			f.Write(AlbumArtist, "steely dan")
+		})
+		withf(t, p, func(f *File) {
+			assert.Equal(t, "steely dan", f.Read(AlbumArtist))
+		})
+
+		// so does AlbumArtistCredit
+		withf(t, p, func(f *File) {
+			f.Write(AlbumArtistCredit, "steely dan")
+		})
+		withf(t, p, func(f *File) {
+			assert.Equal(t, "steely dan", f.Read(AlbumArtistCredit))
+		})
+	})
+}
+
 //go:embed testdata/empty.flac
 var emptyFLAC []byte
 
