@@ -39,9 +39,9 @@ func TestZero(t *testing.T) {
 		assert.Equal(t, 0, n)
 	}
 
-	run := func(name string, data []byte, ext string) {
-		t.Run(name, func(t *testing.T) {
-			path := newFile(t, data, ext)
+	for _, tf := range testFiles {
+		t.Run(tf.name, func(t *testing.T) {
+			path := newFile(t, tf.data, tf.ext)
 			withf(t, path, func(f *File) {
 				f.Write("catalognumber", "")
 				check(f)
@@ -51,9 +51,6 @@ func TestZero(t *testing.T) {
 			})
 		})
 	}
-
-	run("flac", emptyFLAC, ".flac")
-	run("mp3", emptyMP3, ".mp3")
 }
 
 func TestNormalise(t *testing.T) {
@@ -109,43 +106,35 @@ func TestExtract(t *testing.T) {
 }
 
 func TestExtendedTags(t *testing.T) {
-	t.Run("m4a", func(t *testing.T) {
-		p := newFile(t, emptyM4A, ".m4a")
-		// AlbumArtist works
-		withf(t, p, func(f *File) {
-			f.Write(AlbumArtist, "steely dan")
-		})
-		withf(t, p, func(f *File) {
-			assert.Equal(t, "steely dan", f.Read(AlbumArtist))
-		})
+	for _, tf := range testFiles {
+		t.Run(tf.name, func(t *testing.T) {
+			if tf.name == "m4a" {
+				t.Skip("need https://github.com/taglib/taglib/pull/1240")
+			}
 
-		// AlbumArtistCredit doesn't. see taglib/mp4/mp4itemfactory.cpp
-		withf(t, p, func(f *File) {
-			f.Write(AlbumArtistCredit, "steely dan")
+			p := newFile(t, tf.data, tf.ext)
+			withf(t, p, func(f *File) {
+				f.Write(Artist, "steely dan")            // standard
+				f.Write(AlbumArtist, "steely dan")       // extended
+				f.Write(AlbumArtistCredit, "steely dan") // non standard
+			})
+			withf(t, p, func(f *File) {
+				assert.Equal(t, "steely dan", f.Read(Artist))
+				assert.Equal(t, "steely dan", f.Read(AlbumArtist))
+				assert.Equal(t, "steely dan", f.Read(AlbumArtistCredit))
+			})
 		})
-		withf(t, p, func(f *File) {
-			assert.Empty(t, f.Read(AlbumArtistCredit))
-		})
-	})
+	}
+}
 
-	t.Run("flac", func(t *testing.T) {
-		p := newFile(t, emptyFLAC, ".flac")
-		// AlbumArtist works
-		withf(t, p, func(f *File) {
-			f.Write(AlbumArtist, "steely dan")
-		})
-		withf(t, p, func(f *File) {
-			assert.Equal(t, "steely dan", f.Read(AlbumArtist))
-		})
-
-		// so does AlbumArtistCredit
-		withf(t, p, func(f *File) {
-			f.Write(AlbumArtistCredit, "steely dan")
-		})
-		withf(t, p, func(f *File) {
-			assert.Equal(t, "steely dan", f.Read(AlbumArtistCredit))
-		})
-	})
+var testFiles = []struct {
+	name string
+	data []byte
+	ext  string
+}{
+	{"flac", emptyFLAC, ".flac"},
+	{"mp3", emptyMP3, ".mp3"},
+	{"m4a", emptyM4A, ".m4a"},
 }
 
 //go:embed testdata/empty.flac
