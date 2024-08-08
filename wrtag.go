@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
+	"net/http"
 	"os"
 	"path"
 	"path/filepath"
@@ -74,6 +75,7 @@ type Config struct {
 	KeepFiles             map[string]struct{}
 	Addons                []Addon
 	Notifications         notifications.Notifications
+	UpgradeCover          bool
 }
 
 func ProcessDir(
@@ -206,26 +208,16 @@ func ProcessDir(
 		destPaths = append(destPaths, destPath)
 	}
 
+	if err := processCover(ctx, cfg, op, dc, release, destDir, cover); err != nil {
+		return nil, fmt.Errorf("process cover: %w", err)
+	}
+
 	// process addons with new tag.Files
 	if !op.ReadOnly() {
 		for _, addon := range cfg.Addons {
 			if err := addon.ProcessRelease(ctx, destPaths); err != nil {
 				return nil, fmt.Errorf("process addon: %w", err)
 			}
-		}
-	}
-
-	if cover == "" {
-		cover, err = tryDownloadMusicbrainzCover(ctx, &cfg.CoverArtArchiveClient, release)
-		if err != nil {
-			return nil, fmt.Errorf("try download mb cover: %w", err)
-		}
-		defer os.Remove(cover)
-	}
-	if cover != "" {
-		coverDest := filepath.Join(destDir, "cover"+filepath.Ext(cover))
-		if err := op.ProcessFile(dc, cover, coverDest); err != nil {
-			return nil, fmt.Errorf("move file to dest: %w", err)
 		}
 	}
 
@@ -515,12 +507,63 @@ func copyFile(src, dest string) error {
 	return nil
 }
 
-func tryDownloadMusicbrainzCover(ctx context.Context, caa *musicbrainz.CAAClient, release *musicbrainz.Release) (string, error) {
+func processCover(
+	ctx context.Context, cfg *Config,
+	op FileSystemOperation, dc DirContext, release *musicbrainz.Release, destDir string, cover string,
+) error {
+	coverPath := func(p string) string {
+		return filepath.Join(destDir, "cover"+filepath.Ext(p))
+	}
+
+	if !op.ReadOnly() && (cover == "" || cfg.UpgradeCover) {
+		skipFunc := func(resp *http.Response) bool {
+			if cover == "" {
+				return false
+			}
+			info, err := os.Stat(cover)
+			if err != nil {
+				return false
+			}
+			return resp.ContentLength == info.Size()
+		}
+		coverTmp, err := tryDownloadMusicBrainzCover(ctx, &cfg.CoverArtArchiveClient, release, skipFunc)
+		if err != nil {
+			return fmt.Errorf("maybe fetch better cover: %w", err)
+		}
+		if coverTmp != "" {
+			if err := (Move{}).ProcessFile(dc, coverTmp, coverPath(coverTmp)); err != nil {
+				return fmt.Errorf("move new cover to dest: %w", err)
+			}
+			return nil
+		}
+	}
+
+	// process any existing cover if we didn't fetch (or find) any from musicbrainz
+	if cover != "" {
+		if err := op.ProcessFile(dc, cover, coverPath(cover)); err != nil {
+			return fmt.Errorf("move file to dest: %w", err)
+		}
+	}
+	return nil
+}
+
+func tryDownloadMusicBrainzCover(ctx context.Context, caa *musicbrainz.CAAClient, release *musicbrainz.Release, skipFunc func(*http.Response) bool) (string, error) {
 	coverURL, err := caa.GetCoverURL(ctx, release)
 	if err != nil {
 		return "", err
 	}
 	if coverURL == "" {
+		return "", nil
+	}
+
+	resp, err := caa.HTTPClient.Get(coverURL)
+	if err != nil {
+		return "", fmt.Errorf("request cover url: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// try avoid downloading
+	if skipFunc(resp) {
 		return "", nil
 	}
 
@@ -531,17 +574,10 @@ func tryDownloadMusicbrainzCover(ctx context.Context, caa *musicbrainz.CAAClient
 	}
 	defer tmpf.Close()
 
-	resp, err := caa.HTTPClient.Get(coverURL)
-	if err != nil {
-		return "", fmt.Errorf("request cover url: %w", err)
-	}
-	defer resp.Body.Close()
-
-	n, err := io.Copy(tmpf, resp.Body)
-	if err != nil {
+	if _, err := io.Copy(tmpf, resp.Body); err != nil {
 		return "", fmt.Errorf("copy to tmp: %w", err)
 	}
-	slog.Debug("wrote cover to tmp", "size_bytes", n)
+
 	return tmpf.Name(), nil
 }
 

@@ -7,7 +7,7 @@ exec tag write 'kat_moda/3.flac'
 exec tag write 'kat_moda/*.flac' musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
 
 exec wrtag copy -yes kat_moda
-stderr 'wrote cover to tmp'
+stderr 'moved path.*from.*\.wrtag-cover-tmp'
 ! stderr 'deleted extra file.*cover'
 
 exec find albums

@@ -112,6 +112,8 @@ func WrtagConfig() *wrtag.Config {
 	flag.StringVar(&cfg.CoverArtArchiveClient.BaseURL, "caa-base-url", `https://coverartarchive.org/`, "coverartarchive base url")
 	flag.DurationVar(&cfg.CoverArtArchiveClient.RateLimit, "caa-rate-limit", 0, "coverartarchive rate limit duration")
 
+	flag.BoolVar(&cfg.UpgradeCover, "cover-upgrade", false, "fetch new cover art even if it exists locally")
+
 	return &cfg
 }
 
