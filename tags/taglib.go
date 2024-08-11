@@ -36,6 +36,7 @@ const (
 	Label              = "label"
 	CatalogueNum       = "catalognumber" //tag: alts "catalognum"
 	UPC                = "upc"           //tag: alts "mcn"
+	Compilation        = "compilation"
 
 	MBReleaseID      = "musicbrainz_albumid"
 	MBReleaseGroupID = "musicbrainz_releasegroupid"

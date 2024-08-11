@@ -95,6 +95,7 @@ func WriteTo(
 	f.Write(tags.Label, labelInfo.Label.Name)
 	f.Write(tags.CatalogueNum, labelInfo.CatalogNumber)
 	f.Write(tags.UPC, release.Barcode)
+	f.Write(tags.Compilation, formatBool(musicbrainz.IsCompilation(release.ReleaseGroup)))
 
 	f.Write(tags.MBReleaseID, release.ID)
 	f.Write(tags.MBReleaseGroupID, release.ReleaseGroup.ID)
@@ -160,6 +161,13 @@ func formatDate(d time.Time) string {
 		return ""
 	}
 	return d.Format(time.DateOnly)
+}
+
+func formatBool(b bool) string {
+	if !b {
+		return ""
+	}
+	return "1"
 }
 
 func mapFunc[T, To any](elms []T, f func(int, T) To) []To {
