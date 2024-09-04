@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"context"
 	"crypto/subtle"
+	"database/sql"
+	"database/sql/driver"
 	"embed"
 	"encoding/json"
 	"errors"
@@ -24,12 +26,14 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/r3labs/sse/v2"
-	"github.com/timshannon/bolthold"
-	"golang.org/x/sync/errgroup"
-
 	"go.senan.xyz/wrtag"
 	"go.senan.xyz/wrtag/cmd/internal/cmds"
+
+	_ "github.com/ncruces/go-sqlite3/driver"
+	_ "github.com/ncruces/go-sqlite3/embed"
+	"github.com/r3labs/sse/v2"
+	"go.senan.xyz/sqlb"
+	"golang.org/x/sync/errgroup"
 )
 
 func init() {
@@ -69,12 +73,19 @@ func main() {
 		return
 	}
 
-	db, err := bolthold.Open(*dbPath, 0600, nil)
+	dbURI, _ := url.Parse("file://?cache=shared&_fk=1")
+	dbURI.Opaque = *dbPath
+	db, err := sql.Open("sqlite3", dbURI.String())
 	if err != nil {
-		slog.Error("parsing path format template", "err", err)
+		slog.Error("open db template", "err", err)
 		return
 	}
 	defer db.Close()
+
+	if err := jobsMigrate(context.Background(), db); err != nil {
+		slog.Error("migrate db", "err", err)
+		return
+	}
 
 	sseServ := sse.New()
 	sseServ.AutoReplay = false
@@ -97,14 +108,13 @@ func main() {
 
 	processJob := func(ctx context.Context, job *Job, ic wrtag.ImportCondition) error {
 		job.Status = StatusInProgress
-
-		if err := db.Update(job.ID, &job); err != nil {
+		if err := sqlb.ScanRow(ctx, db, job, "update jobs set ? where id=? returning *", sqlb.UpdateSQL(job), job.ID); err != nil {
 			return fmt.Errorf("update job: %w", err)
 		}
 		emit(eventJob(job.ID), eventAllJobs())
 
 		defer func() {
-			if err := db.Update(job.ID, &job); err != nil {
+			if err := sqlb.ScanRow(ctx, db, job, "update jobs set ? where id=? returning *", sqlb.UpdateSQL(job), job.ID); err != nil {
 				slog.Error("update job", "job_id", job.ID, "err", err)
 				return
 			}
@@ -114,8 +124,7 @@ func main() {
 		job.Error = ""
 		job.Status = StatusComplete
 
-		var err error
-		job.SearchResult, err = wrtag.ProcessDir(ctx, cfg, wrtagOperation(job.Operation), job.SourcePath, ic, job.UseMBID)
+		searchResult, err := wrtag.ProcessDir(ctx, cfg, wrtagOperation(job.Operation), job.SourcePath, ic, job.UseMBID)
 		if err != nil {
 			job.Status = StatusError
 			job.Error = err.Error()
@@ -125,6 +134,7 @@ func main() {
 			}
 			return nil
 		}
+		job.SearchResult = &SearchResult{SearchResult: *searchResult}
 
 		job.DestPath, err = wrtag.DestDir(&cfg.PathFormat, job.SearchResult.Release)
 		if err != nil {
@@ -170,20 +180,19 @@ func main() {
 	}
 
 	const pageSize = 20
-	listJobs := func(search string, filter JobStatus, page int) (jobsListing, error) {
-		q := &bolthold.Query{}
+	listJobs := func(ctx context.Context, status JobStatus, search string, page int) (jobsListing, error) {
+		var whereb sqlb.Query
+		whereb.Append("1")
 		if search != "" {
-			q = q.And("SourcePath").MatchFunc(func(path string) (bool, error) {
-				return strings.Contains(strings.ToLower(path), strings.ToLower(search)), nil
-			})
+			whereb.Append("and source_path like ?", search)
 		}
-		if filter != "" {
-			q = q.And("Status").Eq(filter)
+		if status != "" {
+			whereb.Append("and status=?", status)
 		}
 
-		total, err := db.Count(&Job{}, q)
-		if err != nil {
-			return jobsListing{}, err
+		var total int
+		if err := sqlb.ScanRow(ctx, db, sqlb.Primative(&total), "select count(1) from jobs where ?", whereb); err != nil {
+			return jobsListing{}, fmt.Errorf("count total: %w", err)
 		}
 
 		pageCount := max(1, int(math.Ceil(float64(total)/float64(pageSize))))
@@ -191,17 +200,19 @@ func main() {
 			page = 0 // reset if gone too far
 		}
 
-		q = q.
-			Skip(pageSize * page).
-			Limit(pageSize).
-			SortBy("Time").
-			Reverse()
+		var q sqlb.Query
+		q.Append("select * from jobs where ?", whereb)
+		q.Append("order by time desc")
+		q.Append("limit ? offset ?", pageSize, pageSize*page)
+
+		query, values := q.SQL()
+
 		var jobs []*Job
-		if err := db.Find(&jobs, q); err != nil {
-			return jobsListing{}, err
+		if err := sqlb.Scan(ctx, db, &jobs, query, values...); err != nil {
+			return jobsListing{}, fmt.Errorf("list jobs: %w", err)
 		}
 
-		return jobsListing{filter, search, page, pageCount, total, jobs}, nil
+		return jobsListing{status, search, page, pageCount, total, jobs}, nil
 	}
 
 	mux := http.NewServeMux()
@@ -211,7 +222,7 @@ func main() {
 		search := r.URL.Query().Get("search")
 		filter := JobStatus(r.URL.Query().Get("filter"))
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-		jl, err := listJobs(search, filter, page)
+		jl, err := listJobs(r.Context(), filter, search, page)
 		if err != nil {
 			respErrf(w, http.StatusInternalServerError, "error listing jobs: %v", err)
 			return
@@ -236,8 +247,9 @@ func main() {
 			return
 		}
 		path = filepath.Clean(path)
-		job := Job{SourcePath: path, Operation: operation, Time: time.Now()}
-		if err := db.Insert(bolthold.NextSequence(), &job); err != nil {
+
+		var job Job
+		if err := sqlb.ScanRow(r.Context(), db, &job, "insert into jobs (source_path, operation, time) values (?, ?, ?) returning *", path, operation, time.Now()); err != nil {
 			http.Error(w, fmt.Sprintf("error saving job: %v", err), http.StatusInternalServerError)
 			return
 		}
@@ -248,7 +260,7 @@ func main() {
 	mux.HandleFunc("GET /jobs/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id, _ := strconv.Atoi(r.PathValue("id"))
 		var job Job
-		if err := db.Get(uint64(id), &job); err != nil {
+		if err := sqlb.ScanRow(r.Context(), db, &job, "select * from jobs where id=?", id); err != nil {
 			respErrf(w, http.StatusInternalServerError, "error getting job")
 			return
 		}
@@ -267,7 +279,7 @@ func main() {
 		}
 
 		var job Job
-		if err := db.Get(uint64(id), &job); err != nil {
+		if err := sqlb.ScanRow(r.Context(), db, &job, "select * from jobs where id=?", id); err != nil {
 			respErrf(w, http.StatusInternalServerError, "error getting job")
 			return
 		}
@@ -282,7 +294,7 @@ func main() {
 
 	mux.HandleFunc("DELETE /jobs/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id, _ := strconv.Atoi(r.PathValue("id"))
-		if err := db.Delete(uint64(id), &Job{}); err != nil {
+		if _, err := db.ExecContext(r.Context(), "delete from jobs where id=?", id); err != nil {
 			respErrf(w, http.StatusInternalServerError, "error getting job")
 			return
 		}
@@ -291,7 +303,7 @@ func main() {
 
 	mux.HandleFunc("GET /dump", func(w http.ResponseWriter, r *http.Request) {
 		var jobs []*Job
-		if err := db.Find(&jobs, nil); err != nil {
+		if err := sqlb.Scan(r.Context(), db, &jobs, "select * from jobs"); err != nil {
 			respErrf(w, http.StatusInternalServerError, "error listing jobs: %v", err)
 			return
 		}
@@ -302,7 +314,7 @@ func main() {
 	})
 
 	mux.HandleFunc("/{$}", func(w http.ResponseWriter, r *http.Request) {
-		jl, err := listJobs("", "", 0)
+		jl, err := listJobs(r.Context(), "", "", 0)
 		if err != nil {
 			respErrf(w, http.StatusInternalServerError, "error listing jobs: %v", err)
 			return
@@ -334,8 +346,8 @@ func main() {
 			return
 		}
 		path = filepath.Clean(path)
-		job := Job{SourcePath: path, Operation: operation, Time: time.Now()}
-		if err := db.Insert(bolthold.NextSequence(), &job); err != nil {
+		var job Job
+		if err := sqlb.ScanRow(r.Context(), db, &job, "insert into jobs (source_path, operation, time) values (?, ?, ?) returning *", path, operation, time.Now()); err != nil {
 			http.Error(w, fmt.Sprintf("error saving job: %v", err), http.StatusInternalServerError)
 			return
 		}
@@ -365,8 +377,8 @@ func main() {
 
 		tick := func(ctx context.Context) error {
 			var job Job
-			switch err := db.FindOne(&job, bolthold.Where("Status").Eq(StatusEnqueued)); {
-			case errors.Is(err, bolthold.ErrNotFound):
+			switch err := sqlb.ScanRow(ctx, db, &job, "select * from jobs where status=? limit 1", StatusEnqueued); {
+			case errors.Is(err, sql.ErrNoRows):
 				return nil
 			case err != nil:
 				return fmt.Errorf("find next job: %w", err)
@@ -429,14 +441,54 @@ func wrtagOperation(op Operation) wrtag.FileSystemOperation {
 }
 
 type Job struct {
-	ID                   uint64    `boltholdKey:"ID"`
-	Status               JobStatus `boltholdIndex:"Status"`
+	ID                   uint64
+	Status               JobStatus
 	Error                string
 	Operation            Operation
-	Time                 time.Time `boltholdIndex:"Time"`
+	Time                 time.Time
 	UseMBID              string
 	SourcePath, DestPath string
-	SearchResult         *wrtag.SearchResult
+	SearchResult         *SearchResult
+}
+
+func (Job) PrimaryKey() string {
+	return "id"
+}
+func (j Job) Values() []sql.NamedArg {
+	return []sql.NamedArg{
+		sql.Named("id", j.ID),
+		sql.Named("status", j.Status),
+		sql.Named("error", j.Error),
+		sql.Named("operation", j.Operation),
+		sql.Named("time", j.Time),
+		sql.Named("use_mbid", j.UseMBID),
+		sql.Named("source_path", j.SourcePath),
+		sql.Named("dest_path", j.DestPath),
+		sql.Named("search_result", j.SearchResult),
+	}
+}
+func (j *Job) ScanFrom(rows *sql.Rows) error {
+	return rows.Scan(&j.ID, &j.Status, &j.Error, &j.Operation, &j.Time, &j.UseMBID, &j.SourcePath, &j.DestPath, &j.SearchResult)
+}
+
+func jobsMigrate(ctx context.Context, db *sql.DB) error {
+	_, err := db.ExecContext(ctx, `
+		create table if not exists jobs (
+			id            integer primary key autoincrement,
+			status        text not null default "",
+			error         text not null default "",
+			operation     text not null,
+			time          timestamp not null,
+			use_mbid      text not null default "",
+			source_path   text not null,
+			dest_path     text not null default "",
+			search_result jsonb
+		);
+
+		create index if not exists idx_jobs_status on jobs (status);
+		create index if not exists idx_jobs_source_path on jobs (source_path);
+	`)
+	return err
 }
 
 func jobNotificationMessage(publicURL string, job Job) string {
@@ -520,4 +572,23 @@ func ctxTick(ctx context.Context, interval time.Duration, f func()) {
 			f()
 		}
 	}
+}
+
+type SearchResult struct {
+	wrtag.SearchResult
+}
+
+func (sr *SearchResult) Scan(v any) error {
+	if v == nil {
+		return nil
+	}
+	b, ok := v.([]byte)
+	if !ok {
+		return errors.New("type assertion to []byte failed")
+	}
+	return json.Unmarshal(b, &sr.SearchResult)
+}
+
+func (sr SearchResult) Value() (driver.Value, error) {
+	return json.Marshal(sr.SearchResult)
 }
