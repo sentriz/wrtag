@@ -19,9 +19,9 @@ jobs:
           sudo apt update -qq
           sudo apt install -y -qq build-essential libtag1-dev
       - name: Lint
-        uses: golangci/golangci-lint-action@v4
+        uses: golangci/golangci-lint-action@v6
         with:
-          version: v1.56
+          version: v1.60
       - name: Test
         run: go test ./...
   release-please:
