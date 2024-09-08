@@ -18,7 +18,7 @@ require (
 	github.com/stretchr/testify v1.9.0
 	go.senan.xyz/flagconf v0.1.9
 	go.senan.xyz/natcmp v0.1.2
-	go.senan.xyz/sqlb v0.0.0-20240908164436-f808bf5681c1
+	go.senan.xyz/sqlb v0.0.0-20240908192426-3019c01d09ca
 	go.senan.xyz/table v0.0.0-20240227175247-cf2c834b4c23
 	golang.org/x/net v0.29.0
 	golang.org/x/sync v0.8.0

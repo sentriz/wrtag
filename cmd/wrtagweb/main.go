@@ -75,17 +75,19 @@ func main() {
 
 	dbURI, _ := url.Parse("file://?cache=shared&_fk=1")
 	dbURI.Opaque = *dbPath
-	db, err := sql.Open("sqlite3", dbURI.String())
+	dbc, err := sql.Open("sqlite3", dbURI.String())
 	if err != nil {
 		slog.Error("open db template", "err", err)
 		return
 	}
-	defer db.Close()
+	defer dbc.Close()
 
-	if err := jobsMigrate(context.Background(), db); err != nil {
+	if err := jobsMigrate(context.Background(), dbc); err != nil {
 		slog.Error("migrate db", "err", err)
 		return
 	}
+
+	db := sqlb.NewLogDB(dbc, slog.Default(), slog.LevelDebug)
 
 	sseServ := sse.New()
 	sseServ.AutoReplay = false
@@ -184,7 +186,7 @@ func main() {
 		var whereb sqlb.Query
 		whereb.Append("1")
 		if search != "" {
-			whereb.Append("and source_path like ?", search)
+			whereb.Append("and source_path like ?", "%"+search+"%")
 		}
 		if status != "" {
 			whereb.Append("and status=?", status)
@@ -301,18 +303,6 @@ func main() {
 		emit(eventAllJobs())
 	})
 
-	mux.HandleFunc("GET /dump", func(w http.ResponseWriter, r *http.Request) {
-		var jobs []*Job
-		if err := sqlb.Scan(r.Context(), db, &jobs, "select * from jobs"); err != nil {
-			respErrf(w, http.StatusInternalServerError, "error listing jobs: %v", err)
-			return
-		}
-		if err := json.NewEncoder(w).Encode(jobs); err != nil {
-			respErrf(w, http.StatusInternalServerError, "error encoding jobs")
-			return
-		}
-	})
-
 	mux.HandleFunc("/{$}", func(w http.ResponseWriter, r *http.Request) {
 		jl, err := listJobs(r.Context(), "", "", 0)
 		if err != nil {
@@ -352,6 +342,40 @@ func main() {
 			return
 		}
 		emit(eventAllJobs())
+	})
+
+	mux.HandleFunc("GET /db", func(w http.ResponseWriter, r *http.Request) {
+		var jobs []*Job
+		if err := sqlb.Scan(r.Context(), db, &jobs, "select * from jobs"); err != nil {
+			http.Error(w, "error scanning", http.StatusInternalServerError)
+			return
+		}
+		if err := json.NewEncoder(w).Encode(jobs); err != nil {
+			http.Error(w, "error encoding", http.StatusInternalServerError)
+			return
+		}
+	})
+
+	mux.HandleFunc("POST /db", func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		var jobs []*Job
+		if err := json.NewDecoder(r.Body).Decode(&jobs); err != nil {
+			http.Error(w, "error decoding", http.StatusInternalServerError)
+			return
+		}
+
+		var jobErrors []error
+		for _, job := range jobs {
+			if err := sqlb.Exec(r.Context(), db, "insert into jobs ?", sqlb.InsertSQL(job)); err != nil {
+				jobErrors = append(jobErrors, err)
+				continue
+			}
+		}
+
+		if err := errors.Join(jobErrors...); err != nil {
+			http.Error(w, fmt.Sprintf("error inserting: %v", jobErrors), http.StatusBadRequest)
+			return
+		}
 	})
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
