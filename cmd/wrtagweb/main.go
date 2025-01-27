@@ -529,13 +529,13 @@ func (j *Job) ScanFrom(rows *sql.Rows) error {
 var schema []byte
 
 func dbMigrate(ctx context.Context, db *sql.DB) error {
-	var currVer int
-	if err := sqlb.ScanRow(ctx, db, sqlb.Primative(&currVer), "pragma user_version"); err != nil {
+	var nextVer int
+	if err := sqlb.ScanRow(ctx, db, sqlb.Primative(&nextVer), "pragma user_version"); err != nil {
 		return fmt.Errorf("get schema version: %w", err)
 	}
 
 	migrations := txtar.Parse(schema)
-	for i := currVer; i < len(migrations.Files); i++ {
+	for i := nextVer; i < len(migrations.Files); i++ {
 		migration := migrations.Files[i]
 		slog.InfoContext(ctx, "running migration", "name", migration.Name, "query", string(migration.Data))
 
