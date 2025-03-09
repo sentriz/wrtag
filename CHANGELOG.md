@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.0](https://www.github.com/sentriz/wrtag/compare/v0.7.0...v0.8.0) (2025-03-09)
+
+
+### Features
+
+* **musicbrainz:** compilation if VA or compilation secondary types ([c38bc59](https://www.github.com/sentriz/wrtag/commit/c38bc5906b15ed191f99895c2a7d6e403b980e63))
+
 ## [0.7.0](https://www.github.com/sentriz/wrtag/compare/v0.6.1...v0.7.0) (2025-01-04)
 
 
