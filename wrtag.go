@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/KarpelesLab/reflink"
 	"github.com/araddon/dateparse"
 	"github.com/argusdusty/treelock"
 	"go.senan.xyz/natcmp"
@@ -514,28 +515,8 @@ func trimDestDir(dc DirContext, dest string, dryRun bool) error {
 }
 
 func copyFile(src, dest string) (err error) {
-	defer func() {
-		if err != nil {
-			if rerr := os.Remove(dest); rerr != nil {
-				err = errors.Join(err, rerr)
-			}
-		}
-	}()
-
-	srcf, err := os.Open(src)
-	if err != nil {
-		return fmt.Errorf("open src: %w", err)
-	}
-	defer srcf.Close()
-
-	destf, err := os.Create(dest)
-	if err != nil {
-		return fmt.Errorf("open dest: %w", err)
-	}
-	defer destf.Close()
-
-	if _, err := io.Copy(destf, srcf); err != nil {
-		return fmt.Errorf("do copy: %w", err)
+	if err := reflink.Auto(src, dest); err != nil {
+		return fmt.Errorf("reflink or copy: %w", err)
 	}
 	return nil
 }
