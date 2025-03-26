@@ -465,6 +465,18 @@ func (Copy) RemoveSrc(dc DirContext, limit string, src string) error {
 	return nil
 }
 
+// this will probably need to live with the cmd packages later to keep generic config out of this package
+func OperationByName(name string, dryRun bool) (FileSystemOperation, error) {
+	switch name {
+	case "copy":
+		return Copy{DryRun: dryRun}, nil
+	case "move":
+		return Move{DryRun: dryRun}, nil
+	default:
+		return nil, fmt.Errorf("unknown operation")
+	}
+}
+
 // trimDestDir deletes all items in a destination dir that don't look like they should be there
 func trimDestDir(dc DirContext, dest string, dryRun bool) error {
 	entries, err := os.ReadDir(dest)

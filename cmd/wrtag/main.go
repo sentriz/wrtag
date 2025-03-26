@@ -96,7 +96,13 @@ func main() {
 		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 		defer cancel()
 
-		if err := runOperation(ctx, cfg, researchLinkQuerier, parseOperation(command, *dryRun), dir, importCondition, *useMBID); err != nil {
+		op, err := wrtag.OperationByName(command, *dryRun)
+		if err != nil {
+			slog.Error("get operation by name", "err", err)
+			return
+		}
+
+		if err := runOperation(ctx, cfg, researchLinkQuerier, op, dir, importCondition, *useMBID); err != nil {
 			slog.Error("running", "command", command, "err", err)
 			return
 		}
@@ -285,16 +291,6 @@ func syncDir(ctx context.Context, cfg *wrtag.Config, ageYounger, ageOlder time.D
 		return nil, fmt.Errorf("chtimes %q: %v", srcDir, err)
 	}
 	return r, nil
-}
-
-func parseOperation(name string, dryRun bool) wrtag.FileSystemOperation {
-	switch name {
-	case "copy":
-		return wrtag.Copy{DryRun: dryRun}
-	case "move":
-		return wrtag.Move{DryRun: dryRun}
-	}
-	return nil
 }
 
 func ctxConsume[T any](ctx context.Context, work <-chan T, f func(T)) {
