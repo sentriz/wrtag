@@ -161,6 +161,8 @@ origin file info
           <label>copy</label>
           <input type="radio" name="operation" value="move" {{ if eq .Operation "move" }}checked{{ end }} />
           <label>move</label>
+          <input type="radio" name="operation" value="reflink" {{ if eq .Operation "reflink" }}checked{{ end }} />
+          <label>reflink</label>
         </fieldset>
       </div>
       {{ end }}

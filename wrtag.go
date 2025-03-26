@@ -17,6 +17,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/KarpelesLab/reflink"
 	"github.com/araddon/dateparse"
 	"github.com/argusdusty/treelock"
 	"go.senan.xyz/natcmp"
@@ -343,6 +344,7 @@ func DestDir(pathFormat *pathformat.Format, release *musicbrainz.Release) (strin
 
 var _ FileSystemOperation = (*Move)(nil)
 var _ FileSystemOperation = (*Copy)(nil)
+var _ FileSystemOperation = (*Reflink)(nil)
 
 type FileSystemOperation interface {
 	IsDryRun() bool
@@ -472,9 +474,47 @@ func OperationByName(name string, dryRun bool) (FileSystemOperation, error) {
 		return Copy{DryRun: dryRun}, nil
 	case "move":
 		return Move{DryRun: dryRun}, nil
+	case "reflink":
+		return Reflink{DryRun: dryRun}, nil
 	default:
 		return nil, fmt.Errorf("unknown operation")
 	}
+}
+
+type Reflink struct {
+	DryRun bool
+}
+
+func (c Reflink) IsDryRun() bool {
+	return c.DryRun
+}
+
+func (c Reflink) ProcessFile(dc DirContext, src, dest string) error {
+	dc.knownDestPaths[dest] = struct{}{}
+
+	if filepath.Clean(src) == filepath.Clean(dest) {
+		return ErrSelfCopy
+	}
+
+	if c.DryRun {
+		slog.Info("reflink", "from", src, "to", dest)
+		return nil
+	}
+
+	if err := os.MkdirAll(filepath.Dir(dest), os.ModePerm); err != nil {
+		return fmt.Errorf("create dest path: %w", err)
+	}
+
+	if err := reflink.Always(src, dest); err != nil {
+		return fmt.Errorf("reflink file: %w", err)
+	}
+
+	slog.Debug("reflinked path", "from", src, "to", dest)
+	return nil
+}
+
+func (Reflink) RemoveSrc(dc DirContext, limit string, src string) error {
+	return nil
 }
 
 // trimDestDir deletes all items in a destination dir that don't look like they should be there

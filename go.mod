@@ -3,6 +3,7 @@ module go.senan.xyz/wrtag
 go 1.23.0
 
 require (
+	github.com/KarpelesLab/reflink v1.0.2
 	github.com/andybalholm/cascadia v1.3.3
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/argusdusty/treelock v0.0.0-20180405040243-bde644eb4b53

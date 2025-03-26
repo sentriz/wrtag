@@ -32,7 +32,7 @@ func init() {
 	flag.Usage = func() {
 		fmt.Fprintf(flag.Output(), "Usage:\n")
 		fmt.Fprintf(flag.Output(), "  $ %s [<options>] move [<move options>] <path>\n", flag.Name())
-		fmt.Fprintf(flag.Output(), "  $ %s [<options>] copy [<copy options>] <path>\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s [<options>] copy|reflink [<copy options>] <path>\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ %s [<options>] sync [<sync options>] <path>...\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "\n")
 		fmt.Fprintf(flag.Output(), "Options:\n")
@@ -41,6 +41,7 @@ func init() {
 		fmt.Fprintf(flag.Output(), "See also:\n")
 		fmt.Fprintf(flag.Output(), "  $ %s move -h\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ %s copy -h\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s reflink -h\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ %s sync -h\n", flag.Name())
 	}
 }
@@ -66,7 +67,7 @@ func main() {
 	}
 
 	switch command, args := flag.Arg(0), flag.Args()[1:]; command {
-	case "move", "copy":
+	case "move", "copy", "reflink":
 		flag := flag.NewFlagSet(command, flag.ExitOnError)
 		var (
 			yes     = flag.Bool("yes", false, "Use the found release anyway despite a low score")
