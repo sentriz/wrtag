@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.0](https://www.github.com/sentriz/wrtag/compare/v0.9.0...v0.10.0) (2025-03-29)
+
+
+### Features
+
+* **wrtag:** add a `reflink` operation ([343f601](https://www.github.com/sentriz/wrtag/commit/343f6019f579b47be7575ff18bf120b3a0b1eb04)), closes [#87](https://www.github.com/sentriz/wrtag/issues/87)
+* **wrtag:** support atomic copies ([77767dc](https://www.github.com/sentriz/wrtag/commit/77767dc741d79302254af871895ba46b5f1a2d7a))
+
 ## [0.9.0](https://www.github.com/sentriz/wrtag/compare/v0.8.1...v0.9.0) (2025-03-23)
 
 
