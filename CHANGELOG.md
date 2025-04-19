@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.0](https://www.github.com/sentriz/wrtag/compare/v0.11.0...v0.12.0) (2025-04-17)
+
+
+### Features
+
+* **ci:** cache docker builds ([8f2a5c4](https://www.github.com/sentriz/wrtag/commit/8f2a5c4c1b326207aeb283402b138beaa658340a))
+
 ## [0.11.0](https://www.github.com/sentriz/wrtag/compare/v0.9.0...v0.11.0) (2025-04-17)
 
 
