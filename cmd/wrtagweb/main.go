@@ -234,7 +234,7 @@ func main() {
 		}
 
 		var total int
-		if err := sqlb.ScanRow(ctx, db, sqlb.Primative(&total), "select count(1) from jobs where ?", cond); err != nil {
+		if err := sqlb.ScanRow(ctx, db, sqlb.Values(&total), "select count(1) from jobs where ?", cond); err != nil {
 			return jobsListing{}, fmt.Errorf("count total: %w", err)
 		}
 
@@ -244,7 +244,7 @@ func main() {
 		}
 
 		var jobs []*Job
-		if err := sqlb.Scan(ctx, db, &jobs, "select * from jobs where ? order by time desc limit ? offset ?", cond, pageSize, pageSize*page); err != nil {
+		if err := sqlb.ScanPtr(ctx, db, &jobs, "select * from jobs where ? order by time desc limit ? offset ?", cond, pageSize, pageSize*page); err != nil {
 			return jobsListing{}, fmt.Errorf("list jobs: %w", err)
 		}
 
@@ -480,7 +480,7 @@ var schema []byte
 
 func dbMigrate(ctx context.Context, db *sql.DB) error {
 	var nextVer int
-	if err := sqlb.ScanRow(ctx, db, sqlb.Primative(&nextVer), "pragma user_version"); err != nil {
+	if err := sqlb.ScanRow(ctx, db, sqlb.Values(&nextVer), "pragma user_version"); err != nil {
 		return fmt.Errorf("get schema version: %w", err)
 	}
 
