@@ -4,6 +4,12 @@ package main
 
 import "database/sql"
 
+func _() {
+	// Validate the struct fields haven't changed. If this doesn't compile you probably need to `go generate` again.
+	var j Job
+	_ = Job{j.ID, j.Status, j.Error, j.Operation, j.Time, j.UseMBID, j.SourcePath, j.DestPath, j.SearchResult, j.ResearchLinks, j.Confirm}
+}
+
 func (Job) PrimaryKey() string {
 	return "id"
 }
