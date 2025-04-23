@@ -180,7 +180,7 @@ func runOperation(
 	for _, d := range r.Diff {
 		fmt.Fprintf(t, "%s\t%s\t%s\n", d.Field, fmtDiff(d.Before), fmtDiff(d.After))
 	}
-	for _, row := range strings.Split(strings.TrimRight(t.String(), "\n"), "\n") {
+	for row := range strings.SplitSeq(strings.TrimRight(t.String(), "\n"), "\n") {
 		fmt.Fprintf(os.Stderr, "\t%s\n", row)
 	}
 

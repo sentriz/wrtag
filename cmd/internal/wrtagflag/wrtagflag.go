@@ -163,7 +163,7 @@ func (n *notificationsParser) Set(value string) error {
 		return fmt.Errorf("invalid notification uri format. expected eg \"ev1,ev2 uri\"")
 	}
 	var lineErrs []error
-	for _, ev := range strings.Split(eventsRaw, ",") {
+	for ev := range strings.SplitSeq(eventsRaw, ",") {
 		ev, uri = strings.TrimSpace(ev), strings.TrimSpace(uri)
 		err := n.AddURI(ev, uri)
 		lineErrs = append(lineErrs, err)
