@@ -67,7 +67,7 @@ To describe the general workflow:
 
 <img align="right" width="300" src=".github/screenshot-wrtag-copy.png">
 
-The `wrtag` tool is the main command line tool for music organisation. It has two subcommands for working on individual folders (`copy`, `move`), and one for bulk processing (`sync`).
+The `wrtag` tool is the main command line tool for music organisation. It has subcommands for working on individual folders (e.g. `copy`, `move`), and one for bulk processing (`sync`).
 
 ### Importing new music
 
@@ -305,7 +305,7 @@ services:
       - WRTAG_WEB_PUBLIC_URL=https://wrtag.example.com
       - WRTAG_WEB_DB_PATH=/data/wrtag.db
       - WRTAG_LOG_LEVEL=debug
-      # add more config options, like mentioned in the docs above
+      # add more config options, like mentioned in "Global configuration" docs
       # - WRTAG_PATH_FORMAT=...
       # - WRTAG_ADDON=...,...
       # - WRTAG_RESEARCH_LINK=...,...
