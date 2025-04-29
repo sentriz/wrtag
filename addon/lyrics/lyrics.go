@@ -31,7 +31,7 @@ func NewLyricsAddon(conf string) (LyricsAddon, error) {
 		sources = append(sources, source)
 	}
 	if len(sources) == 0 {
-		return LyricsAddon{}, fmt.Errorf("no lyrics sources provided")
+		return LyricsAddon{}, errors.New("no lyrics sources provided")
 	}
 
 	return LyricsAddon{sources}, nil

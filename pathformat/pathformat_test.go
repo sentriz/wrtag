@@ -15,25 +15,25 @@ func TestValidation(t *testing.T) {
 
 	var pf pathformat.Format
 	_, err := pf.Execute(nil, 0, "")
-	assert.Error(t, err) // we didn't initalise with Parse() yet
+	require.Error(t, err) // we didn't initialise with Parse() yet
 
 	// bad/ambiguous format
-	assert.ErrorIs(t, pf.Parse(""), pathformat.ErrInvalidFormat)
-	assert.ErrorIs(t, pf.Parse(" "), pathformat.ErrInvalidFormat)
-	assert.ErrorIs(t, pf.Parse("🤤"), pathformat.ErrInvalidFormat)
+	require.ErrorIs(t, pf.Parse(""), pathformat.ErrInvalidFormat)
+	require.ErrorIs(t, pf.Parse(" "), pathformat.ErrInvalidFormat)
+	require.ErrorIs(t, pf.Parse("🤤"), pathformat.ErrInvalidFormat)
 
-	assert.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}`), pathformat.ErrAmbiguousFormat)
-	assert.ErrorIs(t, pf.Parse(`/albums/test/{{ .Track.Title }}`), pathformat.ErrAmbiguousFormat)
-	assert.ErrorIs(t, pf.Parse(`/albums/test/{{ .TrackNum }}`), pathformat.ErrAmbiguousFormat)
+	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}`), pathformat.ErrAmbiguousFormat)
+	require.ErrorIs(t, pf.Parse(`/albums/test/{{ .Track.Title }}`), pathformat.ErrAmbiguousFormat)
+	require.ErrorIs(t, pf.Parse(`/albums/test/{{ .TrackNum }}`), pathformat.ErrAmbiguousFormat)
 
 	// bad data
-	assert.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.ID }}/`), pathformat.ErrBadData)                   // test case is missing ID
-	assert.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}//`), pathformat.ErrBadData)                                    // double slash anyway
-	assert.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}/{{ .Track.ID }}`), pathformat.ErrBadData) // implicit trailing slash from missing ID
-	assert.ErrorIs(t, pf.Parse(`/albums/test/{{ .Track.ID }}/`), pathformat.ErrBadData)                                                               //
+	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.ID }}/`), pathformat.ErrBadData)                   // test case is missing ID
+	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}//`), pathformat.ErrBadData)                                    // double slash anyway
+	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}/{{ .Track.ID }}`), pathformat.ErrBadData) // implicit trailing slash from missing ID
+	require.ErrorIs(t, pf.Parse(`/albums/test/{{ .Track.ID }}/`), pathformat.ErrBadData)                                                               //
 
 	// good
-	assert.NoError(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}/{{ .TrackNum }}`))
+	require.NoError(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}/{{ .TrackNum }}`))
 	assert.Equal(t, "/albums/test", pf.Root())
 }
 

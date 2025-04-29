@@ -186,9 +186,9 @@ func main() {
 
 		switch job.Status {
 		case StatusComplete:
-			go notifications.Send(context.Background(), notifComplete, jobNotificationMessage(*publicURL, job))
+			go notifications.Send(context.WithoutCancel(ctx), notifComplete, jobNotificationMessage(*publicURL, job))
 		case StatusNeedsInput:
-			go notifications.Send(context.Background(), notifNeedsInput, jobNotificationMessage(*publicURL, job))
+			go notifications.Send(context.WithoutCancel(ctx), notifNeedsInput, jobNotificationMessage(*publicURL, job))
 		}
 
 		return nil
@@ -198,7 +198,7 @@ func main() {
 		New: func() any { return new(bytes.Buffer) },
 	}
 	respTmpl := func(w http.ResponseWriter, name string, data any) {
-		buff := buffPool.Get().(*bytes.Buffer)
+		buff, _ := buffPool.Get().(*bytes.Buffer)
 		defer buffPool.Put(buff)
 		buff.Reset()
 
@@ -406,11 +406,11 @@ func main() {
 		h = authMiddleware(h, *apiKey)
 		h = logMiddleware(h)
 
-		server := &http.Server{Addr: *listenAddr, Handler: h}
+		server := &http.Server{Addr: *listenAddr, Handler: h, ReadHeaderTimeout: 2 * time.Second}
 
 		errgrp.Go(func() error {
 			<-ctx.Done()
-			_ = server.Shutdown(context.Background())
+			_ = server.Shutdown(context.Background()) //nolint:contextcheck
 			return nil
 		})
 		errgrp.Go(func() error {
@@ -512,7 +512,7 @@ func jobNotificationMessage(publicURL string, job Job) string {
 	}
 
 	url, _ := url.Parse(publicURL)
-	url.Fragment = fmt.Sprint(job.ID)
+	url.Fragment = strconv.FormatUint(job.ID, 10)
 
 	return fmt.Sprintf(`%s %s (%s) %s`,
 		job.Operation, status, job.SourcePath, url)
@@ -530,7 +530,7 @@ var uiTmpl = htmltemplate.Must(
 var funcMap = htmltemplate.FuncMap{
 	"now":  func() int64 { return time.Now().UnixMilli() },
 	"file": func(p string) string { ur, _ := url.Parse("file://"); ur.Path = p; return ur.String() },
-	"url":  func(u string) htmltemplate.URL { return htmltemplate.URL(u) },
+	"url":  func(u string) htmltemplate.URL { return htmltemplate.URL(u) }, //nolint:gosec
 	"join": func(delim string, items []string) string { return strings.Join(items, delim) },
 	"pad0": func(amount, n int) string { return fmt.Sprintf("%0*d", amount, n) },
 	"divc": func(a, b int) int { return int(math.Ceil(float64(a) / float64(b))) },
@@ -554,7 +554,7 @@ const cookieKey = "api-key"
 
 func authMiddleware(next http.Handler, apiKey string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// exchange a valid basic basic auth request for a cookie that lasts 30 days
+		// exchange a valid basic auth request for a cookie that lasts 30 days
 		if cookie, _ := r.Cookie(cookieKey); cookie != nil && subtle.ConstantTimeCompare([]byte(cookie.Value), []byte(apiKey)) == 1 {
 			next.ServeHTTP(w, r)
 			return

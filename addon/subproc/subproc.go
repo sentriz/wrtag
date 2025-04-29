@@ -2,6 +2,7 @@ package subproc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -26,7 +27,7 @@ func NewSubprocAddon(conf string) (SubprocAddon, error) {
 		return SubprocAddon{}, err
 	}
 	if len(parts) == 0 {
-		return SubprocAddon{}, fmt.Errorf("no command provided")
+		return SubprocAddon{}, errors.New("no command provided")
 	}
 	a.command = parts[0]
 	a.args = parts[1:]
@@ -48,7 +49,7 @@ func (s SubprocAddon) ProcessRelease(ctx context.Context, paths []string) error 
 		}
 	}
 
-	cmd := exec.CommandContext(ctx, s.command, args...)
+	cmd := exec.CommandContext(ctx, s.command, args...) //nolint:gosec // command name is from user config
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("run cmd: %w", err)
 	}

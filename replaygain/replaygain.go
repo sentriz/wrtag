@@ -11,7 +11,7 @@ import (
 	"strconv"
 )
 
-var ErrNoRsgain = fmt.Errorf("rsgain not found in PATH")
+var ErrNoRsgain = errors.New("rsgain not found in PATH")
 
 const RsgainCommand = "rsgain"
 
@@ -37,7 +37,7 @@ func Calculate(ctx context.Context, truePeak bool, trackPaths []string) (album L
 	args = append(args, "--album")
 	args = append(args, trackPaths...)
 
-	cmd := exec.CommandContext(ctx, RsgainCommand, args...)
+	cmd := exec.CommandContext(ctx, RsgainCommand, args...) //nolint:gosec // args are only args and paths
 
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr

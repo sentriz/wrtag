@@ -200,7 +200,7 @@ func parsePattern(pat string) []string {
 	return paths
 }
 
-// copied from cmd/metadata
+// copied from cmd/metadata.
 func parseTagMap(args []string) map[string][]string {
 	r := make(map[string][]string)
 	var k string

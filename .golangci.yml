@@ -1,23 +1,103 @@
 version: "2"
 linters:
-  disable:
-    - errcheck
-  exclusions:
-    rules:
-      - text: struct literal uses unkeyed fields
-        linters: ["wsl"]
-      - text: Error return value of `.*flag.*Parse.*` is not checked
-        linters: ["wsl"]
+  default: none
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - canonicalheader
+    - containedctx
+    - contextcheck
+    - copyloopvar
+    - decorder
+    - dogsled
+    - dupl
+    - dupword
+    - durationcheck
+    - errchkjson
+    - errname
+    - errorlint
+    - exptostd
+    - fatcontext
+    - forcetypeassert
+    - funcorder
+    - ginkgolinter
+    - gocheckcompilerdirectives
+    - gochecksumtype
+    - goconst
+    - gocritic
+    - godot
+    - godox
+    - goheader
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - govet
+    - grouper
+    - iface
+    - importas
+    - ineffassign
+    - interfacebloat
+    - intrange
+    - loggercheck
+    - makezero
+    - mirror
+    - misspell
+    - musttag
+    - nakedret
+    - nilerr
+    - nilnesserr
+    - noctx
+    - nolintlint
+    - nosprintfhostport
+    - paralleltest
+    - perfsprint
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - staticcheck
+    - tagalign
+    - testableexamples
+    - testifylint
+    - thelper
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - usetesting
+    - wastedassign
+    - whitespace
+    - zerologlint
   settings:
     staticcheck:
       checks:
         - all
         - "-QF1008"
         - "-ST1000"
-formatters:
+    sloglint:
+      kv-only: true
+      context: scope
+      static-msg: true
+      key-naming-case: snake
+      msg-style: lowercased
+    gocritic:
+      disabled-checks:
+        - unlambda
+        - appendAssign
+    gosec:
+      excludes:
+        - G104 # errors unhandled
+        - G104 # nt
   exclusions:
-    generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
+    rules:
+      - path: '(.+)_test\.go'
+        linters:
+          - gosec

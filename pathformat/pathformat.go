@@ -57,7 +57,7 @@ func (pf *Format) Root() string {
 
 func (pf *Format) Execute(release *musicbrainz.Release, index int, ext string) (string, error) {
 	if len(pf.tt.Templates()) == 0 {
-		return "", fmt.Errorf("not initialised yet")
+		return "", errors.New("not initialised yet")
 	}
 
 	flatTracks := musicbrainz.FlatTracks(release.Media)
@@ -113,7 +113,7 @@ type Data struct {
 }
 
 func validate(f Format) error {
-	release := func(artist, name string, tracks ...string) *musicbrainz.Release {
+	release := func(artist, name string, tracks ...string) *musicbrainz.Release { //nolint:unparam
 		var release musicbrainz.Release
 		release.Title = name
 		release.Artists = append(release.Artists, musicbrainz.ArtistCredit{Name: artist, Artist: musicbrainz.Artist{Name: artist}})

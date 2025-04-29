@@ -109,7 +109,7 @@ func OperationByName(name string, dryRun bool) (wrtag.FileSystemOperation, error
 	case "reflink":
 		return wrtag.NewReflink(dryRun), nil
 	default:
-		return nil, fmt.Errorf("unknown operation")
+		return nil, errors.New("unknown operation")
 	}
 }
 
@@ -133,7 +133,7 @@ func (pf pathFormatParser) String() string {
 	if pf.Format == nil || pf.Root() == "" {
 		return ""
 	}
-	return fmt.Sprintf("%s/...", pf.Root())
+	return pf.Root() + "/..."
 }
 
 type researchLinkParser struct{ *researchlink.Builder }
@@ -160,7 +160,7 @@ type notificationsParser struct{ *notifications.Notifications }
 func (n *notificationsParser) Set(value string) error {
 	eventsRaw, uri, ok := strings.Cut(value, " ")
 	if !ok {
-		return fmt.Errorf("invalid notification uri format. expected eg \"ev1,ev2 uri\"")
+		return errors.New("invalid notification uri format. expected eg \"ev1,ev2 uri\"")
 	}
 	var lineErrs []error
 	for ev := range strings.SplitSeq(eventsRaw, ",") {
@@ -188,7 +188,7 @@ func (tw tagWeightsParser) Set(value string) error {
 	const sep = " "
 	i := strings.LastIndex(value, sep)
 	if i < 0 {
-		return fmt.Errorf("invalid tag weight format. expected eg \"tag name 0.5\"")
+		return errors.New("invalid tag weight format. expected eg \"tag name 0.5\"")
 	}
 	tag := strings.TrimSpace(value[:i])
 	weightStr := strings.TrimSpace(value[i+len(sep):])

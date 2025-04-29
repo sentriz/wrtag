@@ -41,7 +41,7 @@ func (n *Notifications) Sendf(ctx context.Context, event string, f string, a ...
 	n.Send(ctx, event, fmt.Sprintf(f, a...))
 }
 
-// Send a simple string for now, maybe later message could instead be be a type which
+// Send a simple string for now, maybe later message could instead be a type which
 // implements a notifications.Bodyer or something so that notifiers can send rich notifications.
 func (n *Notifications) Send(ctx context.Context, event string, message string) {
 	uris := n.mappings[event]

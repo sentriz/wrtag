@@ -26,7 +26,7 @@ func NewSource(name string, rateLimit time.Duration) (Source, error) {
 	case "musixmatch":
 		return &Musixmatch{RateLimit: 500 * time.Millisecond}, nil
 	default:
-		return nil, fmt.Errorf("unknown source")
+		return nil, errors.New("unknown source")
 	}
 }
 

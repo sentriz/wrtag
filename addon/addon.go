@@ -2,6 +2,7 @@ package addon
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sync"
 )
@@ -15,7 +16,7 @@ type Addon interface {
 var registry = map[string]func(conf string) (Addon, error){}
 var registryMu sync.Mutex
 
-// Register adds an addon to the global addon registry
+// Register adds an addon to the global addon registry.
 func Register[A Addon](name string, addn func(conf string) (A, error)) {
 	registryMu.Lock()
 	defer registryMu.Unlock()
@@ -36,7 +37,7 @@ func New(name string, conf string) (Addon, error) {
 	registryMu.Unlock()
 
 	if !ok {
-		return nil, fmt.Errorf("addon not found")
+		return nil, errors.New("addon not found")
 	}
 
 	addn, err := newAddon(conf)

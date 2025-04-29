@@ -30,7 +30,7 @@ func Find(dir string) (*OriginFile, error) {
 }
 
 func Parse(path string) (*OriginFile, error) {
-	f, err := os.Open(path)
+	f, err := os.Open(path) //nolint:gosec // path is only from user's config
 	if err != nil {
 		return nil, fmt.Errorf("open file: %w", err)
 	}

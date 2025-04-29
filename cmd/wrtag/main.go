@@ -90,7 +90,6 @@ func main() {
 		if err != nil {
 			slog.Error("making path abs", "err", err)
 			return
-
 		}
 
 		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
@@ -173,7 +172,7 @@ func runOperation(
 
 	slog.InfoContext(ctx, "matched",
 		"score", fmt.Sprintf("%.2f%%", r.Score),
-		"url", fmt.Sprintf("https://musicbrainz.org/release/%s", r.Release.ID),
+		"url", "https://musicbrainz.org/release/"+r.Release.ID,
 	)
 
 	t := table.NewStringWriter()
@@ -208,7 +207,7 @@ const (
 	notifSyncError    = "sync-error"
 )
 
-func runSync(ctx context.Context, cfg *wrtag.Config, stats *syncStats, dirs []string, ageYounger, ageOlder time.Duration, dryRun bool, numWorkers int) error {
+func runSync(ctx context.Context, cfg *wrtag.Config, stats *syncStats, dirs []string, ageYounger, ageOlder time.Duration, dryRun bool, numWorkers int) error { //nolint:unparam
 	leaves := make(chan string)
 	go func() {
 		for _, d := range dirs {
@@ -288,7 +287,7 @@ func syncDir(ctx context.Context, cfg *wrtag.Config, ageYounger, ageOlder time.D
 	}
 
 	if err := os.Chtimes(srcDir, time.Time{}, time.Now()); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return nil, fmt.Errorf("chtimes %q: %v", srcDir, err)
+		return nil, fmt.Errorf("chtimes %q: %w", srcDir, err)
 	}
 	return r, nil
 }

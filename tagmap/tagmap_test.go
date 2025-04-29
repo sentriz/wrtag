@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestDiffer(t *testing.T) {
@@ -14,7 +15,7 @@ func TestDiffer(t *testing.T) {
 
 	diff("x", "aaaaa", "aaaaa")
 	diff("x", "aaaaa", "aaaaX")
-	assert.Equal(t, 90.0, score) // 9 of 10 chars the same
+	assert.InEpsilon(t, 90.0, score, 0) // 9 of 10 chars the same
 }
 
 func TestDiffWeightsLowerBound(t *testing.T) {
@@ -39,7 +40,7 @@ func TestDiffWeightsLowerBound(t *testing.T) {
 	diff("track 5", "Digital Tenderness", "Digital Tenderness")
 
 	// but that's fine since we gave those 0 weight
-	assert.Equal(t, 100.0, score)
+	assert.InEpsilon(t, 100.0, score, 0)
 }
 
 func TestDiffWeightsUpperBound(t *testing.T) {
@@ -76,7 +77,7 @@ func TestDiffNorm(t *testing.T) {
 	diff("label", "Columbia", "COLUMBIA")
 	diff("catalogue num", "CLO LP 3", "CLOLP3")
 
-	assert.Equal(t, 100.0, score) // we don't care about case or spaces
+	require.InEpsilon(t, 100.0, score, 0) // we don't care about case or spaces
 }
 
 func TestDiffIgnoreMissing(t *testing.T) {
@@ -88,14 +89,14 @@ func TestDiffIgnoreMissing(t *testing.T) {
 	diff("label", "", "COLUMBIA")
 	diff("catalogue num", "CLO LP 3", "CLOLP3")
 
-	assert.Equal(t, 100.0, score)
+	assert.InEpsilon(t, 100.0, score, 0)
 }
 
 func TestNorm(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t, "", norm(""))
-	assert.Equal(t, "", norm(" "))
+	assert.Empty(t, norm(""))
+	assert.Empty(t, norm(" "))
 	assert.Equal(t, "123", norm(" 1!2!3 "))
 	assert.Equal(t, "séan", norm("SÉan"))
 	assert.Equal(t, "hello世界", norm("~~ 【 Hello, 世界。 】~~ 😉"))

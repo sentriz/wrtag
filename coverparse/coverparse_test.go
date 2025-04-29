@@ -9,6 +9,8 @@ import (
 )
 
 func TestSelection(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name     string
 		covers   []string
@@ -78,11 +80,13 @@ func TestSelection(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
 			var s string
 			for _, c := range test.covers {
 				coverparse.BestBetween(&s, c)
 			}
-			if string(s) != test.expected {
+			if s != test.expected {
 				t.Errorf("with covers %v expected %q got %q", test.covers, test.expected, s)
 			}
 		})
@@ -92,6 +96,8 @@ func TestSelection(t *testing.T) {
 // thanks to @heimoshuiyu for orignal test cases
 // https://github.com/sentriz/gonic/pull/516
 func TestCoverSorting(t *testing.T) {
+	t.Parallel()
+
 	cases := []struct {
 		name     string
 		expected []string
@@ -169,6 +175,8 @@ func TestCoverSorting(t *testing.T) {
 	r := rand.New(rand.NewPCG(1, 2))
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			inp := slices.Clone(tc.expected)
 			r.Shuffle(len(inp), func(i, j int) {
 				inp[i], inp[j] = inp[j], inp[i]

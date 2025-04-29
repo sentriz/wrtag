@@ -44,7 +44,7 @@ func TestWalkLeaves(t *testing.T) {
 		"testdata/leaves/a/d/b/c/leaf-c",
 	}
 
-	require.Equal(t, len(exp), len(act))
+	require.Len(t, act, len(exp))
 
 	sort.Strings(act)
 	sort.Strings(exp)

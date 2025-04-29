@@ -99,13 +99,13 @@ type SearchResult struct {
 type ImportCondition uint8
 
 const (
-	// HighScore requires the match to have a high confidence score
+	// HighScore requires the match to have a high confidence score.
 	HighScore ImportCondition = iota
 
-	// HighScoreOrMBID accepts either a high score or a matching MusicBrainz ID
+	// HighScoreOrMBID accepts either a high score or a matching MusicBrainz ID.
 	HighScoreOrMBID
 
-	// Confirm always imports regardless of score
+	// Confirm always imports regardless of score.
 	Confirm
 )
 
@@ -145,7 +145,7 @@ func ProcessDir(
 	op FileSystemOperation, srcDir string, cond ImportCondition, useMBID string,
 ) (*SearchResult, error) {
 	if cfg.PathFormat.Root() == "" {
-		return nil, fmt.Errorf("no path format provided")
+		return nil, errors.New("no path format provided")
 	}
 
 	if !filepath.IsAbs(srcDir) {
@@ -249,7 +249,7 @@ func ProcessDir(
 	dc := NewDirContext()
 
 	// move/copy and tag
-	for i := range len(pathTags) {
+	for i := range pathTags {
 		pt, rt, destPath := pathTags[i], releaseTracks[i], destPaths[i]
 
 		if err := op.ProcessPath(dc, pt.Path, destPath); err != nil {
@@ -396,7 +396,7 @@ func ReadReleaseDir(dirPath string) (string, []PathTags, error) {
 		)
 	})
 
-	return string(cover), pathTags, nil
+	return cover, pathTags, nil
 }
 
 // DestDir generates the destination directory path for a release based on the given path format.
@@ -472,7 +472,7 @@ func (m Move) ProcessPath(dc DirContext, src, dest string) error {
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Dir(dest), os.ModePerm); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dest), 0o750); err != nil {
 		return fmt.Errorf("create dest path: %w", err)
 	}
 
@@ -555,7 +555,7 @@ func (c Copy) ProcessPath(dc DirContext, src, dest string) error {
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Dir(dest), os.ModePerm); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dest), 0o750); err != nil {
 		return fmt.Errorf("create dest path: %w", err)
 	}
 
@@ -603,7 +603,7 @@ func (c Reflink) ProcessPath(dc DirContext, src, dest string) error {
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Dir(dest), os.ModePerm); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dest), 0o750); err != nil {
 		return fmt.Errorf("create dest path: %w", err)
 	}
 
@@ -621,7 +621,7 @@ func (Reflink) PostSource(dc DirContext, limit string, src string) error {
 	return nil
 }
 
-// trimDestDir deletes all items in a destination dir that don't look like they should be there
+// trimDestDir deletes all items in a destination dir that don't look like they should be there.
 func trimDestDir(dc DirContext, dest string, canModifyDest bool) error {
 	entries, err := os.ReadDir(dest)
 	if !canModifyDest && errors.Is(err, os.ErrNotExist) {
@@ -644,7 +644,7 @@ func trimDestDir(dc DirContext, dest string, canModifyDest bool) error {
 		if err != nil {
 			return fmt.Errorf("get info: %w", err)
 		}
-		size += uint64(info.Size())
+		size += uint64(info.Size()) //nolint:gosec
 		toDelete = append(toDelete, path)
 	}
 	if size > thresholdSizeTrim {
@@ -670,7 +670,7 @@ func trimDestDir(dc DirContext, dest string, canModifyDest bool) error {
 }
 
 func copyFile(src, dest string) (err error) {
-	srcf, err := os.Open(src)
+	srcf, err := os.Open(src) //nolint:gosec
 	if err != nil {
 		return fmt.Errorf("open src: %w", err)
 	}
@@ -808,7 +808,7 @@ func dirSize(path string) (uint64, error) {
 			return fmt.Errorf("get info %w", err)
 		}
 		if !info.IsDir() {
-			size += uint64(info.Size())
+			size += uint64(info.Size()) //nolint:gosec
 		}
 		return err
 	})
@@ -865,7 +865,7 @@ func logTagChanges(ctx context.Context, fileKey string, lvl slog.Level, before, 
 	}
 }
 
-func extendQueryWithOriginFile(q *musicbrainz.ReleaseQuery, originFile *originfile.OriginFile) error {
+func extendQueryWithOriginFile(q *musicbrainz.ReleaseQuery, originFile *originfile.OriginFile) error { //nolint:unparam
 	if originFile == nil {
 		return nil
 	}

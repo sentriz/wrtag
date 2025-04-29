@@ -4,6 +4,7 @@ import (
 	"cmp"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -17,7 +18,7 @@ import (
 	"go.senan.xyz/wrtag/clientutil"
 )
 
-var ErrNoResults = fmt.Errorf("no results")
+var ErrNoResults = errors.New("no results")
 
 type MBClient struct {
 	BaseURL   string
@@ -25,28 +26,6 @@ type MBClient struct {
 
 	initOnce   sync.Once
 	HTTPClient *http.Client
-}
-
-func (c *MBClient) request(ctx context.Context, r *http.Request, dest any) error {
-	c.initOnce.Do(func() {
-		c.HTTPClient = clientutil.Wrap(c.HTTPClient, clientutil.Chain(
-			clientutil.WithRateLimit(c.RateLimit),
-		))
-	})
-
-	r = r.WithContext(ctx)
-	resp, err := c.HTTPClient.Do(r)
-	if err != nil {
-		return fmt.Errorf("search: %w", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode/100 != 2 {
-		return fmt.Errorf("musicbrainz returned non 2xx: %w", StatusError(resp.StatusCode))
-	}
-	if err := json.NewDecoder(resp.Body).Decode(dest); err != nil {
-		return fmt.Errorf("decode response: %w", err)
-	}
-	return nil
 }
 
 func (c *MBClient) GetRelease(ctx context.Context, mbid string) (*Release, error) {
@@ -159,6 +138,28 @@ func (c *MBClient) SearchRelease(ctx context.Context, q ReleaseQuery) (*Release,
 	}
 
 	return release, nil
+}
+
+func (c *MBClient) request(ctx context.Context, r *http.Request, dest any) error {
+	c.initOnce.Do(func() {
+		c.HTTPClient = clientutil.Wrap(c.HTTPClient, clientutil.Chain(
+			clientutil.WithRateLimit(c.RateLimit),
+		))
+	})
+
+	r = r.WithContext(ctx)
+	resp, err := c.HTTPClient.Do(r)
+	if err != nil {
+		return fmt.Errorf("search: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode/100 != 2 {
+		return fmt.Errorf("musicbrainz returned non 2xx: %w", StatusError(resp.StatusCode))
+	}
+	if err := json.NewDecoder(resp.Body).Decode(dest); err != nil {
+		return fmt.Errorf("decode response: %w", err)
+	}
+	return nil
 }
 
 type ArtistCredit struct {

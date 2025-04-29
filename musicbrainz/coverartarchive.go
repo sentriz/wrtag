@@ -20,30 +20,6 @@ type CAAClient struct {
 	HTTPClient *http.Client
 }
 
-func (c *CAAClient) request(ctx context.Context, r *http.Request, dest any) error {
-	c.initOnce.Do(func() {
-		c.HTTPClient = clientutil.Wrap(c.HTTPClient, clientutil.Chain(
-			clientutil.WithCache(),
-			clientutil.WithRateLimit(c.RateLimit),
-		))
-	})
-
-	r = r.WithContext(ctx)
-	resp, err := c.HTTPClient.Do(r)
-	if err != nil {
-		return fmt.Errorf("make caa request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode/100 != 2 {
-		return fmt.Errorf("caa returned non 2xx: %w", StatusError(resp.StatusCode))
-	}
-	if err := json.NewDecoder(resp.Body).Decode(dest); err != nil {
-		return fmt.Errorf("decode caa response: %w", err)
-	}
-	return nil
-}
-
 func (c *CAAClient) GetCoverURL(ctx context.Context, release *Release) (string, error) {
 	var candidateURLs []string
 	if release.CoverArtArchive.Front {
@@ -95,4 +71,28 @@ type caaResponse struct {
 			Small   string `json:"small"`
 		} `json:"thumbnails"`
 	} `json:"images"`
+}
+
+func (c *CAAClient) request(ctx context.Context, r *http.Request, dest any) error {
+	c.initOnce.Do(func() {
+		c.HTTPClient = clientutil.Wrap(c.HTTPClient, clientutil.Chain(
+			clientutil.WithCache(),
+			clientutil.WithRateLimit(c.RateLimit),
+		))
+	})
+
+	r = r.WithContext(ctx)
+	resp, err := c.HTTPClient.Do(r)
+	if err != nil {
+		return fmt.Errorf("make caa request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode/100 != 2 {
+		return fmt.Errorf("caa returned non 2xx: %w", StatusError(resp.StatusCode))
+	}
+	if err := json.NewDecoder(resp.Body).Decode(dest); err != nil {
+		return fmt.Errorf("decode caa response: %w", err)
+	}
+	return nil
 }

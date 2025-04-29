@@ -15,6 +15,7 @@ import (
 // https://picard-docs.musicbrainz.org/downloads/MusicBrainz_Picard_Tag_Map.html
 
 //go:generate go run gen_taglist.go -- $GOFILE taglist.gen.go
+//nolint:gosec
 const (
 	Album              = "ALBUM"
 	AlbumArtist        = "ALBUMARTIST"         //tag: alts "ALBUM_ARTIST"

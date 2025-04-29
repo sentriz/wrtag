@@ -6,6 +6,7 @@ import (
 	"io"
 	"maps"
 	"os"
+	"path/filepath"
 	"strconv"
 	"testing"
 
@@ -64,8 +65,12 @@ func TestDoubleSave(t *testing.T) {
 }
 
 func TestExtendedTags(t *testing.T) {
+	t.Parallel()
+
 	for _, tf := range testFiles {
 		t.Run(tf.name, func(t *testing.T) {
+			t.Parallel()
+
 			p := newFile(t, tf.data, tf.ext)
 			withf(t, p, func(f *Tags) {
 				f.Set(Artist, "1. steely dan")            // standard
@@ -103,11 +108,9 @@ var (
 func newFile(t *testing.T, data []byte, ext string) string {
 	t.Helper()
 
-	f, err := os.CreateTemp("", "*"+ext)
+	path := filepath.Join(t.TempDir(), "f"+ext)
+	f, err := os.Create(path)
 	require.NoError(t, err)
-	t.Cleanup(func() {
-		os.Remove(f.Name())
-	})
 
 	_, err = io.Copy(f, bytes.NewReader(data))
 	require.NoError(t, err)

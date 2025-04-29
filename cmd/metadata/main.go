@@ -69,21 +69,21 @@ func main() {
 
 		args, paths := splitArgPaths(flag.Args())
 		keys := parseTagKeys(args)
-		if err := iterFiles(paths, func(p string) error { return read(p, *withProperties, keys) }); err != nil {
+		if err := iterFiles(paths, func(p string) error { return cmdRead(p, *withProperties, keys) }); err != nil {
 			slog.Error("process read", "err", err)
 			return
 		}
 	case "write":
 		args, paths := splitArgPaths(args)
 		keyValues := parseTagKeyValues(args)
-		if err := iterFiles(paths, func(p string) error { return write(p, keyValues) }); err != nil {
+		if err := iterFiles(paths, func(p string) error { return cmdWrite(p, keyValues) }); err != nil {
 			slog.Error("process write", "err", err)
 			return
 		}
 	case "clear":
 		args, paths := splitArgPaths(args)
 		keys := parseTagKeys(args)
-		if err := iterFiles(paths, func(p string) error { return clear(p, keys) }); err != nil {
+		if err := iterFiles(paths, func(p string) error { return cmdClear(p, keys) }); err != nil {
 			slog.Error("process clear", "err", err)
 			return
 		}
@@ -93,7 +93,7 @@ func main() {
 	}
 }
 
-func read(path string, withProperties bool, keys map[string]struct{}) error {
+func cmdRead(path string, withProperties bool, keys map[string]struct{}) error {
 	t, err := tags.ReadTags(path)
 	if err != nil {
 		return fmt.Errorf("read: %w", err)
@@ -146,7 +146,7 @@ func read(path string, withProperties bool, keys map[string]struct{}) error {
 	return nil
 }
 
-func write(path string, keyValues map[string][]string) error {
+func cmdWrite(path string, keyValues map[string][]string) error {
 	var t tags.Tags
 	for k, vs := range keyValues {
 		t.Set(k, vs...)
@@ -157,7 +157,7 @@ func write(path string, keyValues map[string][]string) error {
 	return nil
 }
 
-func clear(path string, keys map[string]struct{}) error {
+func cmdClear(path string, keys map[string]struct{}) error {
 	if len(keys) == 0 {
 		if err := tags.ReplaceTags(path, tags.Tags{}); err != nil {
 			return err
@@ -216,7 +216,7 @@ func parseTagKeyValues(args []string) map[string][]string {
 
 func iterFiles(paths []string, f func(p string) error) error {
 	if len(paths) == 0 {
-		return fmt.Errorf("no paths provided")
+		return errors.New("no paths provided")
 	}
 
 	var pathErrs []error
