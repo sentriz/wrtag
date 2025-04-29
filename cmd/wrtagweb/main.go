@@ -194,14 +194,17 @@ func main() {
 		return nil
 	}
 
-	var buffPool = sync.Pool{New: func() any { return new(bytes.Buffer) }}
+	var buffPool = sync.Pool{
+		New: func() any { return new(bytes.Buffer) },
+	}
 	respTmpl := func(w http.ResponseWriter, name string, data any) {
 		buff := buffPool.Get().(*bytes.Buffer)
 		defer buffPool.Put(buff)
 		buff.Reset()
 
 		if err := uiTmpl.ExecuteTemplate(buff, name, data); err != nil {
-			slog.Error("in template", "err", err)
+			http.Error(w, "error executing template", http.StatusInternalServerError)
+			slog.Error("error executing template", "err", err)
 			return
 		}
 		if _, err := io.Copy(w, buff); err != nil {
