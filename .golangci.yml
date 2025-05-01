@@ -15,6 +15,7 @@ linters:
     - dupl
     - dupword
     - durationcheck
+    - errcheck
     - errchkjson
     - errname
     - errorlint
@@ -95,7 +96,18 @@ linters:
     gosec:
       excludes:
         - G104 # errors unhandled
-        - G104 # nt
+    errcheck:
+      exclude-functions:
+        - fmt.Fprintf
+        - io.ReadFile
+        - os.Setenv
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (*database/sql.DB).Close
+        - (*flag.FlagSet).Parse
+        - (*net/http.ResponseController).Flush
+        - go.senan.xyz/flagconf.ParseConfig
+        - go.senan.xyz/flagconf.ParseEnv
   exclusions:
     rules:
       - path: '(.+)_test\.go'
