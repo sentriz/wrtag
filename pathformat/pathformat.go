@@ -61,6 +61,9 @@ func (pf *Format) Execute(release *musicbrainz.Release, index int, ext string) (
 	}
 
 	flatTracks := musicbrainz.FlatTracks(release.Media)
+	if len(flatTracks) == 0 {
+		return "", errors.New("release has no tracks")
+	}
 
 	var d Data
 	d.Release = *release

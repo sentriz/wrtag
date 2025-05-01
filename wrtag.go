@@ -229,12 +229,6 @@ func ProcessDir(
 	labelInfo := musicbrainz.AnyLabelInfo(release)
 	genres := musicbrainz.AnyGenres(release)
 
-	// lock both source and destination directories
-	unlock := lockPaths(
-		srcDir,
-		destDir,
-	)
-
 	// calculate new paths
 	destPaths := make([]string, 0, len(pathTags))
 	for i, pt := range pathTags {
@@ -245,6 +239,12 @@ func ProcessDir(
 
 		destPaths = append(destPaths, destPath)
 	}
+
+	// lock both source and destination directories
+	unlock := lockPaths(
+		srcDir,
+		destDir,
+	)
 
 	dc := NewDirContext()
 
