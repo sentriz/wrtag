@@ -10,14 +10,14 @@ require (
 	github.com/containrrr/shoutrrr v0.8.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
-	github.com/ncruces/go-sqlite3 v0.25.0
+	github.com/ncruces/go-sqlite3 v0.25.1
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/sergi/go-diff v1.3.1
 	github.com/stretchr/testify v1.10.0
 	go.senan.xyz/flagconf v0.1.9
 	go.senan.xyz/natcmp v0.1.2
-	go.senan.xyz/sqlb v0.2.4
+	go.senan.xyz/sqlb v0.2.6
 	go.senan.xyz/table v0.0.0-20240227175247-cf2c834b4c23
 	go.senan.xyz/taglib v0.6.1
 	golang.org/x/net v0.39.0

@@ -2,7 +2,10 @@
 
 package main
 
-import "database/sql"
+import (
+	"database/sql"
+	"fmt"
+)
 
 func _() {
 	// Validate the struct fields haven't changed. If this doesn't compile you probably need to `go generate` again.
@@ -19,5 +22,38 @@ func (j Job) Values() []sql.NamedArg {
 }
 
 func (j *Job) ScanFrom(rows *sql.Rows) error {
-	return rows.Scan(&j.ID, &j.Status, &j.Error, &j.Operation, &j.Time, &j.UseMBID, &j.SourcePath, &j.DestPath, &j.SearchResult, &j.ResearchLinks, &j.Confirm)
+	columns, err := rows.Columns()
+	if err != nil {
+		return err
+	}
+	dests := make([]any, 0, len(columns))
+	for _, c := range columns {
+		switch c {
+		case "id":
+			dests = append(dests, &j.ID)
+		case "status":
+			dests = append(dests, &j.Status)
+		case "error":
+			dests = append(dests, &j.Error)
+		case "operation":
+			dests = append(dests, &j.Operation)
+		case "time":
+			dests = append(dests, &j.Time)
+		case "use_mbid":
+			dests = append(dests, &j.UseMBID)
+		case "source_path":
+			dests = append(dests, &j.SourcePath)
+		case "dest_path":
+			dests = append(dests, &j.DestPath)
+		case "search_result":
+			dests = append(dests, &j.SearchResult)
+		case "research_links":
+			dests = append(dests, &j.ResearchLinks)
+		case "confirm":
+			dests = append(dests, &j.Confirm)
+		default:
+			return fmt.Errorf("unknown column name %q", c)
+		}
+	}
+	return rows.Scan(dests...)
 }
