@@ -23,7 +23,6 @@ linters:
     - fatcontext
     - forcetypeassert
     - funcorder
-    - ginkgolinter
     - gocheckcompilerdirectives
     - gochecksumtype
     - goconst
@@ -76,7 +75,6 @@ linters:
     - usetesting
     - wastedassign
     - whitespace
-    - zerologlint
   settings:
     staticcheck:
       checks:
@@ -99,15 +97,14 @@ linters:
     errcheck:
       exclude-functions:
         - fmt.Fprintf
-        - io.ReadFile
         - os.Setenv
         - (io.Closer).Close
         - (*os.File).Close
         - (*database/sql.DB).Close
-        - (*flag.FlagSet).Parse
         - (*net/http.ResponseController).Flush
-        - go.senan.xyz/flagconf.ParseConfig
-        - go.senan.xyz/flagconf.ParseEnv
+        - (*flag.FlagSet).Parse # have flag.ExitOnError
+        - go.senan.xyz/flagconf.ParseConfig # have flag.ExitOnError
+        - go.senan.xyz/flagconf.ParseEnv # have flag.ExitOnError
   exclusions:
     rules:
       - path: '(.+)_test\.go'
