@@ -428,6 +428,11 @@ func main() {
 	errgrp.Go(func() error {
 		defer logJob("process jobs")()
 
+		// restart old jobs just in case the process was killed abruptly last time
+		if err := sqlb.Exec(ctx, db, "update jobs set status=? where status=?", StatusEnqueued, StatusInProgress); err != nil {
+			return err
+		}
+
 		t := time.NewTicker(1 * time.Second)
 		defer t.Stop()
 
