@@ -21,9 +21,9 @@ type Diff struct {
 	Equal         bool
 }
 
-type TagWeights map[string]float64
+type Weights map[string]float64
 
-func (tw TagWeights) For(field string) float64 {
+func (tw Weights) For(field string) float64 {
 	if field == "" {
 		return 1
 	}
@@ -35,7 +35,7 @@ func (tw TagWeights) For(field string) float64 {
 	return 1
 }
 
-func DiffRelease[T interface{ Get(string) string }](weights TagWeights, release *musicbrainz.Release, tracks []musicbrainz.Track, tagFiles []T) (float64, []Diff) {
+func DiffRelease[T interface{ Get(string) string }](weights Weights, release *musicbrainz.Release, tracks []musicbrainz.Track, tagFiles []T) (float64, []Diff) {
 	if len(tracks) == 0 {
 		return 0, nil
 	}
@@ -68,10 +68,6 @@ func DiffRelease[T interface{ Get(string) string }](weights TagWeights, release 
 		}
 		diffs = append(diffs, diff(fmt.Sprintf("track %d", i+1), a, b))
 	}
-
-	// we can get negative scores sometimes, just clamp to 0 for now
-	score = max(0, score)
-	score = min(100, score)
 
 	return score, diffs
 }
@@ -123,7 +119,7 @@ func ReleaseTags(
 	return t
 }
 
-func Differ(weights TagWeights, score *float64) func(field string, a, b string) Diff {
+func Differ(weights Weights, score *float64) func(field string, a, b string) Diff {
 	dm := dmp.New()
 
 	var total float64
@@ -135,7 +131,7 @@ func Differ(weights TagWeights, score *float64) func(field string, a, b string) 
 
 			diffs := dm.DiffMain(a, b, false)
 			dist += float64(dm.DiffLevenshtein(diffs)) * weights.For(field)
-			total += float64(len([]rune(b)))
+			total += float64(max(len([]rune(a)), len([]rune(b))))
 
 			*score = 100 - (dist * 100 / total)
 		}

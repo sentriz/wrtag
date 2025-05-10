@@ -121,7 +121,7 @@ type Config struct {
 	PathFormat pathformat.Format
 
 	// TagWeights defines the relative importance of different tags when calculating match scores
-	TagWeights tagmap.TagWeights
+	TagWeights tagmap.Weights
 
 	// KeepFiles specifies files that should be preserved during processing
 	KeepFiles map[string]struct{}

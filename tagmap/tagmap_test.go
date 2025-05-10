@@ -11,7 +11,7 @@ func TestDiffer(t *testing.T) {
 	t.Parallel()
 
 	var score float64
-	diff := Differ(TagWeights{}, &score)
+	diff := Differ(Weights{}, &score)
 
 	diff("x", "aaaaa", "aaaaa")
 	diff("x", "aaaaa", "aaaaX")
@@ -21,7 +21,7 @@ func TestDiffer(t *testing.T) {
 func TestDiffWeightsLowerBound(t *testing.T) {
 	t.Parallel()
 
-	weights := TagWeights{
+	weights := Weights{
 		"label":         0,
 		"catalogue num": 0,
 	}
@@ -46,7 +46,7 @@ func TestDiffWeightsLowerBound(t *testing.T) {
 func TestDiffWeightsUpperBound(t *testing.T) {
 	t.Parallel()
 
-	weights := TagWeights{
+	weights := Weights{
 		"label":         2,
 		"catalogue num": 2,
 	}
@@ -72,7 +72,7 @@ func TestDiffNorm(t *testing.T) {
 	t.Parallel()
 
 	var score float64
-	diff := Differ(TagWeights{}, &score)
+	diff := Differ(Weights{}, &score)
 
 	diff("label", "Columbia", "COLUMBIA")
 	diff("catalogue num", "CLO LP 3", "CLOLP3")
@@ -84,7 +84,7 @@ func TestDiffIgnoreMissing(t *testing.T) {
 	t.Parallel()
 
 	var score float64
-	diff := Differ(TagWeights{}, &score)
+	diff := Differ(Weights{}, &score)
 
 	diff("label", "", "COLUMBIA")
 	diff("catalogue num", "CLO LP 3", "CLOLP3")
@@ -97,7 +97,7 @@ func TestNegativeScore(t *testing.T) {
 	t.Parallel()
 
 	var score float64
-	diff := Differ(TagWeights{}, &score)
+	diff := Differ(Weights{}, &score)
 
 	diff("release", "Moon Boots", "Moon Boots")
 	diff("artist", "Bird Bear Hare and Fish", "BBHF")
@@ -119,8 +119,7 @@ func TestNegativeScore(t *testing.T) {
 	diff("track 11", "Bird Bear Hare and Fish – 次の火", "BBHF – 次の火")
 	diff("track 12", "Bird Bear Hare and Fish – Work", "BBHF – Work")
 
-	// probably we can come up with a better algorithm here to not produce a negative score
-	assert.InEpsilon(t, -63, score, 1)
+	assert.InEpsilon(t, 37, score, 1)
 }
 
 func TestNorm(t *testing.T) {

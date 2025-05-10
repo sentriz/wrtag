@@ -14,7 +14,7 @@ env WRTAG_PATH_FORMAT='albums/{{ artists .Release.Artists | sort | join "; " | s
 
 # we exit if score too low
 ! exec wrtag move kat_moda/
-stderr 'msg=matched score=70'
+stderr 'msg=matched score=71'
 stderr 'score too low'
 
 # but can overwrite with -yes

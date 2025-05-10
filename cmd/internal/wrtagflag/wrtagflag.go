@@ -74,7 +74,7 @@ func Config() *wrtag.Config {
 	cfg.KeepFiles = map[string]struct{}{}
 	flag.Var(&keepFileParser{cfg.KeepFiles}, "keep-file", "Define an extra file path to keep when moving/copying to root dir (stackable)")
 
-	cfg.TagWeights = tagmap.TagWeights{}
+	cfg.TagWeights = tagmap.Weights{}
 	flag.Var(&tagWeightsParser{cfg.TagWeights}, "tag-weight", "Adjust distance weighting for a tag (0 to ignore) (stackable)")
 
 	flag.StringVar(&cfg.MusicBrainzClient.BaseURL, "mb-base-url", `https://musicbrainz.org/ws/2/`, "MusicBrainz base URL")
@@ -182,7 +182,7 @@ func (n notificationsParser) String() string {
 	return strings.Join(parts, ", ")
 }
 
-type tagWeightsParser struct{ tagmap.TagWeights }
+type tagWeightsParser struct{ tagmap.Weights }
 
 func (tw tagWeightsParser) Set(value string) error {
 	const sep = " "
@@ -196,12 +196,12 @@ func (tw tagWeightsParser) Set(value string) error {
 	if err != nil {
 		return fmt.Errorf("parse weight: %w", err)
 	}
-	tw.TagWeights[tag] = weight
+	tw.Weights[tag] = weight
 	return nil
 }
 func (tw tagWeightsParser) String() string {
 	var parts []string
-	for a, b := range tw.TagWeights {
+	for a, b := range tw.Weights {
 		parts = append(parts, fmt.Sprintf("%s: %.2f", a, b))
 	}
 	return strings.Join(parts, ", ")
