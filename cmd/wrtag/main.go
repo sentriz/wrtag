@@ -21,8 +21,8 @@ import (
 	"go.senan.xyz/table/table"
 
 	"go.senan.xyz/wrtag"
-	"go.senan.xyz/wrtag/cmd/internal/logging"
 	"go.senan.xyz/wrtag/cmd/internal/wrtagflag"
+	"go.senan.xyz/wrtag/cmd/internal/wrtaglog"
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/researchlink"
 )
@@ -46,7 +46,7 @@ func init() {
 }
 
 func main() {
-	defer logging.Logging()()
+	defer wrtaglog.Setup()()
 	wrtagflag.DefaultClient()
 	var (
 		cfg                 = wrtagflag.Config()

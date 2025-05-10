@@ -25,8 +25,8 @@ import (
 	"time"
 
 	"go.senan.xyz/wrtag"
-	"go.senan.xyz/wrtag/cmd/internal/logging"
 	wrtagflag "go.senan.xyz/wrtag/cmd/internal/wrtagflag"
+	"go.senan.xyz/wrtag/cmd/internal/wrtaglog"
 	"go.senan.xyz/wrtag/researchlink"
 
 	_ "github.com/ncruces/go-sqlite3/driver"
@@ -53,7 +53,7 @@ const (
 )
 
 func main() {
-	defer logging.Logging()()
+	defer wrtaglog.Setup()()
 	wrtagflag.DefaultClient()
 	var (
 		cfg                 = wrtagflag.Config()

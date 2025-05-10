@@ -1,4 +1,4 @@
-package logging
+package wrtaglog
 
 import (
 	"context"
@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 )
 
-func Logging() (exit func()) {
+func Setup() (exit func()) {
 	var logLevel slog.LevelVar
 	flag.TextVar(&logLevel, "log-level", &logLevel, "Set the logging level")
 
@@ -24,7 +24,6 @@ func Logging() (exit func()) {
 		if h.hadSlogError.Load() {
 			os.Exit(1)
 		}
-		os.Exit(0)
 	}
 }
 
