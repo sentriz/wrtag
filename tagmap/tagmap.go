@@ -114,31 +114,37 @@ func ReleaseTags(
 	return t
 }
 
+var (
+	dm = dmp.New()
+)
+
 func Differ(score *float64) func(weight float64, field string, a, b string) Diff {
-	dm := dmp.New()
-
 	var total float64
-	var dist float64
+	var totalDist float64
+
 	return func(w float64, field, a, b string) Diff {
-		// separate, normalised diff only for score. if we have both fields
-		if a != "" && b != "" {
-			a, b := norm(a), norm(b)
-
-			diffs := dm.DiffMain(a, b, false)
-			dist += float64(dm.DiffLevenshtein(diffs)) * w
-			total += float64(max(len([]rune(a)), len([]rune(b))))
-
-			*score = 100 - (dist * 100 / total)
-		}
-
 		diffs := dm.DiffMain(a, b, false)
-		dist := float64(dm.DiffLevenshtein(diffs))
-		return Diff{
-			Field:  field,
-			Before: filterFunc(diffs, func(d dmp.Diff) bool { return d.Type <= dmp.DiffEqual }),
-			After:  filterFunc(diffs, func(d dmp.Diff) bool { return d.Type >= dmp.DiffEqual }),
-			Equal:  dist == 0,
+
+		var d Diff
+		d.Field = field
+		d.Before = filterFunc(diffs, func(d dmp.Diff) bool { return d.Type <= dmp.DiffEqual })
+		d.After = filterFunc(diffs, func(d dmp.Diff) bool { return d.Type >= dmp.DiffEqual })
+		d.Equal = a == b
+
+		if a == "" || b == "" {
+			return d
 		}
+
+		// separate, norm diff for score calculation. only if we have both fields
+		aNorm, bNorm := norm(a), norm(b)
+
+		diffs = dm.DiffMain(aNorm, bNorm, false)
+		totalDist += float64(dm.DiffLevenshtein(diffs)) * w
+		total += float64(max(len([]rune(aNorm)), len([]rune(bNorm))))
+
+		*score = 100 - (totalDist * 100 / total)
+
+		return d
 	}
 }
 
@@ -177,7 +183,7 @@ func mapFunc[T, To any](elms []T, f func(int, T) To) []To {
 }
 
 func filterFunc[T any](elms []T, f func(T) bool) []T {
-	var res []T
+	var res = make([]T, 0, len(elms))
 	for _, el := range elms {
 		if f(el) {
 			res = append(res, el)
