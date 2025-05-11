@@ -23,18 +23,6 @@ type Diff struct {
 
 type Weights map[string]float64
 
-func (tw Weights) For(field string) float64 {
-	if field == "" {
-		return 1
-	}
-	for f, w := range tw {
-		if strings.HasPrefix(field, f) {
-			return w
-		}
-	}
-	return 1
-}
-
 func DiffRelease[T interface{ Get(string) string }](weights Weights, release *musicbrainz.Release, tracks []musicbrainz.Track, tagFiles []T) (float64, []Diff) {
 	if len(tracks) == 0 {
 		return 0, nil
@@ -43,18 +31,25 @@ func DiffRelease[T interface{ Get(string) string }](weights Weights, release *mu
 	labelInfo := musicbrainz.AnyLabelInfo(release)
 
 	var score float64
-	diff := Differ(weights, &score)
+	diff := Differ(&score)
+
+	weight := func(t string) float64 {
+		if w, ok := weights[t]; ok {
+			return w
+		}
+		return 1
+	}
 
 	var diffs []Diff
 	{
 		tf := tagFiles[0]
 		diffs = append(diffs,
-			diff("release", tf.Get(tags.Album), release.Title),
-			diff("artist", tf.Get(tags.AlbumArtist), musicbrainz.ArtistsString(release.Artists)),
-			diff("label", tf.Get(tags.Label), labelInfo.Label.Name),
-			diff("catalogue num", tf.Get(tags.CatalogueNum), labelInfo.CatalogNumber),
-			diff("upc", tf.Get(tags.UPC), release.Barcode),
-			diff("media format", tf.Get(tags.MediaFormat), release.Media[0].Format),
+			diff(weight("release"), "release", tf.Get(tags.Album), release.Title),
+			diff(weight("artist"), "artist", tf.Get(tags.AlbumArtist), musicbrainz.ArtistsString(release.Artists)),
+			diff(weight("label"), "label", tf.Get(tags.Label), labelInfo.Label.Name),
+			diff(weight("catalogue num"), "catalogue num", tf.Get(tags.CatalogueNum), labelInfo.CatalogNumber),
+			diff(weight("upc"), "upc", tf.Get(tags.UPC), release.Barcode),
+			diff(weight("media format"), "media format", tf.Get(tags.MediaFormat), release.Media[0].Format),
 		)
 	}
 
@@ -66,7 +61,7 @@ func DiffRelease[T interface{ Get(string) string }](weights Weights, release *mu
 		if i < len(tracks) {
 			b = strings.Join(trim(musicbrainz.ArtistsString(tracks[i].Artists), tracks[i].Title), " – ")
 		}
-		diffs = append(diffs, diff(fmt.Sprintf("track %d", i+1), a, b))
+		diffs = append(diffs, diff(weight("track"), fmt.Sprintf("track %d", i+1), a, b))
 	}
 
 	return score, diffs
@@ -119,18 +114,18 @@ func ReleaseTags(
 	return t
 }
 
-func Differ(weights Weights, score *float64) func(field string, a, b string) Diff {
+func Differ(score *float64) func(weight float64, field string, a, b string) Diff {
 	dm := dmp.New()
 
 	var total float64
 	var dist float64
-	return func(field, a, b string) Diff {
+	return func(w float64, field, a, b string) Diff {
 		// separate, normalised diff only for score. if we have both fields
 		if a != "" && b != "" {
 			a, b := norm(a), norm(b)
 
 			diffs := dm.DiffMain(a, b, false)
-			dist += float64(dm.DiffLevenshtein(diffs)) * weights.For(field)
+			dist += float64(dm.DiffLevenshtein(diffs)) * w
 			total += float64(max(len([]rune(a)), len([]rune(b))))
 
 			*score = 100 - (dist * 100 / total)
