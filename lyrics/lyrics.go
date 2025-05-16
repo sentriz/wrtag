@@ -22,9 +22,9 @@ type Source interface {
 func NewSource(name string, rateLimit time.Duration) (Source, error) {
 	switch name {
 	case "genius":
-		return &Genius{RateLimit: 500 * time.Millisecond}, nil
+		return &Genius{RateLimit: rateLimit}, nil
 	case "musixmatch":
-		return &Musixmatch{RateLimit: 500 * time.Millisecond}, nil
+		return &Musixmatch{RateLimit: rateLimit}, nil
 	default:
 		return nil, errors.New("unknown source")
 	}
