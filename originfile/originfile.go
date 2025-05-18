@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/goccy/go-yaml"
 	"go.senan.xyz/wrtag/fileutil"
-	"gopkg.in/yaml.v3"
 )
 
 // https://github.com/x1ppy/gazelle-origin
