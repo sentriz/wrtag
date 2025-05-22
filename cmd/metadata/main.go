@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	"log/slog"
 	"os"
@@ -67,9 +68,12 @@ func main() {
 		)
 		flag.Parse(args)
 
+		out := bufio.NewWriter(os.Stdout)
+		defer out.Flush()
+
 		args, paths := splitArgPaths(flag.Args())
 		keys := parseTagKeys(args)
-		if err := iterFiles(paths, func(p string) error { return cmdRead(p, *withProperties, keys) }); err != nil {
+		if err := iterFiles(paths, func(p string) error { return cmdRead(out, p, *withProperties, keys) }); err != nil {
 			slog.Error("process read", "err", err)
 			return
 		}
@@ -93,7 +97,7 @@ func main() {
 	}
 }
 
-func cmdRead(path string, withProperties bool, keys map[string]struct{}) error {
+func cmdRead(to io.Writer, path string, withProperties bool, keys map[string]struct{}) error {
 	t, err := tags.ReadTags(path)
 	if err != nil {
 		return fmt.Errorf("read: %w", err)
@@ -102,13 +106,13 @@ func cmdRead(path string, withProperties bool, keys map[string]struct{}) error {
 	if len(keys) == 0 {
 		for k, vs := range t.Iter() {
 			for _, v := range vs {
-				fmt.Printf("%s\t%s\t%s\n", path, k, v)
+				fmt.Fprintf(to, "%s\t%s\t%s\n", path, k, v)
 			}
 		}
 	} else {
 		for k := range keys {
 			for _, v := range t.Values(k) {
-				fmt.Printf("%s\t%s\t%s\n", path, tags.NormKey(k), v)
+				fmt.Fprintf(to, "%s\t%s\t%s\n", path, tags.NormKey(k), v)
 			}
 		}
 	}
@@ -131,16 +135,16 @@ func cmdRead(path string, withProperties bool, keys map[string]struct{}) error {
 	}
 
 	if k := "length"; wantProperty(k) {
-		fmt.Printf("%s\t%s\t%s\n", path, k, formatDuration(properties.Length))
+		fmt.Fprintf(to, "%s\t%s\t%s\n", path, k, formatDuration(properties.Length))
 	}
 	if k := "bitrate"; wantProperty(k) {
-		fmt.Printf("%s\t%s\t%d\n", path, k, properties.Bitrate)
+		fmt.Fprintf(to, "%s\t%s\t%d\n", path, k, properties.Bitrate)
 	}
 	if k := "sample_rate"; wantProperty(k) {
-		fmt.Printf("%s\t%s\t%d\n", path, k, properties.SampleRate)
+		fmt.Fprintf(to, "%s\t%s\t%d\n", path, k, properties.SampleRate)
 	}
 	if k := "channels"; wantProperty(k) {
-		fmt.Printf("%s\t%s\t%d\n", path, k, properties.Channels)
+		fmt.Fprintf(to, "%s\t%s\t%d\n", path, k, properties.Channels)
 	}
 
 	return nil
