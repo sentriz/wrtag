@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.12.0](https://www.github.com/sentriz/wrtag/compare/v0.11.0...v0.12.0) (2025-05-29)
+
+
+### Features
+
+* **ci:** add errcheck ([6ff44e1](https://www.github.com/sentriz/wrtag/commit/6ff44e1d17c119152b2b4730aeb3d46e7905cc12))
+* **ci:** add more linters ([69f2c82](https://www.github.com/sentriz/wrtag/commit/69f2c8200217c88e98a27f414b720abbf325fb88))
+* **ci:** cache docker builds ([8f2a5c4](https://www.github.com/sentriz/wrtag/commit/8f2a5c4c1b326207aeb283402b138beaa658340a))
+* **metadata:** buffer stdout for `read` ([8911983](https://www.github.com/sentriz/wrtag/commit/89119832a6a9d21137f7ea666b471295566433ee))
+* **wrtag:** adjust tag match to account for larger left side ([0de5233](https://www.github.com/sentriz/wrtag/commit/0de52339085dd012551be8e9a3676e4542a089f9))
+* **wrtagweb:** restart old in-progress jobs on startup ([173fad9](https://www.github.com/sentriz/wrtag/commit/173fad9bebaac432dd9ee588a38ff45004cbe00b))
+* **wrtagweb:** set manual import form width to 500px by default ([#102](https://www.github.com/sentriz/wrtag/issues/102)) ([d2ae6a1](https://www.github.com/sentriz/wrtag/commit/d2ae6a1daa9c54c81e9f2a99fec8f02404649480))
+
+
+### Bug Fixes
+
+* **lyrics:** pass rate limit lyric sources ([a29d477](https://www.github.com/sentriz/wrtag/commit/a29d4776a573ecf31b729a625b5d17cc94a9c6c7))
+* **wrtagweb:** horizonal overflow on mobile ([0dc263b](https://www.github.com/sentriz/wrtag/commit/0dc263b959a32c7305201f8dffc9bcf9a1aba6e2)), closes [#106](https://www.github.com/sentriz/wrtag/issues/106)
+* **wrtagweb:** return error in template execute ([07d1b31](https://www.github.com/sentriz/wrtag/commit/07d1b31e5bd117e1a50e332e374d47b91c3ef469))
+
 ## [0.11.0](https://www.github.com/sentriz/wrtag/compare/v0.9.0...v0.11.0) (2025-04-17)
 
 
