@@ -101,5 +101,5 @@ jobs:
             ghcr.io/${{ github.repository }}:latest
             ${{ github.repository }}:${{ needs.release-please.outputs.tag_name }}
             ${{ github.repository }}:latest
-          cache-from: type=registry,ref=ghcr.io/${{ github.repository }}:latest
-          cache-to: type=inline
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

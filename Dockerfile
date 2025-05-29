@@ -3,6 +3,9 @@ FROM --platform=$BUILDPLATFORM golang:1.24-alpine3.21 AS builder
 ARG TARGETOS
 ARG TARGETARCH
 WORKDIR /src
+COPY go.mod .
+COPY go.sum .
+RUN go mod download
 COPY . .
 RUN  \
     --mount=type=cache,target=/go/pkg/mod \
