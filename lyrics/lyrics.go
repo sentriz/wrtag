@@ -100,6 +100,7 @@ var geniusEsc = strings.NewReplacer(
 	")", "",
 	"[", "",
 	"]", "",
+	"&", "and",
 )
 
 type Genius struct {
