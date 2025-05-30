@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.13.0](https://www.github.com/sentriz/wrtag/compare/v0.12.0...v0.13.0) (2025-05-30)
+
+
+### Features
+
+* **ci:** use native gha cache ([9795428](https://www.github.com/sentriz/wrtag/commit/97954283ba4e4bd195e3364e972cf44e98520c87))
+* **lyrics:** esc `&` in for Genius ([2bd0b3e](https://www.github.com/sentriz/wrtag/commit/2bd0b3e698bbf0f19c607a5d804ad15679260036))
+
 ## [0.12.0](https://www.github.com/sentriz/wrtag/compare/v0.11.0...v0.12.0) (2025-05-29)
 
 
