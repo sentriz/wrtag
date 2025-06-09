@@ -27,14 +27,14 @@ func Compare(a, b string) int {
 }
 
 // BestBetween updates the current best candidate if the new path is better.
-func BestBetween(cover *string, other string) {
-	if *cover == "" {
-		*cover = other
-		return
+func BestBetween(cover string, other string) string {
+	if cover == "" {
+		return other
 	}
-	if Compare(*cover, other) > 0 {
-		*cover = other
+	if Compare(cover, other) > 0 {
+		return other
 	}
+	return cover
 }
 
 var artTypePriorities = map[string]int{

@@ -337,7 +337,7 @@ func ReadReleaseDir(dirPath string) (string, []PathTags, error) {
 	paths := append(mainPaths, discPaths...)
 	for _, path := range paths {
 		if coverparse.IsCover(path) {
-			coverparse.BestBetween(&cover, path)
+			cover = coverparse.BestBetween(cover, path)
 			continue
 		}
 

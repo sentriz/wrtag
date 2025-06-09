@@ -84,7 +84,7 @@ func TestSelection(t *testing.T) {
 
 			var s string
 			for _, c := range test.covers {
-				coverparse.BestBetween(&s, c)
+				s = coverparse.BestBetween(s, c)
 			}
 			if s != test.expected {
 				t.Errorf("with covers %v expected %q got %q", test.covers, test.expected, s)
