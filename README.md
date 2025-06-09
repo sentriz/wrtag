@@ -231,12 +231,12 @@ Configuration for `wrtagweb` works the same as [Global configuration](#global-co
 
 <!-- gen with ```go run ./cmd/wrtagweb -h 2>&1 | ./gen-docs | wl-copy``` -->
 
-| CLI argument     | Environment variable  | Config file key | Description                                                  |
-| ---------------- | --------------------- | --------------- | ------------------------------------------------------------ |
-| -web-api-key     | WRTAG_WEB_API_KEY     | web-api-key     | API key for web interface                                    |
-| -web-db-path     | WRTAG_WEB_DB_PATH     | web-db-path     | Path to database path for web interface (default "wrtag.db") |
-| -web-listen-addr | WRTAG_WEB_LISTEN_ADDR | web-listen-addr | Listen address for web interface                             |
-| -web-public-url  | WRTAG_WEB_PUBLIC_URL  | web-public-url  | Public URL for web interface (optional)                      |
+| CLI argument     | Environment variable  | Config file key | Description                                        |
+| ---------------- | --------------------- | --------------- | -------------------------------------------------- |
+| -web-api-key     | WRTAG_WEB_API_KEY     | web-api-key     | API key for web interface                          |
+| -web-db-path     | WRTAG_WEB_DB_PATH     | web-db-path     | Path to database path for web interface (optional) |
+| -web-listen-addr | WRTAG_WEB_LISTEN_ADDR | web-listen-addr | Listen address for web interface                   |
+| -web-public-url  | WRTAG_WEB_PUBLIC_URL  | web-public-url  | Public URL for web interface (optional)            |
 
 ## Tool `metadata`
 
