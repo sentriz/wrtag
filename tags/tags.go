@@ -22,12 +22,12 @@ const (
 	AlbumArtists       = "ALBUMARTISTS"        //tag: alts "ALBUM_ARTISTS"
 	AlbumArtistCredit  = "ALBUMARTIST_CREDIT"  //tag: alts "ALBUM_ARTIST_CREDIT"
 	AlbumArtistsCredit = "ALBUMARTISTS_CREDIT" //tag: alts "ALBUM_ARTISTS_CREDIT"
-	Date               = "DATE"                //tag: alts "YEAR"
+	Date               = "DATE"                //tag: alts "YEAR" "RELEASEDATE"
 	OriginalDate       = "ORIGINALDATE"        //tag: alts "ORIGINAL_YEAR"
 	MediaFormat        = "MEDIA"
 	Label              = "LABEL"
-	CatalogueNum       = "CATALOGNUMBER" //tag: alts "CATALOGNUM"
-	UPC                = "UPC"           //tag: alts "MCN"
+	CatalogueNum       = "CATALOGNUMBER" //tag: alts "CATALOGNUM" "CAT#" "CATALOGID" "CATNUM"
+	UPC                = "UPC"           //tag: alts "MCN" "BARCODE"
 	Compilation        = "COMPILATION"
 
 	MBReleaseID      = "MUSICBRAINZ_ALBUMID"
@@ -54,6 +54,9 @@ const (
 	ReplayGainAlbumPeak = "REPLAYGAIN_ALBUM_PEAK"
 
 	Lyrics = "LYRICS" //tag: alts "LYRICS:DESCRIPTION" "USLT:DESCRIPTION" "©LYR"
+
+	Encoder = "ENCODER"
+	Comment = "COMMENT"
 )
 
 type WriteOption = taglib.WriteOption
