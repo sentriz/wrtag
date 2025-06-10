@@ -23,7 +23,7 @@ type LyricsAddon struct {
 
 func NewLyricsAddon(conf string) (LyricsAddon, error) {
 	var sources lyrics.MultiSource
-	for _, arg := range strings.Fields(conf) {
+	for arg := range strings.FieldsSeq(conf) {
 		source, err := lyrics.NewSource(arg, 500*time.Millisecond)
 		if err != nil {
 			return LyricsAddon{}, fmt.Errorf("source %q: %w", arg, err)
@@ -57,7 +57,7 @@ func (l LyricsAddon) ProcessRelease(ctx context.Context, paths []string) error {
 				if err != nil && !errors.Is(err, lyrics.ErrLyricsNotFound) {
 					return err
 				}
-				if err := tags.WriteTags(path, tags.NewTags(tags.Lyrics, lyricData), tags.DiffBeforeWrite); err != nil {
+				if err := tags.WriteTags(path, tags.NewTags(tags.Lyrics, lyricData), 0); err != nil {
 					return fmt.Errorf("write new lyrics: %w", err)
 				}
 				return nil

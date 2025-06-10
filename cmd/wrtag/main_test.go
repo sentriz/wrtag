@@ -81,7 +81,7 @@ func mainTag() {
 			if err := ensureAudioFile(p); err != nil {
 				log.Fatalf("ensure flac: %v", err)
 			}
-			var t tags.Tags
+			var t = tags.Tags{}
 			for k, vs := range pairs {
 				t.Set(k, vs...)
 			}

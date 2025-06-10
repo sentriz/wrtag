@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"strings"
 
-	"go.senan.xyz/taglib"
 	"go.senan.xyz/wrtag/addon"
 	"go.senan.xyz/wrtag/replaygain"
 	"go.senan.xyz/wrtag/tags"
@@ -24,7 +23,7 @@ type ReplayGainAddon struct {
 
 func NewReplayGainAddon(conf string) (ReplayGainAddon, error) {
 	var a ReplayGainAddon
-	for _, arg := range strings.Fields(conf) {
+	for arg := range strings.FieldsSeq(conf) {
 		switch arg {
 		case "true-peak":
 			a.truePeak = true
@@ -67,7 +66,7 @@ func (a ReplayGainAddon) ProcessRelease(ctx context.Context, paths []string) err
 			tags.ReplayGainAlbumGain, fmtdB(albumLev.GaindB),
 			tags.ReplayGainAlbumPeak, fmtFloat(albumLev.Peak, 6),
 		)
-		if err := tags.WriteTags(path, t, taglib.DiffBeforeWrite); err != nil {
+		if err := tags.WriteTags(path, t, 0); err != nil {
 			trackErrs = append(trackErrs, err)
 			continue
 		}

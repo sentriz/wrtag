@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
+	"maps"
 	"os"
 	"path/filepath"
 	"slices"
@@ -104,8 +105,8 @@ func cmdRead(to io.Writer, path string, withProperties bool, keys map[string]str
 	}
 
 	if len(keys) == 0 {
-		for k, vs := range t.Iter() {
-			for _, v := range vs {
+		for _, k := range slices.Sorted(maps.Keys(t)) {
+			for _, v := range t[k] {
 				fmt.Fprintf(to, "%s\t%s\t%s\n", path, k, v)
 			}
 		}
@@ -151,11 +152,11 @@ func cmdRead(to io.Writer, path string, withProperties bool, keys map[string]str
 }
 
 func cmdWrite(path string, keyValues map[string][]string) error {
-	var t tags.Tags
+	var t = tags.Tags{}
 	for k, vs := range keyValues {
 		t.Set(k, vs...)
 	}
-	if err := tags.WriteTags(path, t, tags.DiffBeforeWrite); err != nil {
+	if err := tags.WriteTags(path, t, 0); err != nil {
 		return fmt.Errorf("save: %w", err)
 	}
 	return nil
@@ -168,7 +169,7 @@ func cmdClear(path string, keys map[string]struct{}) error {
 		}
 		return nil
 	}
-	var t tags.Tags
+	var t = tags.Tags{}
 	for k := range keys {
 		t.Set(k)
 	}

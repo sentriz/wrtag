@@ -256,7 +256,8 @@ func ProcessDir(
 			return nil, fmt.Errorf("process path %q: %w", filepath.Base(pt.Path), err)
 		}
 
-		destTags := tagmap.ReleaseTags(release, labelInfo, genres, i, &rt)
+		var destTags = tags.Tags{}
+		tagmap.WriteRelease(destTags, release, labelInfo, genres, i, &rt)
 
 		if lvl, slog := slog.LevelDebug, slog.Default(); slog.Enabled(ctx, lvl) {
 			logTagChanges(ctx, pt.Path, lvl, pt.Tags, destTags)
@@ -270,7 +271,7 @@ func ProcessDir(
 			continue
 		}
 
-		if err := tags.WriteTags(destPath, destTags, tags.DiffBeforeWrite); err != nil { // not replacing here since some plugins use other tags
+		if err := tags.WriteTags(destPath, destTags, tags.Clear); err != nil {
 			return nil, fmt.Errorf("write tag file: %w", err)
 		}
 	}
@@ -858,8 +859,8 @@ func parseAnyTime(str string) time.Time {
 
 func logTagChanges(ctx context.Context, fileKey string, lvl slog.Level, before, after tags.Tags) {
 	fileKey = filepath.Base(fileKey)
-	for k := range after.Iter() {
-		if before, after := before.Values(k), after.Values(k); !slices.Equal(before, after) {
+	for k := range after {
+		if before, after := before[k], after[k]; !slices.Equal(before, after) {
 			slog.Log(ctx, lvl, "tag change", "file", fileKey, "key", k, "from", before, "to", after)
 		}
 	}

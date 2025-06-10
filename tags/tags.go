@@ -2,7 +2,6 @@
 package tags
 
 import (
-	"iter"
 	"maps"
 	"path/filepath"
 	"slices"
@@ -64,8 +63,7 @@ const (
 type WriteOption = taglib.WriteOption
 
 const (
-	Clear           = taglib.Clear
-	DiffBeforeWrite = taglib.DiffBeforeWrite
+	Clear = taglib.Clear
 )
 
 func CanRead(absPath string) bool {
@@ -77,63 +75,70 @@ func CanRead(absPath string) bool {
 }
 
 func ReadTags(path string) (Tags, error) {
-	t, err := taglib.ReadTags(path)
-	return Tags{t}, err
+	rt, err := taglib.ReadTags(path)
+	if err != nil {
+		return Tags{}, err
+	}
+
+	// the internal state of t should be always be normalised so that later users of
+	// Get and Set, potentially with non-normalised keys will find a match
+	var t = make(Tags, len(rt))
+	for k, vs := range rt {
+		t.Set(k, vs...)
+	}
+	return t, nil
 }
 
 func WriteTags(path string, tags Tags, opts WriteOption) error {
-	return taglib.WriteTags(path, tags.t, opts)
+	return taglib.WriteTags(path, tags, opts)
 }
 
 func ReadProperties(path string) (taglib.Properties, error) {
 	return taglib.ReadProperties(path)
 }
 
-type Tags struct {
-	t map[string][]string
-}
+type Tags map[string][]string
 
 func NewTags(vs ...string) Tags {
 	if len(vs)%2 != 0 {
 		panic("vs should be kv pairs")
 	}
-	var t Tags
+	var t = Tags{}
 	for i := 0; i < len(vs)-1; i += 2 {
 		t.Set(vs[i], vs[i+1])
 	}
 	return t
 }
 
-func (t Tags) Iter() iter.Seq2[string, []string] {
-	return func(yield func(string, []string) bool) {
-		for _, k := range slices.Sorted(maps.Keys(t.t)) {
-			if k := NormKey(k); !yield(k, t.t[k]) {
-				break
-			}
-		}
-	}
-}
-
-func (t *Tags) Set(key string, values ...string) {
-	if t.t == nil {
-		t.t = map[string][]string{}
-	}
-	t.t[NormKey(key)] = values
+func (t Tags) Set(key string, values ...string) {
+	t[NormKey(key)] = values
 }
 
 func (t Tags) Get(key string) string {
-	if vs := t.t[NormKey(key)]; len(vs) > 0 {
+	if vs := t[NormKey(key)]; len(vs) > 0 {
 		return vs[0]
 	}
 	return ""
 }
 
 func (t Tags) Values(key string) []string {
-	return t.t[NormKey(key)]
+	return t[NormKey(key)]
 }
 
 func Equal(a, b Tags) bool {
-	return maps.EqualFunc(a.t, b.t, slices.Equal)
+	// not using maps.EqualFunc(x, slices.Equal) here since we don't care
+	// about a difference in not present vs present but 0 len
+	for k, vs := range a {
+		if ovs := b[k]; !slices.Equal(vs, ovs) {
+			return false
+		}
+	}
+	for k, vs := range b {
+		if ovs := a[k]; !slices.Equal(vs, ovs) {
+			return false
+		}
+	}
+	return true
 }
 
 func NormKey(k string) string {
@@ -142,4 +147,8 @@ func NormKey(k string) string {
 		return nk
 	}
 	return k
+}
+
+func KnownTags() map[string]struct{} {
+	return maps.Clone(knownTags)
 }

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"io"
-	"maps"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -18,35 +17,15 @@ func TestTrackNum(t *testing.T) {
 	t.Parallel()
 
 	path := newFile(t, emptyFLAC, ".flac")
-	withf(t, path, func(f *Tags) {
+	withf(t, path, func(f Tags) {
 		f.Set(TrackNumber, strconv.Itoa(69))
 	})
-	withf(t, path, func(f *Tags) {
+	withf(t, path, func(f Tags) {
 		f.Set(TrackNumber, strconv.Itoa(69))
 	})
-	withf(t, path, func(f *Tags) {
+	withf(t, path, func(f Tags) {
 		assert.Equal(t, "69", f.Get(TrackNumber))
 	})
-}
-
-func TestNormalise(t *testing.T) {
-	t.Parallel()
-
-	got := NewTags(
-		"media", "CD",
-		"trackc", "14",
-		"year", "1967",
-		"album artist credit", "Steve",
-	)
-
-	exp := map[string][]string{
-		"MEDIA":              {"CD"},
-		"TRACKNUMBER":        {"14"},
-		"DATE":               {"1967"},
-		"ALBUMARTIST_CREDIT": {"Steve"},
-	}
-
-	require.Equal(t, exp, maps.Collect(got.Iter()))
 }
 
 func TestDoubleSave(t *testing.T) {
@@ -57,11 +36,11 @@ func TestDoubleSave(t *testing.T) {
 	require.NoError(t, err)
 
 	f.Set(Album, "a")
-	require.NoError(t, WriteTags(path, f, Clear|DiffBeforeWrite))
+	require.NoError(t, WriteTags(path, f, Clear))
 	f.Set(Album, "b")
-	require.NoError(t, WriteTags(path, f, Clear|DiffBeforeWrite))
+	require.NoError(t, WriteTags(path, f, Clear))
 	f.Set(Album, "c")
-	require.NoError(t, WriteTags(path, f, Clear|DiffBeforeWrite))
+	require.NoError(t, WriteTags(path, f, Clear))
 }
 
 func TestExtendedTags(t *testing.T) {
@@ -72,12 +51,12 @@ func TestExtendedTags(t *testing.T) {
 			t.Parallel()
 
 			p := newFile(t, tf.data, tf.ext)
-			withf(t, p, func(f *Tags) {
+			withf(t, p, func(f Tags) {
 				f.Set(Artist, "1. steely dan")            // standard
 				f.Set(AlbumArtist, "2. steely dan")       // extended
 				f.Set(AlbumArtistCredit, "3. steely dan") // non standard
 			})
-			withf(t, p, func(f *Tags) {
+			withf(t, p, func(f Tags) {
 				assert.Equal(t, "1. steely dan", f.Get(Artist))
 				assert.Equal(t, "2. steely dan", f.Get(AlbumArtist))
 				assert.Equal(t, "3. steely dan", f.Get(AlbumArtistCredit))
@@ -118,13 +97,13 @@ func newFile(t *testing.T, data []byte, ext string) string {
 	return f.Name()
 }
 
-func withf(t *testing.T, path string, fn func(*Tags)) {
+func withf(t *testing.T, path string, fn func(Tags)) {
 	t.Helper()
 
 	tags, err := ReadTags(path)
 	require.NoError(t, err)
 
-	fn(&tags)
+	fn(tags)
 
 	require.NoError(t, WriteTags(path, tags, Clear))
 }
