@@ -2,6 +2,7 @@
 package tags
 
 import (
+	"cmp"
 	"iter"
 	"maps"
 	"path/filepath"
@@ -78,7 +79,14 @@ func CanRead(absPath string) bool {
 
 func ReadTags(path string) (Tags, error) {
 	t, err := taglib.ReadTags(path)
-	return Tags{t}, err
+	if err != nil {
+		return Tags{}, err
+	}
+
+	tags := Tags{t}
+	NormTags(tags)
+
+	return tags, err
 }
 
 func WriteTags(path string, tags Tags, opts WriteOption) error {
@@ -134,6 +142,32 @@ func (t Tags) Values(key string) []string {
 
 func Equal(a, b Tags) bool {
 	return maps.EqualFunc(a.t, b.t, slices.Equal)
+}
+
+func Clone(t Tags) Tags {
+	return Tags{t: maps.Clone(t.t)}
+}
+
+func ClearUnknown(t Tags) {
+	for k := range t.t {
+		if _, ok := knownTags[k]; !ok {
+			t.t[k] = nil // no values clears when writing
+		}
+	}
+}
+
+func NormTags(t Tags) {
+	for k, vs := range t.t {
+		if nk := NormKey(k); nk != k {
+			if _, ok := t.t[nk]; ok && cmp.Or(vs...) != "" {
+				// alt has a value, just drop the orig
+				delete(t.t, k)
+				continue
+			}
+			t.t[nk] = vs
+			delete(t.t, k)
+		}
+	}
 }
 
 func NormKey(k string) string {
