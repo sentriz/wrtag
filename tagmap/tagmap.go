@@ -92,6 +92,7 @@ func ReleaseTags(
 	t.Set(tags.CatalogueNum, trim(labelInfo.CatalogNumber)...)
 	t.Set(tags.UPC, trim(release.Barcode)...)
 	t.Set(tags.Compilation, trim(formatBool(musicbrainz.IsCompilation(release.ReleaseGroup)))...)
+	t.Set(tags.ReleaseType, trim(strings.ToLower(string(release.ReleaseGroup.PrimaryType)))...)
 
 	t.Set(tags.MBReleaseID, trim(release.ID)...)
 	t.Set(tags.MBReleaseGroupID, trim(release.ReleaseGroup.ID)...)

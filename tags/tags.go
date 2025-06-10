@@ -29,6 +29,7 @@ const (
 	CatalogueNum       = "CATALOGNUMBER" //tag: alts "CATALOGNUM" "CAT#" "CATALOGID" "CATNUM"
 	UPC                = "UPC"           //tag: alts "MCN" "BARCODE"
 	Compilation        = "COMPILATION"
+	ReleaseType        = "RELEASETYPE"
 
 	MBReleaseID      = "MUSICBRAINZ_ALBUMID"
 	MBReleaseGroupID = "MUSICBRAINZ_RELEASEGROUPID"
