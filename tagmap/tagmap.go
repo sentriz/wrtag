@@ -110,6 +110,7 @@ func ReleaseTags(
 	t.Set(tags.DiscNumber, trim(strconv.Itoa(1))...)
 
 	t.Set(tags.MBRecordingID, trim(trk.Recording.ID)...)
+	t.Set(tags.MBTrackID, trim(trk.ID)...)
 	t.Set(tags.MBArtistID, trim(mapFunc(trk.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
 
 	return t

@@ -47,6 +47,7 @@ const (
 	DiscNumber    = "DISCNUMBER"
 
 	MBRecordingID = "MUSICBRAINZ_TRACKID"
+	MBTrackID     = "MUSICBRAINZ_RELEASETRACKID"
 	MBArtistID    = "MUSICBRAINZ_ARTISTID"
 
 	ReplayGainTrackGain = "REPLAYGAIN_TRACK_GAIN"
