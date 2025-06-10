@@ -85,7 +85,7 @@ func mainTag() {
 			for k, vs := range pairs {
 				t.Set(k, vs...)
 			}
-			if err := tags.WriteTags(p, t); err != nil {
+			if err := tags.WriteTags(p, t, 0); err != nil {
 				log.Fatalf("write tag file: %v", err)
 			}
 		case "check":

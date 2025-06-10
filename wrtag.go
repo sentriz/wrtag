@@ -270,7 +270,7 @@ func ProcessDir(
 			continue
 		}
 
-		if err := tags.WriteTags(destPath, destTags); err != nil { // not replacing here since some plugins use other tags
+		if err := tags.WriteTags(destPath, destTags, tags.DiffBeforeWrite); err != nil { // not replacing here since some plugins use other tags
 			return nil, fmt.Errorf("write tag file: %w", err)
 		}
 	}

@@ -56,6 +56,13 @@ const (
 	Lyrics = "LYRICS" //tag: alts "LYRICS:DESCRIPTION" "USLT:DESCRIPTION" "©LYR"
 )
 
+type WriteOption = taglib.WriteOption
+
+const (
+	Clear           = taglib.Clear
+	DiffBeforeWrite = taglib.DiffBeforeWrite
+)
+
 func CanRead(absPath string) bool {
 	switch ext := strings.ToLower(filepath.Ext(absPath)); ext {
 	case ".mp3", ".flac", ".opus", ".aac", ".aiff", ".ape", ".m4a", ".m4b", ".mp2", ".mpc", ".oga", ".ogg", ".spx", ".tak", ".wav", ".wma", ".wv":
@@ -69,12 +76,8 @@ func ReadTags(path string) (Tags, error) {
 	return Tags{t}, err
 }
 
-func ReplaceTags(path string, tags Tags) error {
-	return taglib.WriteTags(path, tags.t, taglib.Clear|taglib.DiffBeforeWrite)
-}
-
-func WriteTags(path string, tags Tags) error {
-	return taglib.WriteTags(path, tags.t, taglib.DiffBeforeWrite)
+func WriteTags(path string, tags Tags, opts WriteOption) error {
+	return taglib.WriteTags(path, tags.t, opts)
 }
 
 func ReadProperties(path string) (taglib.Properties, error) {

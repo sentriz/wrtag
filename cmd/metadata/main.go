@@ -155,7 +155,7 @@ func cmdWrite(path string, keyValues map[string][]string) error {
 	for k, vs := range keyValues {
 		t.Set(k, vs...)
 	}
-	if err := tags.WriteTags(path, t); err != nil {
+	if err := tags.WriteTags(path, t, tags.DiffBeforeWrite); err != nil {
 		return fmt.Errorf("save: %w", err)
 	}
 	return nil
@@ -163,7 +163,7 @@ func cmdWrite(path string, keyValues map[string][]string) error {
 
 func cmdClear(path string, keys map[string]struct{}) error {
 	if len(keys) == 0 {
-		if err := tags.ReplaceTags(path, tags.Tags{}); err != nil {
+		if err := tags.WriteTags(path, tags.Tags{}, tags.Clear); err != nil {
 			return err
 		}
 		return nil
@@ -172,7 +172,7 @@ func cmdClear(path string, keys map[string]struct{}) error {
 	for k := range keys {
 		t.Set(k)
 	}
-	if err := tags.WriteTags(path, t); err != nil {
+	if err := tags.WriteTags(path, t, 0); err != nil {
 		return err
 	}
 	return nil

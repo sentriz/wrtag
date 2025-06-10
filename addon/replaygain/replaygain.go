@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"strings"
 
+	"go.senan.xyz/taglib"
 	"go.senan.xyz/wrtag/addon"
 	"go.senan.xyz/wrtag/replaygain"
 	"go.senan.xyz/wrtag/tags"
@@ -66,7 +67,7 @@ func (a ReplayGainAddon) ProcessRelease(ctx context.Context, paths []string) err
 			tags.ReplayGainAlbumGain, fmtdB(albumLev.GaindB),
 			tags.ReplayGainAlbumPeak, fmtFloat(albumLev.Peak, 6),
 		)
-		if err := tags.WriteTags(path, t); err != nil {
+		if err := tags.WriteTags(path, t, taglib.DiffBeforeWrite); err != nil {
 			trackErrs = append(trackErrs, err)
 			continue
 		}

@@ -57,11 +57,11 @@ func TestDoubleSave(t *testing.T) {
 	require.NoError(t, err)
 
 	f.Set(Album, "a")
-	require.NoError(t, ReplaceTags(path, f))
+	require.NoError(t, WriteTags(path, f, Clear|DiffBeforeWrite))
 	f.Set(Album, "b")
-	require.NoError(t, ReplaceTags(path, f))
+	require.NoError(t, WriteTags(path, f, Clear|DiffBeforeWrite))
 	f.Set(Album, "c")
-	require.NoError(t, ReplaceTags(path, f))
+	require.NoError(t, WriteTags(path, f, Clear|DiffBeforeWrite))
 }
 
 func TestExtendedTags(t *testing.T) {
@@ -126,5 +126,5 @@ func withf(t *testing.T, path string, fn func(*Tags)) {
 
 	fn(&tags)
 
-	require.NoError(t, ReplaceTags(path, tags))
+	require.NoError(t, WriteTags(path, tags, Clear))
 }
