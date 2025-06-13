@@ -99,8 +99,6 @@ func Calculate(ctx context.Context, truePeak bool, trackPaths []string) (album L
 	return album, tracks, nil
 }
 
-type Column uint8
-
 const (
 	Filename = iota
 	LoudnessLUFS
