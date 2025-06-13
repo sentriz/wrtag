@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.14.0](https://www.github.com/sentriz/wrtag/compare/v0.13.0...v0.14.0) (2025-06-13)
+
+
+### Features
+
+* **tagmap:** write "MUSICBRAINZ_RELEASETRACKID" tag ([4f13881](https://www.github.com/sentriz/wrtag/commit/4f13881adb7779eb08a5778f13f5cb6c69ade7b5))
+* **tagmap:** write "RELEASETYPE" tag ([c19bd5d](https://www.github.com/sentriz/wrtag/commit/c19bd5d270d7ef24dd067af2a2b60dd01d93f0d4))
+* **tags:** add more known tags and variants ([9fb9f2a](https://www.github.com/sentriz/wrtag/commit/9fb9f2ae2795791dc6fbfe91cdd41f6dcdeb5299))
+
 ## [0.13.0](https://www.github.com/sentriz/wrtag/compare/v0.12.0...v0.13.0) (2025-05-30)
 
 
