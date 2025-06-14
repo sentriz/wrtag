@@ -256,7 +256,10 @@ func ProcessDir(
 			return nil, fmt.Errorf("process path %q: %w", filepath.Base(pt.Path), err)
 		}
 
-		destTags := tagmap.ReleaseTags(release, labelInfo, genres, i, &rt)
+		destTags := tags.Clone(pt.Tags)
+
+		tagmap.WriteRelease(destTags, release, labelInfo, genres, i, &rt)
+		tags.ClearUnknown(destTags)
 
 		if lvl, slog := slog.LevelDebug, slog.Default(); slog.Enabled(ctx, lvl) {
 			logTagChanges(ctx, pt.Path, lvl, pt.Tags, destTags)
@@ -270,7 +273,7 @@ func ProcessDir(
 			continue
 		}
 
-		if err := tags.WriteTags(destPath, destTags, tags.DiffBeforeWrite); err != nil { // not replacing here since some plugins use other tags
+		if err := tags.WriteTags(destPath, destTags, tags.Clear|tags.DiffBeforeWrite); err != nil {
 			return nil, fmt.Errorf("write tag file: %w", err)
 		}
 	}

@@ -67,10 +67,11 @@ func DiffRelease[T interface{ Get(string) string }](weights Weights, release *mu
 	return score, diffs
 }
 
-func ReleaseTags(
+func WriteRelease(
+	t tags.Tags,
 	release *musicbrainz.Release, labelInfo musicbrainz.LabelInfo, genres []musicbrainz.Genre,
 	i int, trk *musicbrainz.Track,
-) tags.Tags {
+) {
 	var genreNames []string
 	for _, g := range genres[:min(6, len(genres))] { // top 6 genre strings
 		genreNames = append(genreNames, g.Name)
@@ -79,7 +80,6 @@ func ReleaseTags(
 	disambiguationParts := trim(release.ReleaseGroup.Disambiguation, release.Disambiguation)
 	disambiguation := strings.Join(disambiguationParts, ", ")
 
-	var t tags.Tags
 	t.Set(tags.Album, trim(release.Title)...)
 	t.Set(tags.AlbumArtist, trim(musicbrainz.ArtistsString(release.Artists))...)
 	t.Set(tags.AlbumArtists, trim(musicbrainz.ArtistsNames(release.Artists)...)...)
@@ -112,8 +112,6 @@ func ReleaseTags(
 	t.Set(tags.MBRecordingID, trim(trk.Recording.ID)...)
 	t.Set(tags.MBTrackID, trim(trk.ID)...)
 	t.Set(tags.MBArtistID, trim(mapFunc(trk.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
-
-	return t
 }
 
 var (

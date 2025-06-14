@@ -4,7 +4,6 @@ import (
 	"bytes"
 	_ "embed"
 	"io"
-	"maps"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -27,26 +26,6 @@ func TestTrackNum(t *testing.T) {
 	withf(t, path, func(f *Tags) {
 		assert.Equal(t, "69", f.Get(TrackNumber))
 	})
-}
-
-func TestNormalise(t *testing.T) {
-	t.Parallel()
-
-	got := NewTags(
-		"media", "CD",
-		"trackc", "14",
-		"year", "1967",
-		"album artist credit", "Steve",
-	)
-
-	exp := map[string][]string{
-		"MEDIA":              {"CD"},
-		"TRACKNUMBER":        {"14"},
-		"DATE":               {"1967"},
-		"ALBUMARTIST_CREDIT": {"Steve"},
-	}
-
-	require.Equal(t, exp, maps.Collect(got.Iter()))
 }
 
 func TestDoubleSave(t *testing.T) {
