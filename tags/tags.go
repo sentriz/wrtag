@@ -54,9 +54,15 @@ const (
 	ReplayGainAlbumGain = "REPLAYGAIN_ALBUM_GAIN"
 	ReplayGainAlbumPeak = "REPLAYGAIN_ALBUM_PEAK"
 
+	BPM    = "BPM"
 	Lyrics = "LYRICS" //tag: alts "LYRICS:DESCRIPTION" "USLT:DESCRIPTION" "©LYR"
 
-	Encoder = "ENCODER"
+	AcoustIDFingerprint = "ACOUSTID_FINGERPRINT"
+	AcoustIDID          = "ACOUSTID_ID"
+
+	Encoder   = "ENCODER"
+	EncodedBy = "ENCODEDBY"
+
 	Comment = "COMMENT"
 )
 

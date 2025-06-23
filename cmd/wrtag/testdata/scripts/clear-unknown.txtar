@@ -1,14 +1,15 @@
 env WRTAG_LOG_LEVEL=debug
 env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+env WRTAG_TAG_CONFIG='keep is_a_tag,drop genre,drop genres'
 
-# TODO: add a case for the upcoming tag "copy:" directive here
-
-exec tag write 'kat_moda/1.flac' 'not a tag' aaa
+exec tag write 'kat_moda/1.flac' 'not_a_tag' aaa , 'is_a_tag' 'bbb' , 'lyrics' 'laa laaa laaaa'
 exec tag write 'kat_moda/2.flac'
 exec tag write 'kat_moda/3.flac'
 exec tag write 'kat_moda/*.flac' musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
 
 exec wrtag move -yes kat_moda
 
-exec tag check 'albums/Kat Moda/1.flac' 'not a tag' # missing
-exec tag check 'albums/Kat Moda/1.flac' 'NOT A TAG' # missing
+exec tag check 'albums/Kat Moda/1.flac' 'not_a_tag'               # missing, unknown
+exec tag check 'albums/Kat Moda/1.flac' 'is_a_tag' bbb            # copied, from WRTAG_TAG_CONFIG
+exec tag check 'albums/Kat Moda/1.flac' 'lyrics' 'laa laaa laaaa' # copied, from default copy set
+exec tag check 'albums/Kat Moda/1.flac' 'genre'                   # missing, WRTAG_TAG_CONFIG

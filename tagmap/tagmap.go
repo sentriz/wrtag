@@ -148,6 +148,41 @@ func Differ(score *float64) func(weight float64, field string, a, b string) Diff
 	}
 }
 
+type Config struct {
+	Keep []string
+	Drop []string
+}
+
+func ApplyConfig(
+	dest, source tags.Tags,
+	conf Config,
+) {
+	for _, k := range defaultKeepConfig {
+		dest.Set(k, source.Values(k)...)
+	}
+	for _, k := range conf.Keep {
+		dest.Set(k, source.Values(k)...)
+	}
+	for _, k := range conf.Drop {
+		dest.Set(k)
+	}
+}
+
+// defaultKeepConfig is set of tags which are kept as-is when replacing tags.
+var defaultKeepConfig = []string{
+	tags.ReplayGainTrackGain,
+	tags.ReplayGainTrackPeak,
+	tags.ReplayGainAlbumGain,
+	tags.ReplayGainAlbumPeak,
+	tags.BPM,
+	tags.Lyrics,
+	tags.AcoustIDFingerprint,
+	tags.AcoustIDID,
+	tags.Encoder,
+	tags.EncodedBy,
+	tags.Comment,
+}
+
 func norm(input string) string {
 	return strings.Map(func(r rune) rune {
 		if unicode.IsLetter(r) {

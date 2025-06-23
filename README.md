@@ -43,8 +43,9 @@ To describe the general workflow:
    - [Addon Lyrics](#addon-lyrics)
    - [Addon ReplayGain](#addon-replaygain)
    - [Addon Subprocess](#addon-subprocess)
-7. [Notifications](#notifications)
-8. [Goals and non-goals](#goals-and-non-goals)
+7. [Tagging](#tagging)
+8. [Notifications](#notifications)
+9. [Goals and non-goals](#goals-and-non-goals)
 
 # Features
 
@@ -326,23 +327,24 @@ Global configuration is used by all tools. Any option can be provided with a CLI
 
 <!-- gen with ```go run ./cmd/wrtag -h 2>&1 | ./gen-docs | wl-copy``` -->
 
-| CLI argument      | Environment variable   | Config file key  | Description                                                                                    |
-| ----------------- | ---------------------- | ---------------- | ---------------------------------------------------------------------------------------------- |
-| -addon            | WRTAG_ADDON            | addon            | Define an addon for extra metadata writing (see [Addons](#addons)) (stackable)                 |
-| -caa-base-url     | WRTAG_CAA_BASE_URL     | caa-base-url     | CoverArtArchive base URL (default "<https://coverartarchive.org/>")                            |
-| -caa-rate-limit   | WRTAG_CAA_RATE_LIMIT   | caa-rate-limit   | CoverArtArchive rate limit duration                                                            |
-| -config           | WRTAG_CONFIG           | config           | Print the parsed config and exit                                                               |
-| -config-path      | WRTAG_CONFIG_PATH      | config-path      | Path to config file (default "$XDG_CONFIG_HOME/wrtag/config")                                  |
-| -cover-upgrade    | WRTAG_COVER_UPGRADE    | cover-upgrade    | Fetch new cover art even if it exists locally                                                  |
-| -keep-file        | WRTAG_KEEP_FILE        | keep-file        | Define an extra file path to keep when moving/copying to root dir (stackable)                  |
-| -log-level        | WRTAG_LOG_LEVEL        | log-level        | Set the logging level (default INFO)                                                           |
-| -mb-base-url      | WRTAG_MB_BASE_URL      | mb-base-url      | MusicBrainz base URL (default "<https://musicbrainz.org/ws/2/>")                               |
-| -mb-rate-limit    | WRTAG_MB_RATE_LIMIT    | mb-rate-limit    | MusicBrainz rate limit duration (default 1s)                                                   |
-| -notification-uri | WRTAG_NOTIFICATION_URI | notification-uri | Add a shoutrrr notification URI for an event (see [Notifications](#notifications)) (stackable) |
-| -path-format      | WRTAG_PATH_FORMAT      | path-format      | Path to root music directory including path format rules (see [Path format](#path-format))     |
-| -research-link    | WRTAG_RESEARCH_LINK    | research-link    | Define a helper URL to help find information about an unmatched release (stackable)            |
-| -tag-weight       | WRTAG_TAG_WEIGHT       | tag-weight       | Adjust distance weighting for a tag (0 to ignore) (stackable)                                  |
-| -version          | WRTAG_VERSION          | version          | Print the version and exit                                                                     |
+| CLI argument      | Environment variable   | Config file key  | Description                                                                                          |
+| ----------------- | ---------------------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
+| -addon            | WRTAG_ADDON            | addon            | Define an addon for extra metadata writing (see [Addons](#addons)) (stackable)                       |
+| -caa-base-url     | WRTAG_CAA_BASE_URL     | caa-base-url     | CoverArtArchive base URL (default "<https://coverartarchive.org/>")                                  |
+| -caa-rate-limit   | WRTAG_CAA_RATE_LIMIT   | caa-rate-limit   | CoverArtArchive rate limit duration                                                                  |
+| -config           | WRTAG_CONFIG           | config           | Print the parsed config and exit                                                                     |
+| -config-path      | WRTAG_CONFIG_PATH      | config-path      | Path to config file (default "$XDG_CONFIG_HOME/wrtag/config")                                        |
+| -cover-upgrade    | WRTAG_COVER_UPGRADE    | cover-upgrade    | Fetch new cover art even if it exists locally                                                        |
+| -keep-file        | WRTAG_KEEP_FILE        | keep-file        | Define an extra file path to keep when moving/copying to root dir (stackable)                        |
+| -log-level        | WRTAG_LOG_LEVEL        | log-level        | Set the logging level (default INFO)                                                                 |
+| -mb-base-url      | WRTAG_MB_BASE_URL      | mb-base-url      | MusicBrainz base URL (default "<https://musicbrainz.org/ws/2/>")                                     |
+| -mb-rate-limit    | WRTAG_MB_RATE_LIMIT    | mb-rate-limit    | MusicBrainz rate limit duration (default 1s)                                                         |
+| -notification-uri | WRTAG_NOTIFICATION_URI | notification-uri | Add a shoutrrr notification URI for an event (see [Notifications](#notifications)) (stackable)       |
+| -path-format      | WRTAG_PATH_FORMAT      | path-format      | Path to root music directory including path format rules (see [Path format](#path-format))           |
+| -research-link    | WRTAG_RESEARCH_LINK    | research-link    | Define a helper URL to help find information about an unmatched release (stackable)                  |
+| -tag-weight       | WRTAG_TAG_WEIGHT       | tag-weight       | Adjust distance weighting for a tag (0 to ignore) (stackable)                                        |
+| -tag-config       | WRTAG_TAG_CONFIG       | tag-config       | Specify tag keep and drop rules when writing new tag revisions (see [Tagging](#tagging)) (stackable) |
+| -version          | WRTAG_VERSION          | version          | Print the version and exit                                                                           |
 
 ### Format
 
@@ -515,6 +517,87 @@ The subprocess addon is for running a user-provided program.
 The format of the addon config is `subproc <path> <args>...`, where `path` is the path to the program, or the program name itself if it’s in your `$PATH`. `args` are extra command line arguments to pass to the program. One of the `args` should be a special placeholder named `<files>`. This will be expanded to the paths to the files that were just processed by `wrtag`.
 
 For example, the addon `"subproc my-program a --b 'c d' <files>"` might call `my-program` with arguments `["a", "--b", "c d", "track 1.flac", "track 2.flac", "track 3.flac"]` after importing a release with 3 tracks.
+
+# Tagging
+
+During the music tagging process, **wrtag** follows a systematic approach to ensure consistent and accurate metadata
+
+1. **All existing tags are cleared** from the audio files to start with a clean slate
+2. **Main tags are written** using data from the MusicBrainz release (see [Tags written](#tags-written))
+3. **Default keep tags are preserved** from the original files (see [Tags kept by default](#tags-kept-by-default))
+4. **Custom `tag-config` rules are applied** to further customise the final tag set (see [Tag configuration](#tag-configuration))
+
+## Tags written
+
+| Tag [(see "Key")](https://taglib.org/api/p_propertymapping.html) | Description                                   | Example Value                                                                  |
+| ---------------------------------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------------------ |
+| `ALBUM`                                                          | Album/release title                           | `My Life in the Bush of Ghosts`                                                |
+| `ALBUMARTIST`                                                    | Primary album artist as string                | `Brian Eno + David Byrne`                                                      |
+| `ALBUMARTISTS`                                                   | Album artist names as multi-valued tag        | `Brian Eno`, `David Byrne`                                                     |
+| `ALBUMARTIST_CREDIT`                                             | Album artist credit as string                 | `Eno + Byrne`                                                                  |
+| `ALBUMARTISTS_CREDIT`                                            | Album artist credit names as multi-valued tag | `Eno`, `Byrne`                                                                 |
+| `DATE`                                                           | Release date                                  | `2006-03-27`                                                                   |
+| `ORIGINALDATE`                                                   | Original release date                         | `1981-02-01`                                                                   |
+| `MEDIA`                                                          | Media format                                  | `Enhanced CD`                                                                  |
+| `LABEL`                                                          | Record label                                  | `Virgin`                                                                       |
+| `CATALOGNUMBER`                                                  | Catalogue number                              | `BEDBX 1`                                                                      |
+| `BARCODE`                                                        | Release barcode/UPC                           | `0094633134126`                                                                |
+| `COMPILATION`                                                    | Compilation flag                              | `1`                                                                            |
+| `RELEASETYPE`                                                    | Release type                                  | `album`                                                                        |
+| `TITLE`                                                          | Track title                                   | `America Is Waiting`                                                           |
+| `ARTIST`                                                         | Track artist as string                        | `Brian Eno + David Byrne`                                                      |
+| `ARTISTS`                                                        | Track artist names as multi-valued tag        | `Brian Eno`, `David Byrne`                                                     |
+| `ARTIST_CREDIT`                                                  | Track artist credit as string                 | `Eno + Byrne`                                                                  |
+| `ARTISTS_CREDIT`                                                 | Track artist credit names as multi-valued tag | `Eno`, `Byrne`                                                                 |
+| `GENRE`                                                          | Primary genre                                 | `ambient`                                                                      |
+| `GENRES`                                                         | Genre list as multi-valued tag                | `ambient`, `art rock`, `electronic`, `experimental`                            |
+| `TRACKNUMBER`                                                    | Track number                                  | `1`                                                                            |
+| `MUSICBRAINZ_ALBUMID`                                            | MusicBrainz release ID                        | `3b28412d-8a47-3da9-8331-525947231d50`                                         |
+| `MUSICBRAINZ_RELEASEGROUPID`                                     | MusicBrainz release group ID                  | `0dd5a352-6ae0-3e0d-bf18-bec30e27807d`                                         |
+| `MUSICBRAINZ_ALBUMARTISTID`                                      | MusicBrainz album artist ID                   | `ff95eb47-41c4-4f7f-a104-cdc30f02e872`, `d4659efb-b8eb-4f03-95e9-f69ce35967a9` |
+| `MUSICBRAINZ_ALBUMCOMMENT`                                       | Release and release group disambiguation      | `2005 remaster`                                                                |
+| `MUSICBRAINZ_TRACKID`                                            | MusicBrainz recording ID                      | `28a9587e-15a1-49d6-b02a-65d29b748ffe`                                         |
+| `MUSICBRAINZ_RELEASETRACKID`                                     | MusicBrainz track ID                          | `c0b83973-4f74-3200-8411-392630d9c945`                                         |
+| `MUSICBRAINZ_ARTISTID`                                           | MusicBrainz track artist ID                   | `ff95eb47-41c4-4f7f-a104-cdc30f02e872`, `d4659efb-b8eb-4f03-95e9-f69ce35967a9` |
+
+## Tags kept by default
+
+The following tags are automatically preserved from the original files during the tagging process
+
+| Tag                     | Description                 |
+| ----------------------- | --------------------------- |
+| `REPLAYGAIN_TRACK_GAIN` | ReplayGain track gain value |
+| `REPLAYGAIN_TRACK_PEAK` | ReplayGain track peak value |
+| `REPLAYGAIN_ALBUM_GAIN` | ReplayGain album gain value |
+| `REPLAYGAIN_ALBUM_PEAK` | ReplayGain album peak value |
+| `BPM`                   | Beats per minute            |
+| `LYRICS`                | Song lyrics                 |
+| `ACOUSTID_FINGERPRINT`  | AcoustID audio fingerprint  |
+| `ACOUSTID_ID`           | AcoustID identifier         |
+| `ENCODER`               | Encoder information         |
+| `ENCODEDBY`             | Encoded by information      |
+| `COMMENT`               | Comments                    |
+
+## Tag configuration
+
+The `tag-config` option allows you to customise which tags are kept or dropped during the tagging process. This option can be used multiple times and supports two operations
+
+- `keep <tag>` - Preserve the specified tag from the original file
+- `drop <tag>` - Remove the specified tag from the final output
+
+The option is configured as part of the [global configuration](#global-configuration) using a [config format](#format).
+
+For example:
+
+- `$ wrtag -tag-config "keep CUSTOM_RATING" -tag-config "keep MOOD" -tag-config "drop GENRE"`
+- `$ WRTAG_TAG_CONFIG="keep CUSTOM_RATING,keep MOOD,drop GENRE,drop COMMENT"`
+- or repeating the `tag-config` clause in the config file
+
+This example configuration would
+
+- Keep any existing `CUSTOM_RATING` and `MOOD` tags from the original files
+- Remove `GENRE` tags from the final output (even though **wrtag** normally writes genre information)
+- Remove `COMMENT` tags from the final output (overriding the default keep behavior)
 
 # Notifications
 
