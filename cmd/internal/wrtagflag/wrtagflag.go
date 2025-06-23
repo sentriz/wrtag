@@ -77,6 +77,9 @@ func Config() *wrtag.Config {
 	cfg.TagWeights = tagmap.Weights{}
 	flag.Var(&tagWeightsParser{cfg.TagWeights}, "tag-weight", "Adjust distance weighting for a tag (0 to ignore) (stackable)")
 
+	cfg.TagConfig = tagmap.Config{}
+	flag.Var(&tagConfigParser{&cfg.TagConfig}, "tag-config", "Specify tag copy and drop rules when writing new tag revisions (stackable)")
+
 	flag.StringVar(&cfg.MusicBrainzClient.BaseURL, "mb-base-url", `https://musicbrainz.org/ws/2/`, "MusicBrainz base URL")
 	flag.DurationVar(&cfg.MusicBrainzClient.RateLimit, "mb-rate-limit", 1*time.Second, "MusicBrainz rate limit duration")
 
@@ -203,6 +206,38 @@ func (tw tagWeightsParser) String() string {
 	var parts []string
 	for a, b := range tw.Weights {
 		parts = append(parts, fmt.Sprintf("%s: %.2f", a, b))
+	}
+	return strings.Join(parts, ", ")
+}
+
+type tagConfigParser struct{ *tagmap.Config }
+
+func (tw tagConfigParser) Set(value string) error {
+	op, tag, ok := strings.Cut(value, " ")
+	if !ok {
+		return errors.New("invalid tag config format. expected eg \"<op> <tag>\"")
+	}
+	switch op {
+	case "copy":
+		tw.Copy = append(tw.Copy, tag)
+	case "drop":
+		tw.Drop = append(tw.Drop, tag)
+	default:
+		return fmt.Errorf("invalid tag config op %q", op)
+	}
+	return nil
+}
+
+func (tw tagConfigParser) String() string {
+	if tw.Config == nil {
+		return ""
+	}
+	var parts []string
+	for _, k := range tw.Copy {
+		parts = append(parts, fmt.Sprintf("copy %q", k))
+	}
+	for _, k := range tw.Drop {
+		parts = append(parts, fmt.Sprintf("drop %q", k))
 	}
 	return strings.Join(parts, ", ")
 }

@@ -326,23 +326,24 @@ Global configuration is used by all tools. Any option can be provided with a CLI
 
 <!-- gen with ```go run ./cmd/wrtag -h 2>&1 | ./gen-docs | wl-copy``` -->
 
-| CLI argument      | Environment variable   | Config file key  | Description                                                                                    |
-| ----------------- | ---------------------- | ---------------- | ---------------------------------------------------------------------------------------------- |
-| -addon            | WRTAG_ADDON            | addon            | Define an addon for extra metadata writing (see [Addons](#addons)) (stackable)                 |
-| -caa-base-url     | WRTAG_CAA_BASE_URL     | caa-base-url     | CoverArtArchive base URL (default "<https://coverartarchive.org/>")                            |
-| -caa-rate-limit   | WRTAG_CAA_RATE_LIMIT   | caa-rate-limit   | CoverArtArchive rate limit duration                                                            |
-| -config           | WRTAG_CONFIG           | config           | Print the parsed config and exit                                                               |
-| -config-path      | WRTAG_CONFIG_PATH      | config-path      | Path to config file (default "$XDG_CONFIG_HOME/wrtag/config")                                  |
-| -cover-upgrade    | WRTAG_COVER_UPGRADE    | cover-upgrade    | Fetch new cover art even if it exists locally                                                  |
-| -keep-file        | WRTAG_KEEP_FILE        | keep-file        | Define an extra file path to keep when moving/copying to root dir (stackable)                  |
-| -log-level        | WRTAG_LOG_LEVEL        | log-level        | Set the logging level (default INFO)                                                           |
-| -mb-base-url      | WRTAG_MB_BASE_URL      | mb-base-url      | MusicBrainz base URL (default "<https://musicbrainz.org/ws/2/>")                               |
-| -mb-rate-limit    | WRTAG_MB_RATE_LIMIT    | mb-rate-limit    | MusicBrainz rate limit duration (default 1s)                                                   |
-| -notification-uri | WRTAG_NOTIFICATION_URI | notification-uri | Add a shoutrrr notification URI for an event (see [Notifications](#notifications)) (stackable) |
-| -path-format      | WRTAG_PATH_FORMAT      | path-format      | Path to root music directory including path format rules (see [Path format](#path-format))     |
-| -research-link    | WRTAG_RESEARCH_LINK    | research-link    | Define a helper URL to help find information about an unmatched release (stackable)            |
-| -tag-weight       | WRTAG_TAG_WEIGHT       | tag-weight       | Adjust distance weighting for a tag (0 to ignore) (stackable)                                  |
-| -version          | WRTAG_VERSION          | version          | Print the version and exit                                                                     |
+| CLI argument      | Environment variable   | Config file key  | Description                                                                                             |
+| ----------------- | ---------------------- | ---------------- | ------------------------------------------------------------------------------------------------------- |
+| -addon            | WRTAG_ADDON            | addon            | Define an addon for extra metadata writing (see [Addons](#addons)) (stackable)                          |
+| -caa-base-url     | WRTAG_CAA_BASE_URL     | caa-base-url     | CoverArtArchive base URL (default "<https://coverartarchive.org/>")                                     |
+| -caa-rate-limit   | WRTAG_CAA_RATE_LIMIT   | caa-rate-limit   | CoverArtArchive rate limit duration                                                                     |
+| -config           | WRTAG_CONFIG           | config           | Print the parsed config and exit                                                                        |
+| -config-path      | WRTAG_CONFIG_PATH      | config-path      | Path to config file (default "$XDG_CONFIG_HOME/wrtag/config")                                           |
+| -cover-upgrade    | WRTAG_COVER_UPGRADE    | cover-upgrade    | Fetch new cover art even if it exists locally                                                           |
+| -keep-file        | WRTAG_KEEP_FILE        | keep-file        | Define an extra file path to keep when moving/copying to root dir (stackable)                           |
+| -log-level        | WRTAG_LOG_LEVEL        | log-level        | Set the logging level (default INFO)                                                                    |
+| -mb-base-url      | WRTAG_MB_BASE_URL      | mb-base-url      | MusicBrainz base URL (default "<https://musicbrainz.org/ws/2/>")                                        |
+| -mb-rate-limit    | WRTAG_MB_RATE_LIMIT    | mb-rate-limit    | MusicBrainz rate limit duration (default 1s)                                                            |
+| -notification-uri | WRTAG_NOTIFICATION_URI | notification-uri | Add a shoutrrr notification URI for an event (see [Notifications](#notifications)) (stackable)          |
+| -path-format      | WRTAG_PATH_FORMAT      | path-format      | Path to root music directory including path format rules (see [Path format](#path-format))              |
+| -research-link    | WRTAG_RESEARCH_LINK    | research-link    | Define a helper URL to help find information about an unmatched release (stackable)                     |
+| -tag-weight       | WRTAG_TAG_WEIGHT       | tag-weight       | Adjust distance weighting for a tag (0 to ignore) (stackable)                                           |
+| -tag-config       | WRTAG_TAG_CONFIG       | tag-config       | Specify rules for keeping previous tags when editing, or removing tags from the default set (stackable) |
+| -version          | WRTAG_VERSION          | version          | Print the version and exit                                                                              |
 
 ### Format
 

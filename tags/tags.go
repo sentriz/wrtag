@@ -56,7 +56,12 @@ const (
 
 	Lyrics = "LYRICS" //tag: alts "LYRICS:DESCRIPTION" "USLT:DESCRIPTION" "©LYR"
 
-	Encoder = "ENCODER"
+	AcoustIDFingerprint = "ACOUSTID_FINGERPRINT"
+	AcoustIDID          = "ACOUSTID_ID"
+
+	Encoder   = "ENCODER"
+	EncodedBy = "ENCODEDBY"
+
 	Comment = "COMMENT"
 )
 

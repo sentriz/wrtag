@@ -123,6 +123,9 @@ type Config struct {
 	// TagWeights defines the relative importance of different tags when calculating match scores
 	TagWeights tagmap.Weights
 
+	// TagConfig defines options for modifying the default tag set
+	TagConfig tagmap.Config
+
 	// KeepFiles specifies files that should be preserved during processing
 	KeepFiles map[string]struct{}
 
@@ -258,6 +261,7 @@ func ProcessDir(
 
 		var destTags = tags.Tags{}
 		tagmap.WriteRelease(destTags, release, labelInfo, genres, i, &rt)
+		tagmap.ApplyConfig(destTags, pt.Tags, cfg.TagConfig)
 
 		if lvl, slog := slog.LevelDebug, slog.Default(); slog.Enabled(ctx, lvl) {
 			logTagChanges(ctx, pt.Path, lvl, pt.Tags, destTags)
