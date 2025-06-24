@@ -52,7 +52,9 @@ func TestNormalise(t *testing.T) {
 	err := taglib.WriteTags(path, map[string][]string{
 		// using only alternatives
 		"releasedate":         {"1970-01-02"},
-		"TRACKC":              {"23"},
+		"TRACK":               {"23"},
+		"TRACKNUMBER":         {"24"},
+		"totaltracks":         {"30"},
 		"Mcn":                 {"1234"},
 		"lyrics:description":  {"this is lyrics maybe"},
 		"mEdiA":               {"CD"},
@@ -63,7 +65,7 @@ func TestNormalise(t *testing.T) {
 	tags, err := ReadTags(path)
 	require.NoError(t, err)
 	assert.Equal(t, "1970-01-02", tags.Get(Date))
-	assert.Equal(t, "23", tags.Get(TrackNumber))
+	assert.Equal(t, "24", tags.Get(TrackNumber)) // prefer non alt
 	assert.Equal(t, "1234", tags.Get(UPC))
 	assert.Equal(t, "this is lyrics maybe", tags.Get(Lyrics))
 	assert.Equal(t, "CD", tags.Get(MediaFormat))
