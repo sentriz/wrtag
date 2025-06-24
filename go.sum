@@ -45,8 +45,8 @@ github.com/mattn/go-colorable v0.1.14/go.mod h1:6LmQG8QLFO4G5z1gPvYEzlUgJ2wF+stg
 github.com/mattn/go-isatty v0.0.20 h1:xfD0iDuEKnDkl03q4limB+vH+GxLEtL/jb4xVJSWWEY=
 github.com/mattn/go-isatty v0.0.20/go.mod h1:W+V8PltTTMOvKvAeJH7IuucS94S2C6jfK/D7dTCTo3Y=
 github.com/mattn/go-runewidth v0.0.10/go.mod h1:RAqKPSqVFrSLVXbA8x7dzmKdmGzieGRCM46jaSJTDAk=
-github.com/ncruces/go-sqlite3 v0.26.1 h1:lBXmbmucH1Bsj57NUQR6T84UoMN7jnNImhF+ibEITJU=
-github.com/ncruces/go-sqlite3 v0.26.1/go.mod h1:XFTPtFIo1DmGCh+XVP8KGn9b/o2f+z0WZuT09x2N6eo=
+github.com/ncruces/go-sqlite3 v0.26.2 h1:5UkIBwdfMN2irpVI1dgi9TjTUlxNI06Rti1C8O7ZKVg=
+github.com/ncruces/go-sqlite3 v0.26.2/go.mod h1:XFTPtFIo1DmGCh+XVP8KGn9b/o2f+z0WZuT09x2N6eo=
 github.com/ncruces/julianday v1.0.0 h1:fH0OKwa7NWvniGQtxdJRxAgkBMolni2BjDHaWTxqt7M=
 github.com/ncruces/julianday v1.0.0/go.mod h1:Dusn2KvZrrovOMJuOt0TNXL6tB7U2E8kvza5fFc9G7g=
 github.com/onsi/ginkgo/v2 v2.9.2 h1:BA2GMJOtfGAfagzYtrAlufIP0lq6QERkFmHLMLPwFSU=
