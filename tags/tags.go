@@ -49,12 +49,17 @@ const (
 	MBTrackID     = "MUSICBRAINZ_RELEASETRACKID"
 	MBArtistID    = "MUSICBRAINZ_ARTISTID"
 
-	ReplayGainTrackGain = "REPLAYGAIN_TRACK_GAIN"
-	ReplayGainTrackPeak = "REPLAYGAIN_TRACK_PEAK"
-	ReplayGainAlbumGain = "REPLAYGAIN_ALBUM_GAIN"
-	ReplayGainAlbumPeak = "REPLAYGAIN_ALBUM_PEAK"
+	ReplayGainTrackGain         = "REPLAYGAIN_TRACK_GAIN"
+	ReplayGainTrackPeak         = "REPLAYGAIN_TRACK_PEAK"
+	ReplayGainAlbumGain         = "REPLAYGAIN_ALBUM_GAIN"
+	ReplayGainAlbumPeak         = "REPLAYGAIN_ALBUM_PEAK"
+	ReplayGainTrackRange        = "REPLAYGAIN_TRACK_RANGE"
+	ReplayGainAlbumRange        = "REPLAYGAIN_ALBUM_RANGE"
+	ReplayGainReferenceLoudness = "REPLAYGAIN_REFERENCE_LOUDNESS"
 
-	BPM    = "BPM"
+	BPM = "BPM"
+	Key = "INITIALKEY" //tag: alts "INITIAL_KEY"
+
 	Lyrics = "LYRICS" //tag: alts "LYRICS:DESCRIPTION" "USLT:DESCRIPTION" "©LYR"
 
 	AcoustIDFingerprint = "ACOUSTID_FINGERPRINT"
