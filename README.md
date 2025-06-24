@@ -562,21 +562,12 @@ During the music tagging process, **wrtag** follows a systematic approach to ens
 
 ## Tags kept by default
 
-The following tags are automatically preserved from the original files during the tagging process
+The following tags are automatically preserved from the original files during the tagging process, if present
 
-| Tag                     | Description                 |
-| ----------------------- | --------------------------- |
-| `REPLAYGAIN_TRACK_GAIN` | ReplayGain track gain value |
-| `REPLAYGAIN_TRACK_PEAK` | ReplayGain track peak value |
-| `REPLAYGAIN_ALBUM_GAIN` | ReplayGain album gain value |
-| `REPLAYGAIN_ALBUM_PEAK` | ReplayGain album peak value |
-| `BPM`                   | Beats per minute            |
-| `LYRICS`                | Song lyrics                 |
-| `ACOUSTID_FINGERPRINT`  | AcoustID audio fingerprint  |
-| `ACOUSTID_ID`           | AcoustID identifier         |
-| `ENCODER`               | Encoder information         |
-| `ENCODEDBY`             | Encoded by information      |
-| `COMMENT`               | Comments                    |
+- ReplayGain settings
+- BPM, Key, Lyrics
+- AcoustID identifiers
+- Encoder comments
 
 ## Tag configuration
 
