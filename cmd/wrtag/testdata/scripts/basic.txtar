@@ -80,6 +80,7 @@ stderr 'level=DEBUG msg=response.*status=200' # make sure we have debug output
 ! stderr 'level=DEBUG msg=\"tag change\".*key=COMPILATION'              # didn't change
 ! stderr 'level=DEBUG msg=\"tag change\".*key=MUSICBRAINZ_ALBUMCOMMENT' # didn't change
 ! stderr 'level=DEBUG msg=\"tag change\".*key=UPC'                      # didn't change
+! stderr 'level=DEBUG msg=\"tag change\".*key=BARCODE'                  # didn't change
 
 -- exp-layout --
 albums

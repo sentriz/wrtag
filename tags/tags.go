@@ -26,7 +26,7 @@ const (
 	MediaFormat        = "MEDIA"
 	Label              = "LABEL"
 	CatalogueNum       = "CATALOGNUMBER" //tag: alts "CATALOGNUM" "CAT#" "CATALOGID" "CATNUM"
-	UPC                = "UPC"           //tag: alts "MCN" "BARCODE"
+	Barcode            = "BARCODE"       //tag: alts "UPC" "MCN"
 	Compilation        = "COMPILATION"
 	ReleaseType        = "RELEASETYPE"
 

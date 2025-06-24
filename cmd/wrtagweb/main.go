@@ -144,10 +144,10 @@ func main() {
 
 		if searchResult != nil && searchResult.Query.Artist != "" {
 			researchLinks, err := researchLinkQuerier.Build(researchlink.Query{
-				Artist: searchResult.Query.Artist,
-				Album:  searchResult.Query.Release,
-				UPC:    searchResult.Query.Barcode,
-				Date:   searchResult.Query.Date,
+				Artist:  searchResult.Query.Artist,
+				Album:   searchResult.Query.Release,
+				Barcode: searchResult.Query.Barcode,
+				Date:    searchResult.Query.Date,
 			})
 			if err != nil {
 				return fmt.Errorf("build links: %w", err)

@@ -48,7 +48,7 @@ func DiffRelease[T interface{ Get(string) string }](weights Weights, release *mu
 			diff(weight("artist"), "artist", tf.Get(tags.AlbumArtist), musicbrainz.ArtistsString(release.Artists)),
 			diff(weight("label"), "label", tf.Get(tags.Label), labelInfo.Label.Name),
 			diff(weight("catalogue num"), "catalogue num", tf.Get(tags.CatalogueNum), labelInfo.CatalogNumber),
-			diff(weight("upc"), "upc", tf.Get(tags.UPC), release.Barcode),
+			diff(weight("barcode"), "barcode", tf.Get(tags.Barcode), release.Barcode),
 			diff(weight("media format"), "media format", tf.Get(tags.MediaFormat), release.Media[0].Format),
 		)
 	}
@@ -90,7 +90,7 @@ func WriteRelease(
 	t.Set(tags.MediaFormat, trim(release.Media[0].Format)...)
 	t.Set(tags.Label, trim(labelInfo.Label.Name)...)
 	t.Set(tags.CatalogueNum, trim(labelInfo.CatalogNumber)...)
-	t.Set(tags.UPC, trim(release.Barcode)...)
+	t.Set(tags.Barcode, trim(release.Barcode)...)
 	t.Set(tags.Compilation, trim(formatBool(musicbrainz.IsCompilation(release.ReleaseGroup)))...)
 	t.Set(tags.ReleaseType, trim(strings.ToLower(string(release.ReleaseGroup.PrimaryType)))...)
 

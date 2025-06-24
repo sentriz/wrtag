@@ -184,10 +184,10 @@ func runOperation(
 	}
 
 	links, err := researchLinks.Build(researchlink.Query{
-		Artist: r.Query.Artist,
-		Album:  r.Query.Release,
-		UPC:    r.Query.Barcode,
-		Date:   r.Query.Date,
+		Artist:  r.Query.Artist,
+		Album:   r.Query.Release,
+		Barcode: r.Query.Barcode,
+		Date:    r.Query.Date,
 	})
 	if err != nil {
 		return fmt.Errorf("research search: %w", err)

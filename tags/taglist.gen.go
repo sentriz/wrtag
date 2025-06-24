@@ -12,6 +12,7 @@ var knownTags = map[string]struct{}{
 	"ARTISTS": {},
 	"ARTISTS_CREDIT": {},
 	"ARTIST_CREDIT": {},
+	"BARCODE": {},
 	"BPM": {},
 	"CATALOGNUMBER": {},
 	"COMMENT": {},
@@ -40,7 +41,6 @@ var knownTags = map[string]struct{}{
 	"REPLAYGAIN_TRACK_PEAK": {},
 	"TITLE": {},
 	"TRACKNUMBER": {},
-	"UPC": {},
 }
 var alternatives = map[string]string{
 	"ACOUSTID FINGERPRINT": "ACOUSTID_FINGERPRINT",
@@ -59,6 +59,8 @@ var alternatives = map[string]string{
 	"ARTISTSCREDIT": "ARTISTS_CREDIT",
 	"ARTIST CREDIT": "ARTIST_CREDIT",
 	"ARTISTCREDIT": "ARTIST_CREDIT",
+	"UPC": "BARCODE",
+	"MCN": "BARCODE",
 	"CATALOGNUM": "CATALOGNUMBER",
 	"CAT#": "CATALOGNUMBER",
 	"CATALOGID": "CATALOGNUMBER",
@@ -83,6 +85,4 @@ var alternatives = map[string]string{
 	"REPLAYGAIN TRACK PEAK": "REPLAYGAIN_TRACK_PEAK",
 	"TRACK": "TRACKNUMBER",
 	"TRACKNUM": "TRACKNUMBER",
-	"MCN": "UPC",
-	"BARCODE": "UPC",
 }

@@ -41,10 +41,10 @@ func (b *Builder) AddSource(name, templRaw string) error {
 }
 
 type Query struct {
-	Artist string
-	Album  string
-	UPC    string
-	Date   time.Time
+	Artist  string
+	Album   string
+	Barcode string
+	Date    time.Time
 }
 
 type SearchResult struct {

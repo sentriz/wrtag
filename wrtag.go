@@ -181,7 +181,7 @@ func ProcessDir(
 		Format:           searchTags.Get(tags.MediaFormat),
 		Label:            searchTags.Get(tags.Label),
 		CatalogueNum:     searchTags.Get(tags.CatalogueNum),
-		Barcode:          searchTags.Get(tags.UPC),
+		Barcode:          searchTags.Get(tags.Barcode),
 		NumTracks:        len(pathTags),
 	}
 

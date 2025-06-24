@@ -66,7 +66,7 @@ func TestNormalise(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "1970-01-02", tags.Get(Date))
 	assert.Equal(t, "24", tags.Get(TrackNumber)) // prefer non alt
-	assert.Equal(t, "1234", tags.Get(UPC))
+	assert.Equal(t, "1234", tags.Get(Barcode))
 	assert.Equal(t, "this is lyrics maybe", tags.Get(Lyrics))
 	assert.Equal(t, "CD", tags.Get(MediaFormat))
 	assert.Equal(t, "Steve", tags.Get(AlbumArtistCredit))
