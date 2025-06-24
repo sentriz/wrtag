@@ -11,6 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.senan.xyz/taglib"
 )
 
 func TestTrackNum(t *testing.T) {
@@ -41,6 +42,32 @@ func TestDoubleSave(t *testing.T) {
 	require.NoError(t, WriteTags(path, f, Clear))
 	f.Set(Album, "c")
 	require.NoError(t, WriteTags(path, f, Clear))
+}
+
+func TestNormalise(t *testing.T) {
+	t.Parallel()
+
+	path := newFile(t, emptyFLAC, ".flac")
+	// setup file with raw taglib, no normalisation
+	err := taglib.WriteTags(path, map[string][]string{
+		// using only alternatives
+		"releasedate":         {"1970-01-02"},
+		"TRACKC":              {"23"},
+		"Mcn":                 {"1234"},
+		"lyrics:description":  {"this is lyrics maybe"},
+		"mEdiA":               {"CD"},
+		"album artist credit": {"Steve"},
+	}, taglib.Clear)
+	require.NoError(t, err)
+
+	tags, err := ReadTags(path)
+	require.NoError(t, err)
+	assert.Equal(t, "1970-01-02", tags.Get(Date))
+	assert.Equal(t, "23", tags.Get(TrackNumber))
+	assert.Equal(t, "1234", tags.Get(UPC))
+	assert.Equal(t, "this is lyrics maybe", tags.Get(Lyrics))
+	assert.Equal(t, "CD", tags.Get(MediaFormat))
+	assert.Equal(t, "Steve", tags.Get(AlbumArtistCredit))
 }
 
 func TestExtendedTags(t *testing.T) {
