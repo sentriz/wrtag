@@ -120,8 +120,8 @@ type Config struct {
 	// PathFormat defines the directory structure for organising music files
 	PathFormat pathformat.Format
 
-	// TagWeights defines the relative importance of different tags when calculating match scores
-	TagWeights tagmap.Weights
+	// DiffWeights defines the relative importance of different tags when calculating match scores
+	DiffWeights tagmap.Weights
 
 	// TagConfig defines options for modifying the default tag set
 	TagConfig tagmap.Config
@@ -204,7 +204,7 @@ func ProcessDir(
 
 	releaseTracks := musicbrainz.FlatTracks(release.Media)
 
-	score, diff := tagmap.DiffRelease(cfg.TagWeights, release, releaseTracks, pathTags)
+	score, diff := tagmap.DiffRelease(cfg.DiffWeights, release, releaseTracks, pathTags)
 
 	if len(pathTags) != len(releaseTracks) {
 		return &SearchResult{release, query, 0, "", diff, originFile}, fmt.Errorf("%w: %d remote / %d local", ErrTrackCountMismatch, len(releaseTracks), len(pathTags))

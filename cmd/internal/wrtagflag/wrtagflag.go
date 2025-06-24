@@ -74,8 +74,8 @@ func Config() *wrtag.Config {
 	cfg.KeepFiles = map[string]struct{}{}
 	flag.Var(&keepFileParser{cfg.KeepFiles}, "keep-file", "Define an extra file path to keep when moving/copying to root dir (stackable)")
 
-	cfg.TagWeights = tagmap.Weights{}
-	flag.Var(&tagWeightsParser{cfg.TagWeights}, "tag-weight", "Adjust distance weighting for a tag (0 to ignore) (stackable)")
+	cfg.DiffWeights = tagmap.Weights{}
+	flag.Var(&diffWeightsParser{cfg.DiffWeights}, "diff-weight", "Adjust distance weighting for a tag (0 to ignore) (stackable)")
 
 	cfg.TagConfig = tagmap.Config{}
 	flag.Var(&tagConfigParser{&cfg.TagConfig}, "tag-config", "Specify tag keep and drop rules when writing new tag revisions (see [Tagging](#tagging)) (stackable)")
@@ -119,7 +119,7 @@ func OperationByName(name string, dryRun bool) (wrtag.FileSystemOperation, error
 var _ flag.Value = (*pathFormatParser)(nil)
 var _ flag.Value = (*researchLinkParser)(nil)
 var _ flag.Value = (*notificationsParser)(nil)
-var _ flag.Value = (*tagWeightsParser)(nil)
+var _ flag.Value = (*diffWeightsParser)(nil)
 var _ flag.Value = (*keepFileParser)(nil)
 var _ flag.Value = (*addonsParser)(nil)
 
@@ -185,24 +185,24 @@ func (n notificationsParser) String() string {
 	return strings.Join(parts, ", ")
 }
 
-type tagWeightsParser struct{ tagmap.Weights }
+type diffWeightsParser struct{ tagmap.Weights }
 
-func (tw tagWeightsParser) Set(value string) error {
+func (tw diffWeightsParser) Set(value string) error {
 	const sep = " "
 	i := strings.LastIndex(value, sep)
 	if i < 0 {
-		return errors.New("invalid tag weight format. expected eg \"tag name 0.5\"")
+		return errors.New("invalid diff weight format. expected eg \"tag name 0.5\"")
 	}
-	tag := strings.TrimSpace(value[:i])
+	k := strings.TrimSpace(value[:i])
 	weightStr := strings.TrimSpace(value[i+len(sep):])
 	weight, err := strconv.ParseFloat(weightStr, 64)
 	if err != nil {
 		return fmt.Errorf("parse weight: %w", err)
 	}
-	tw.Weights[tag] = weight
+	tw.Weights[k] = weight
 	return nil
 }
-func (tw tagWeightsParser) String() string {
+func (tw diffWeightsParser) String() string {
 	var parts []string
 	for a, b := range tw.Weights {
 		parts = append(parts, fmt.Sprintf("%s: %.2f", a, b))

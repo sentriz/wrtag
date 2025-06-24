@@ -1,4 +1,4 @@
-env WRTAG_TAG_WEIGHT='label 0, catalogue num 0, media format 0'
+env WRTAG_DIFF_WEIGHT='label 0, catalogue num 0, media format 0'
 env WRTAG_PATH_FORMAT='albums/{{ artistsString .Release.Artists }}/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
 
 # set up files, already in correct place
