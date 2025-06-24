@@ -42,7 +42,7 @@ const (
 	ArtistsCredit = "ARTISTS_CREDIT" //tag: alts "ARTISTSCREDIT"
 	Genre         = "GENRE"
 	Genres        = "GENRES"
-	TrackNumber   = "TRACKNUMBER" //tag: alts "TRACK" "TRACKC"
+	TrackNumber   = "TRACKNUMBER" //tag: alts "TRACK" "TRACKNUM"
 	DiscNumber    = "DISCNUMBER"
 
 	MBRecordingID = "MUSICBRAINZ_TRACKID"
@@ -85,11 +85,12 @@ func ReadTags(path string) (Tags, error) {
 		return Tags{}, err
 	}
 
-	// the internal state of t should be always be normalised so that later users of
-	// Get and Set, potentially with non-normalised keys will find a match
+	// the internal state of t should be always be normalised so that later users of Get and Set, potentially
+	// with non-normalised keys will find a match.
+	// We apply normalisations in deterministic order in case there are some overlap in norm and non norm tags.
 	var t = make(Tags, len(rt))
-	for k, vs := range rt {
-		t.Set(k, vs...)
+	for _, k := range slices.Sorted(maps.Keys(rt)) {
+		t.Set(k, rt[k]...)
 	}
 	return t, nil
 }
