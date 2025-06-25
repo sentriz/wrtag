@@ -115,7 +115,7 @@ func NewTags(vs ...string) Tags {
 	if len(vs)%2 != 0 {
 		panic("vs should be kv pairs")
 	}
-	var t = Tags{}
+	var t = make(Tags, len(vs)/2)
 	for i := 0; i < len(vs)-1; i += 2 {
 		t.Set(vs[i], vs[i+1])
 	}
