@@ -378,6 +378,23 @@ func ArtistsCreditString(credits []ArtistCredit) string {
 	return sb.String()
 }
 
+func ArtistsSortNames(sorts []ArtistCredit) []string {
+	var r []string
+	for _, c := range sorts {
+		r = append(r, c.Artist.SortName)
+	}
+	return r
+}
+
+func ArtistsSortString(sorts []ArtistCredit) string {
+	var sb strings.Builder
+	for _, c := range sorts {
+		sb.WriteString(c.Artist.SortName)
+		sb.WriteString(c.JoinPhrase)
+	}
+	return sb.String()
+}
+
 const enLocale = "en"
 
 func artistEnName(artist Artist) string {
