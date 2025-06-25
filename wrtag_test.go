@@ -123,3 +123,51 @@ func TestDiffNormText(t *testing.T) {
 	assert.Equal(t, "séan", diffNormText("SÉan"))
 	assert.Equal(t, "hello世界", diffNormText("~~ 【 Hello, 世界。 】~~ 😉"))
 }
+
+func TestIsNonFatalError(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, IsNonFatalError(ErrScoreTooLow))
+	assert.True(t, IsNonFatalError(ErrTrackCountMismatch))
+	assert.False(t, IsNonFatalError(ErrNoTracks))
+	assert.False(t, IsNonFatalError(ErrNotSortable))
+	assert.False(t, IsNonFatalError(ErrSelfCopy))
+}
+
+func TestNewDirContext(t *testing.T) {
+	t.Parallel()
+
+	dc := NewDirContext()
+	assert.NotNil(t, dc.knownDestPaths)
+	assert.Empty(t, dc.knownDestPaths)
+}
+
+func TestMoveCanModifyDest(t *testing.T) {
+	t.Parallel()
+
+	move := NewMove(false)
+	assert.True(t, move.CanModifyDest())
+
+	dryRunMove := NewMove(true)
+	assert.False(t, dryRunMove.CanModifyDest())
+}
+
+func TestCopyCanModifyDest(t *testing.T) {
+	t.Parallel()
+
+	cpy := NewCopy(false)
+	assert.True(t, cpy.CanModifyDest())
+
+	dryRunCopy := NewCopy(true)
+	assert.False(t, dryRunCopy.CanModifyDest())
+}
+
+func TestReflinkCanModifyDest(t *testing.T) {
+	t.Parallel()
+
+	reflink := NewReflink(false)
+	assert.True(t, reflink.CanModifyDest())
+
+	dryRunReflink := NewReflink(true)
+	assert.False(t, dryRunReflink.CanModifyDest())
+}
