@@ -40,9 +40,6 @@ func TestValidation(t *testing.T) {
 func TestPathFormat(t *testing.T) {
 	t.Parallel()
 
-	var pf pathformat.Format
-	require.NoError(t, pf.Parse(`/music/albums/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .TrackNum }}.{{ len .Tracks | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}`))
-
 	track := musicbrainz.Track{
 		Title: "Sharon's Tone",
 	}
@@ -66,6 +63,9 @@ func TestPathFormat(t *testing.T) {
 		}},
 	}
 
+	var pf pathformat.Format
+	require.NoError(t, pf.Parse(`/music/albums/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .TrackNum }}.{{ len .Tracks | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}`))
+
 	path, err := pf.Execute(release, 0, ".flac")
 	require.NoError(t, err)
 	assert.Equal(t, `/music/albums/Luke Vibert/(2018) Valvable/01.01 Sharon's Tone.flac`, path)
@@ -75,4 +75,18 @@ func TestPathFormat(t *testing.T) {
 	path, err = pf.Execute(release, 0, ".flac")
 	require.NoError(t, err)
 	assert.Equal(t, `/music/albums/Luke Vibert/(2018) Valvable (Deluxe Edition)/01.01 Sharon's Tone.flac`, path)
+
+	require.NoError(t, pf.Parse(`/music/albums/{{ artists .Release.Artists | the | sort | join "; " | safepath }}/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}`))
+
+	release.Artists[0].Artist.Name = "A House"
+
+	path, err = pf.Execute(release, 0, ".flac")
+	require.NoError(t, err)
+	assert.Equal(t, `/music/albums/House, A/Valvable/1.flac`, path)
+
+	release.Artists[0].Artist.Name = "The House"
+
+	path, err = pf.Execute(release, 0, ".flac")
+	require.NoError(t, err)
+	assert.Equal(t, `/music/albums/House, The/Valvable/1.flac`, path)
 }
