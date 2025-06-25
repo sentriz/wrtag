@@ -417,6 +417,9 @@ func DestDir(pathFormat *pathformat.Format, release *musicbrainz.Release) (strin
 	return dir, nil
 }
 
+// WriteRelease populates a Tags structure with metadata from a MusicBrainz release and track.
+// It writes both album-level tags (release title, artists, dates, labels) and track-level tags
+// (track title, artists, track number) to the provided Tags instance.
 func WriteRelease(
 	t tags.Tags,
 	release *musicbrainz.Release, labelInfo musicbrainz.LabelInfo, genres []musicbrainz.Genre,
@@ -480,14 +483,24 @@ func WriteRelease(
 	t.Set(tags.MusicBrainzArtistID, trimZero(mapFunc(trk.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
 }
 
+// Diff represents a comparison between two tag values, showing the differences
+// using diff-match-patch format for visualization.
 type Diff struct {
+	// Field is the name of the tag field being compared
 	Field         string
+	// Before contains the diff segments for the original value
 	Before, After []dmp.Diff
+	// Equal indicates whether the two values are identical
 	Equal         bool
 }
 
+// DiffWeights maps tag field names to their relative importance when calculating match scores.
+// Higher weights make differences in those fields have greater impact on the overall score.
 type DiffWeights map[string]float64
 
+// DiffRelease compares local tag files against a MusicBrainz release and calculates a match score.
+// It returns a score (0-100) indicating match confidence and detailed diffs for each compared field.
+// The weights parameter allows customizing the importance of different tag fields in the score calculation.
 func DiffRelease[T interface{ Get(string) string }](weights DiffWeights, release *musicbrainz.Release, tracks []musicbrainz.Track, tagFiles []T) (float64, []Diff) {
 	if len(tracks) == 0 {
 		return 0, nil
@@ -536,6 +549,8 @@ var (
 	dm = dmp.New()
 )
 
+// Differ creates a difference function that compares two strings and updates a running score.
+// The returned function calculates text differences and accumulates weighted distances for scoring.
 func Differ(score *float64) func(weight float64, field string, a, b string) Diff {
 	var total float64
 	var totalDist float64
@@ -578,11 +593,17 @@ func diffNormText(input string) string {
 	}, input)
 }
 
+// TagConfig defines which tags to preserve from source files and which to remove.
+// This allows fine-tuning of the tagging process beyond the default behavior.
 type TagConfig struct {
+	// Keep specifies additional tag fields to preserve from the source file
 	Keep []string
+	// Drop specifies tag fields to remove from the final output
 	Drop []string
 }
 
+// ApplyTagConfig applies tag configuration rules to merge source tags into destination tags.
+// It preserves specified tags from the source and removes unwanted tags according to the config.
 func ApplyTagConfig(
 	dest, source tags.Tags,
 	conf TagConfig,
