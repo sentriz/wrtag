@@ -449,8 +449,8 @@ In addition to what's provided by Go [text/template](https://pkg.go.dev/text/tem
 | `artistsEnString`     | Formats artists names in English locale as a string        | `{{ artistsEnString .Track.Artists }}`                       |
 | `artistsCredit`       | Gets credit names from artist credits                      | `{{ artistsCredit .Release.Artists }}`                       |
 | `artistsCreditString` | Formats artist credits as a string                         | `{{ artistsCreditString .Release.Artists }}`                 |
-| `artistsSort`         | Gets sort names from artist sorts                          | `{{ artistsSort .Release.Artists \| sort \| join "; " }}`    |
-| `artistsSortString`   | Formats artist sort names as a string                      | `{{ artistsSortString .Release.Artists }}`                   |
+| `artistsSort`         | Gets sort names from artist credits                        | `{{ artistsSort .Release.Artists \| sort \| join "; " }}`    |
+| `artistsSortString`   | Formats artist sort names as a credits                     | `{{ artistsSortString .Release.Artists }}`                   |
 
 ## Example formats
 
