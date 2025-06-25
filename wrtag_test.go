@@ -1,4 +1,4 @@
-package tagmap
+package wrtag
 
 import (
 	"testing"
@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// ⚠️ Note, core wrtag functionality is tested from ./cmd/wrtag/
 
 func TestDiffer(t *testing.T) {
 	t.Parallel()
@@ -112,12 +114,12 @@ func TestNegativeScore(t *testing.T) {
 	assert.InEpsilon(t, 37, score, 1)
 }
 
-func TestNorm(t *testing.T) {
+func TestDiffNormText(t *testing.T) {
 	t.Parallel()
 
-	assert.Empty(t, norm(""))
-	assert.Empty(t, norm(" "))
-	assert.Equal(t, "123", norm(" 1!2!3 "))
-	assert.Equal(t, "séan", norm("SÉan"))
-	assert.Equal(t, "hello世界", norm("~~ 【 Hello, 世界。 】~~ 😉"))
+	assert.Empty(t, diffNormText(""))
+	assert.Empty(t, diffNormText(" "))
+	assert.Equal(t, "123", diffNormText(" 1!2!3 "))
+	assert.Equal(t, "séan", diffNormText("SÉan"))
+	assert.Equal(t, "hello世界", diffNormText("~~ 【 Hello, 世界。 】~~ 😉"))
 }

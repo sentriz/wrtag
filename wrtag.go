@@ -17,13 +17,16 @@ import (
 	"path"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
+	"unicode"
 
 	"github.com/KarpelesLab/reflink"
 	"github.com/araddon/dateparse"
 	"github.com/argusdusty/treelock"
+	dmp "github.com/sergi/go-diff/diffmatchpatch"
 	"go.senan.xyz/natcmp"
 	"go.senan.xyz/wrtag/addon"
 	"go.senan.xyz/wrtag/coverparse"
@@ -31,7 +34,6 @@ import (
 	"go.senan.xyz/wrtag/musicbrainz"
 	"go.senan.xyz/wrtag/originfile"
 	"go.senan.xyz/wrtag/pathformat"
-	"go.senan.xyz/wrtag/tagmap"
 	"go.senan.xyz/wrtag/tags"
 )
 
@@ -89,7 +91,7 @@ type SearchResult struct {
 	DestDir string
 
 	// Diff contains the differences between local tags and MusicBrainz tags
-	Diff []tagmap.Diff
+	Diff []Diff
 
 	// OriginFile contains information from any gazelle-origin file found in the source directory
 	OriginFile *originfile.OriginFile
@@ -121,10 +123,10 @@ type Config struct {
 	PathFormat pathformat.Format
 
 	// DiffWeights defines the relative importance of different tags when calculating match scores
-	DiffWeights tagmap.Weights
+	DiffWeights DiffWeights
 
 	// TagConfig defines options for modifying the default tag set
-	TagConfig tagmap.Config
+	TagConfig TagConfig
 
 	// KeepFiles specifies files that should be preserved during processing
 	KeepFiles map[string]struct{}
@@ -204,7 +206,7 @@ func ProcessDir(
 
 	releaseTracks := musicbrainz.FlatTracks(release.Media)
 
-	score, diff := tagmap.DiffRelease(cfg.DiffWeights, release, releaseTracks, pathTags)
+	score, diff := DiffRelease(cfg.DiffWeights, release, releaseTracks, pathTags)
 
 	if len(pathTags) != len(releaseTracks) {
 		return &SearchResult{release, query, 0, "", diff, originFile}, fmt.Errorf("%w: %d remote / %d local", ErrTrackCountMismatch, len(releaseTracks), len(pathTags))
@@ -260,8 +262,8 @@ func ProcessDir(
 		}
 
 		var destTags = tags.Tags{}
-		tagmap.WriteRelease(destTags, release, labelInfo, genres, i, &rt)
-		tagmap.ApplyConfig(destTags, pt.Tags, cfg.TagConfig)
+		WriteRelease(destTags, release, labelInfo, genres, i, &rt)
+		ApplyTagConfig(destTags, pt.Tags, cfg.TagConfig)
 
 		if lvl, slog := slog.LevelDebug, slog.Default(); slog.Enabled(ctx, lvl) {
 			logTagChanges(ctx, pt.Path, lvl, pt.Tags, destTags)
@@ -413,6 +415,206 @@ func DestDir(pathFormat *pathformat.Format, release *musicbrainz.Release) (strin
 	dir := filepath.Dir(path)
 	dir = filepath.Clean(dir)
 	return dir, nil
+}
+
+func WriteRelease(
+	t tags.Tags,
+	release *musicbrainz.Release, labelInfo musicbrainz.LabelInfo, genres []musicbrainz.Genre,
+	i int, trk *musicbrainz.Track,
+) {
+	formatDate := func(d time.Time) string {
+		if d.IsZero() {
+			return ""
+		}
+		return d.Format(time.DateOnly)
+	}
+
+	formatBool := func(b bool) string {
+		if !b {
+			return ""
+		}
+		return "1"
+	}
+
+	var genreNames []string
+	for _, g := range genres[:min(6, len(genres))] { // top 6 genre strings
+		genreNames = append(genreNames, g.Name)
+	}
+
+	disambiguationParts := trimZero(release.ReleaseGroup.Disambiguation, release.Disambiguation)
+	disambiguation := strings.Join(disambiguationParts, ", ")
+
+	// t.Set(x, trimZero(y)...) so that we clear out tags with no value from the map
+
+	t.Set(tags.Album, trimZero(release.Title)...)
+	t.Set(tags.AlbumArtist, trimZero(musicbrainz.ArtistsString(release.Artists))...)
+	t.Set(tags.AlbumArtists, trimZero(musicbrainz.ArtistsNames(release.Artists)...)...)
+	t.Set(tags.AlbumArtistCredit, trimZero(musicbrainz.ArtistsCreditString(release.Artists))...)
+	t.Set(tags.AlbumArtistsCredit, trimZero(musicbrainz.ArtistsCreditNames(release.Artists)...)...)
+	t.Set(tags.Date, trimZero(formatDate(release.Date.Time))...)
+	t.Set(tags.OriginalDate, trimZero(formatDate(release.ReleaseGroup.FirstReleaseDate.Time))...)
+	t.Set(tags.MediaFormat, trimZero(release.Media[0].Format)...)
+	t.Set(tags.Label, trimZero(labelInfo.Label.Name)...)
+	t.Set(tags.CatalogueNum, trimZero(labelInfo.CatalogNumber)...)
+	t.Set(tags.Barcode, trimZero(release.Barcode)...)
+	t.Set(tags.Compilation, trimZero(formatBool(musicbrainz.IsCompilation(release.ReleaseGroup)))...)
+	t.Set(tags.ReleaseType, trimZero(strings.ToLower(string(release.ReleaseGroup.PrimaryType)))...)
+
+	t.Set(tags.MusicBrainzReleaseID, trimZero(release.ID)...)
+	t.Set(tags.MusicBrainzReleaseGroupID, trimZero(release.ReleaseGroup.ID)...)
+	t.Set(tags.MusicBrainzAlbumArtistID, trimZero(mapFunc(release.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
+	t.Set(tags.MusicBrainzAlbumComment, trimZero(disambiguation)...)
+
+	t.Set(tags.Title, trimZero(trk.Title)...)
+	t.Set(tags.Artist, trimZero(musicbrainz.ArtistsString(trk.Artists))...)
+	t.Set(tags.Artists, trimZero(musicbrainz.ArtistsNames(trk.Artists)...)...)
+	t.Set(tags.ArtistCredit, trimZero(musicbrainz.ArtistsCreditString(trk.Artists))...)
+	t.Set(tags.ArtistsCredit, trimZero(musicbrainz.ArtistsCreditNames(trk.Artists)...)...)
+	t.Set(tags.Genre, trimZero(cmp.Or(genreNames...))...)
+	t.Set(tags.Genres, trimZero(genreNames...)...)
+	t.Set(tags.TrackNumber, trimZero(strconv.Itoa(i+1))...)
+	t.Set(tags.DiscNumber, trimZero(strconv.Itoa(1))...)
+
+	t.Set(tags.MusicBrainzRecordingID, trimZero(trk.Recording.ID)...)
+	t.Set(tags.MusicBrainzTrackID, trimZero(trk.ID)...)
+	t.Set(tags.MusicBrainzArtistID, trimZero(mapFunc(trk.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
+}
+
+type Diff struct {
+	Field         string
+	Before, After []dmp.Diff
+	Equal         bool
+}
+
+type DiffWeights map[string]float64
+
+func DiffRelease[T interface{ Get(string) string }](weights DiffWeights, release *musicbrainz.Release, tracks []musicbrainz.Track, tagFiles []T) (float64, []Diff) {
+	if len(tracks) == 0 {
+		return 0, nil
+	}
+
+	labelInfo := musicbrainz.AnyLabelInfo(release)
+
+	var score float64
+	diff := Differ(&score)
+
+	weight := func(t string) float64 {
+		if w, ok := weights[t]; ok {
+			return w
+		}
+		return 1
+	}
+
+	var diffs []Diff
+	{
+		tf := tagFiles[0]
+		diffs = append(diffs,
+			diff(weight("release"), "release", tf.Get(tags.Album), release.Title),
+			diff(weight("artist"), "artist", tf.Get(tags.AlbumArtist), musicbrainz.ArtistsString(release.Artists)),
+			diff(weight("label"), "label", tf.Get(tags.Label), labelInfo.Label.Name),
+			diff(weight("catalogue num"), "catalogue num", tf.Get(tags.CatalogueNum), labelInfo.CatalogNumber),
+			diff(weight("barcode"), "barcode", tf.Get(tags.Barcode), release.Barcode),
+			diff(weight("media format"), "media format", tf.Get(tags.MediaFormat), release.Media[0].Format),
+		)
+	}
+
+	for i := range max(len(tagFiles), len(tracks)) {
+		var a, b string
+		if i < len(tagFiles) {
+			a = strings.Join(trimZero(tagFiles[i].Get(tags.Artist), tagFiles[i].Get(tags.Title)), " – ")
+		}
+		if i < len(tracks) {
+			b = strings.Join(trimZero(musicbrainz.ArtistsString(tracks[i].Artists), tracks[i].Title), " – ")
+		}
+		diffs = append(diffs, diff(weight("track"), fmt.Sprintf("track %d", i+1), a, b))
+	}
+
+	return score, diffs
+}
+
+var (
+	dm = dmp.New()
+)
+
+func Differ(score *float64) func(weight float64, field string, a, b string) Diff {
+	var total float64
+	var totalDist float64
+
+	return func(w float64, field, a, b string) Diff {
+		diffs := dm.DiffMain(a, b, false)
+
+		var d Diff
+		d.Field = field
+		d.Before = filterFunc(diffs, func(d dmp.Diff) bool { return d.Type <= dmp.DiffEqual })
+		d.After = filterFunc(diffs, func(d dmp.Diff) bool { return d.Type >= dmp.DiffEqual })
+		d.Equal = a == b
+
+		if a == "" || b == "" {
+			return d
+		}
+
+		// separate, norm diff for score calculation. only if we have both fields
+		aNorm, bNorm := diffNormText(a), diffNormText(b)
+
+		diffs = dm.DiffMain(aNorm, bNorm, false)
+		totalDist += float64(dm.DiffLevenshtein(diffs)) * w
+		total += float64(max(len([]rune(aNorm)), len([]rune(bNorm))))
+
+		*score = 100 - (totalDist * 100 / total)
+
+		return d
+	}
+}
+
+func diffNormText(input string) string {
+	return strings.Map(func(r rune) rune {
+		if unicode.IsLetter(r) {
+			return unicode.ToLower(r)
+		}
+		if unicode.IsNumber(r) {
+			return r
+		}
+		return -1
+	}, input)
+}
+
+type TagConfig struct {
+	Keep []string
+	Drop []string
+}
+
+func ApplyTagConfig(
+	dest, source tags.Tags,
+	conf TagConfig,
+) {
+	for _, k := range defaultKeepConfig {
+		dest.Set(k, source.Values(k)...)
+	}
+	for _, k := range conf.Keep {
+		dest.Set(k, source.Values(k)...)
+	}
+	for _, k := range conf.Drop {
+		dest.Set(k)
+	}
+}
+
+// defaultKeepConfig is set of tags which are kept as-is when replacing tags.
+var defaultKeepConfig = []string{
+	tags.ReplayGainTrackGain,
+	tags.ReplayGainTrackPeak,
+	tags.ReplayGainAlbumGain,
+	tags.ReplayGainAlbumPeak,
+	tags.ReplayGainTrackRange,
+	tags.ReplayGainAlbumRange,
+	tags.ReplayGainReferenceLoudness,
+	tags.BPM,
+	tags.Key,
+	tags.Lyrics,
+	tags.AcoustIDFingerprint,
+	tags.AcoustIDID,
+	tags.Encoder,
+	tags.EncodedBy,
+	tags.Comment,
 }
 
 // FileSystemOperation defines operations that can be performed on files during the import/tagging process.
@@ -854,6 +1056,29 @@ func safeRemoveAll(src string, dryRun bool) error {
 
 	slog.Debug("removed path", "path", src)
 	return nil
+}
+
+func mapFunc[T, To any](elms []T, f func(int, T) To) []To {
+	var res = make([]To, 0, len(elms))
+	for i, v := range elms {
+		res = append(res, f(i, v))
+	}
+	return res
+}
+
+func filterFunc[T any](elms []T, f func(T) bool) []T {
+	var res = make([]T, 0, len(elms))
+	for _, el := range elms {
+		if f(el) {
+			res = append(res, el)
+		}
+	}
+	return res
+}
+
+func trimZero[T comparable](elms ...T) []T {
+	var zero T
+	return slices.DeleteFunc(elms, func(t T) bool { return t == zero })
 }
 
 func parseAnyTime(str string) time.Time {
