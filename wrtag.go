@@ -166,15 +166,15 @@ func ProcessDir(
 
 	searchTags := pathTags[0].Tags
 
-	var mbid = searchTags.Get(tags.MBReleaseID)
+	var mbid = searchTags.Get(tags.MusicBrainzReleaseID)
 	if useMBID != "" {
 		mbid = useMBID
 	}
 
 	query := musicbrainz.ReleaseQuery{
 		MBReleaseID:      mbid,
-		MBArtistID:       searchTags.Get(tags.MBArtistID),
-		MBReleaseGroupID: searchTags.Get(tags.MBReleaseGroupID),
+		MBArtistID:       searchTags.Get(tags.MusicBrainzArtistID),
+		MBReleaseGroupID: searchTags.Get(tags.MusicBrainzReleaseGroupID),
 		Release:          searchTags.Get(tags.Album),
 		Artist:           cmp.Or(searchTags.Get(tags.AlbumArtist), searchTags.Get(tags.Artist)),
 		Date:             parseAnyTime(searchTags.Get(tags.Date)),

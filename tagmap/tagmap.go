@@ -94,10 +94,10 @@ func WriteRelease(
 	t.Set(tags.Compilation, trim(formatBool(musicbrainz.IsCompilation(release.ReleaseGroup)))...)
 	t.Set(tags.ReleaseType, trim(strings.ToLower(string(release.ReleaseGroup.PrimaryType)))...)
 
-	t.Set(tags.MBReleaseID, trim(release.ID)...)
-	t.Set(tags.MBReleaseGroupID, trim(release.ReleaseGroup.ID)...)
-	t.Set(tags.MBAlbumArtistID, trim(mapFunc(release.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
-	t.Set(tags.MBAlbumComment, trim(disambiguation)...)
+	t.Set(tags.MusicBrainzReleaseID, trim(release.ID)...)
+	t.Set(tags.MusicBrainzReleaseGroupID, trim(release.ReleaseGroup.ID)...)
+	t.Set(tags.MusicBrainzAlbumArtistID, trim(mapFunc(release.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
+	t.Set(tags.MusicBrainzAlbumComment, trim(disambiguation)...)
 
 	t.Set(tags.Title, trim(trk.Title)...)
 	t.Set(tags.Artist, trim(musicbrainz.ArtistsString(trk.Artists))...)
@@ -109,9 +109,9 @@ func WriteRelease(
 	t.Set(tags.TrackNumber, trim(strconv.Itoa(i+1))...)
 	t.Set(tags.DiscNumber, trim(strconv.Itoa(1))...)
 
-	t.Set(tags.MBRecordingID, trim(trk.Recording.ID)...)
-	t.Set(tags.MBTrackID, trim(trk.ID)...)
-	t.Set(tags.MBArtistID, trim(mapFunc(trk.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
+	t.Set(tags.MusicBrainzRecordingID, trim(trk.Recording.ID)...)
+	t.Set(tags.MusicBrainzTrackID, trim(trk.ID)...)
+	t.Set(tags.MusicBrainzArtistID, trim(mapFunc(trk.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
 }
 
 var (

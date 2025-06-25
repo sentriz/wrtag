@@ -30,10 +30,10 @@ const (
 	Compilation        = "COMPILATION"
 	ReleaseType        = "RELEASETYPE"
 
-	MBReleaseID      = "MUSICBRAINZ_ALBUMID"
-	MBReleaseGroupID = "MUSICBRAINZ_RELEASEGROUPID"
-	MBAlbumArtistID  = "MUSICBRAINZ_ALBUMARTISTID"
-	MBAlbumComment   = "MUSICBRAINZ_ALBUMCOMMENT"
+	MusicBrainzReleaseID      = "MUSICBRAINZ_ALBUMID"
+	MusicBrainzReleaseGroupID = "MUSICBRAINZ_RELEASEGROUPID"
+	MusicBrainzAlbumArtistID  = "MUSICBRAINZ_ALBUMARTISTID"
+	MusicBrainzAlbumComment   = "MUSICBRAINZ_ALBUMCOMMENT"
 
 	Title         = "TITLE"
 	Artist        = "ARTIST"
@@ -45,9 +45,9 @@ const (
 	TrackNumber   = "TRACKNUMBER" //tag: alts "TRACK" "TRACKNUM"
 	DiscNumber    = "DISCNUMBER"
 
-	MBRecordingID = "MUSICBRAINZ_TRACKID"
-	MBTrackID     = "MUSICBRAINZ_RELEASETRACKID"
-	MBArtistID    = "MUSICBRAINZ_ARTISTID"
+	MusicBrainzRecordingID = "MUSICBRAINZ_TRACKID"
+	MusicBrainzTrackID     = "MUSICBRAINZ_RELEASETRACKID"
+	MusicBrainzArtistID    = "MUSICBRAINZ_ARTISTID"
 
 	ReplayGainTrackGain         = "REPLAYGAIN_TRACK_GAIN"
 	ReplayGainTrackPeak         = "REPLAYGAIN_TRACK_PEAK"
