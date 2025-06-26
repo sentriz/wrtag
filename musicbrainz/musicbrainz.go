@@ -31,7 +31,7 @@ type MBClient struct {
 func (c *MBClient) GetRelease(ctx context.Context, mbid string) (*Release, error) {
 	urlV := url.Values{}
 	urlV.Set("fmt", "json")
-	urlV.Set("inc", "recordings+artist-credits+labels+release-groups+genres+aliases")
+	urlV.Set("inc", "recordings+artist-credits+labels+release-groups+genres+aliases+recording-level-rels+artist-rels")
 
 	url, _ := url.Parse(joinPath(c.BaseURL, "release", mbid))
 	url.RawQuery = urlV.Encode()
@@ -198,6 +198,24 @@ type Alias struct {
 	SortName string `json:"sort-name"`
 }
 
+type Relation struct {
+	TargetType   string `json:"target-type"`
+	TypeID       string `json:"type-id"`
+	SourceCredit string `json:"source-credit"`
+	TargetCredit string `json:"target-credit"`
+	AttributeIDs struct {
+	} `json:"attribute-ids"`
+	Direction       string `json:"direction"`
+	Attributes      []any  `json:"attributes"`
+	Type            string `json:"type"`
+	AttributeValues struct {
+	} `json:"attribute-values"`
+	Begin  any    `json:"begin"`
+	End    any    `json:"end"`
+	Ended  bool   `json:"ended"`
+	Artist Artist `json:"artist"`
+}
+
 type Track struct {
 	ID        string `json:"id"`
 	Length    int    `json:"length"`
@@ -210,6 +228,7 @@ type Track struct {
 		Length           int            `json:"length"`
 		Title            string         `json:"title"`
 		Artists          []ArtistCredit `json:"artist-credit"`
+		Relations        []Relation     `json:"relations"`
 	} `json:"recording"`
 	Number   string         `json:"number"`
 	Position int            `json:"position"`

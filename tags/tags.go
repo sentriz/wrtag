@@ -45,6 +45,11 @@ const (
 	TrackNumber   = "TRACKNUMBER" //tag: alts "TRACK" "TRACKNUM"
 	DiscNumber    = "DISCNUMBER"
 
+	Remixer        = "REMIXER"
+	Remixers       = "REMIXERS"
+	RemixerCredit  = "REMIXER_CREDIT"
+	RemixersCredit = "REMIXERS_CREDIT"
+
 	MusicBrainzRecordingID = "MUSICBRAINZ_TRACKID"
 	MusicBrainzTrackID     = "MUSICBRAINZ_RELEASETRACKID"
 	MusicBrainzArtistID    = "MUSICBRAINZ_ARTISTID"

@@ -447,6 +447,14 @@ func WriteRelease(
 	disambiguationParts := trimZero(release.ReleaseGroup.Disambiguation, release.Disambiguation)
 	disambiguation := strings.Join(disambiguationParts, ", ")
 
+	var remixers, remixersCredit []string
+	for _, r := range trk.Recording.Relations {
+		if r.Artist.ID != "" && r.Type == "remixer" {
+			remixers = append(remixers, r.Artist.Name)
+			remixersCredit = append(remixersCredit, cmp.Or(r.TargetCredit, r.Artist.Name))
+		}
+	}
+
 	// t.Set(x, trimZero(y)...) so that we clear out tags with no value from the map
 
 	t.Set(tags.Album, trimZero(release.Title)...)
@@ -478,6 +486,11 @@ func WriteRelease(
 	t.Set(tags.TrackNumber, trimZero(strconv.Itoa(i+1))...)
 	t.Set(tags.DiscNumber, trimZero(strconv.Itoa(1))...)
 
+	t.Set(tags.Remixer, trimZero(strings.Join(remixers, ", "))...)
+	t.Set(tags.Remixers, trimZero(remixers...)...)
+	t.Set(tags.RemixerCredit, trimZero(strings.Join(remixersCredit, ", "))...)
+	t.Set(tags.RemixersCredit, trimZero(remixersCredit...)...)
+
 	t.Set(tags.MusicBrainzRecordingID, trimZero(trk.Recording.ID)...)
 	t.Set(tags.MusicBrainzTrackID, trimZero(trk.ID)...)
 	t.Set(tags.MusicBrainzArtistID, trimZero(mapFunc(trk.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
@@ -487,11 +500,11 @@ func WriteRelease(
 // using diff-match-patch format for visualization.
 type Diff struct {
 	// Field is the name of the tag field being compared
-	Field         string
+	Field string
 	// Before contains the diff segments for the original value
 	Before, After []dmp.Diff
 	// Equal indicates whether the two values are identical
-	Equal         bool
+	Equal bool
 }
 
 // DiffWeights maps tag field names to their relative importance when calculating match scores.

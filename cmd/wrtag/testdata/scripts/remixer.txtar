@@ -1,0 +1,29 @@
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+
+exec tag write 'ride_this/1.flac' title 'Critical Breakdown'
+exec tag write 'ride_this/2.flac' title 'FRK'
+exec tag write 'ride_this/3.flac' title 'Critical Breakdown (DJ Swisherman remix)'
+exec tag write 'ride_this/4.flac' title 'Ride This D'
+exec tag write 'ride_this/5.flac' title 'Say No Go'
+exec tag write 'ride_this/6.flac' title 'Ride This D (Mark Broom remix)'
+
+exec tag write 'ride_this/*' artist      'Gene Richards Jr.'
+exec tag write 'ride_this/*' album       'Ride This D EP'
+exec tag write 'ride_this/*' albumartist 'Gene Richards Jr.'
+exec tag write 'ride_this/*' label       'Frenzy Recordings'
+exec tag write 'ride_this/*' catalognum  'FRNZYREC009'
+exec tag write 'ride_this/*' upc         '8721215406990'
+exec tag write 'ride_this/*' media       'Digital Media'
+exec tag write 'ride_this/*' musicbrainz_albumid 'b18e0f3a-0a70-4372-a79b-0001568b147b'
+
+exec wrtag copy ride_this
+stderr 'score=100\.00%'
+
+exec tag check 'albums/Ride This D EP/3.flac' remixer         'DJ SWISHERMAN'
+exec tag check 'albums/Ride This D EP/3.flac' remixers        'DJ SWISHERMAN'
+exec tag check 'albums/Ride This D EP/3.flac' remixer_credit  'DJ Swisherman'
+exec tag check 'albums/Ride This D EP/3.flac' remixers_credit 'DJ Swisherman'
+exec tag check 'albums/Ride This D EP/6.flac' remixer         'Mark Broom'
+exec tag check 'albums/Ride This D EP/6.flac' remixers        'Mark Broom'
+exec tag check 'albums/Ride This D EP/6.flac' remixer_credit  'Mark Broom'
+exec tag check 'albums/Ride This D EP/6.flac' remixers_credit 'Mark Broom'
