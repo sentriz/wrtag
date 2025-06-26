@@ -14,6 +14,7 @@ import (
 
 var ErrInvalidFormat = errors.New("invalid format")
 var ErrAmbiguousFormat = errors.New("ambiguous format")
+var ErrBadRelease = errors.New("bad release")
 var ErrBadData = errors.New("bad data")
 
 const delimL, delimR = "{{", "}}"
@@ -65,13 +66,32 @@ func (pf *Format) Execute(release *musicbrainz.Release, index int, ext string) (
 		return "", errors.New("release has no tracks")
 	}
 
+	var anyPos bool
+	for _, t := range flatTracks {
+		if t.Position > 0 {
+			anyPos = true
+			break
+		}
+	}
+	if !anyPos {
+		return "", fmt.Errorf("%w: all tracks have 0 position", ErrBadRelease)
+	}
+
+	var numPregap int
+	for _, t := range flatTracks[:index] {
+		if t.Position == 0 {
+			numPregap++
+		}
+	}
+
 	var d Data
 	d.Release = *release
-	d.Index = index
 	d.Ext = ext
 	d.Track = flatTracks[index]
 	d.Tracks = flatTracks
-	d.TrackNum = index + 1
+	if d.Track.Position > 0 {
+		d.TrackNum = index + 1 - numPregap // non pregap track, give it a 1-indexed num
+	}
 	d.IsCompilation = musicbrainz.IsCompilation(release.ReleaseGroup)
 	{
 		var parts []string
@@ -107,7 +127,6 @@ func (pf *Format) Execute(release *musicbrainz.Release, index int, ext string) (
 type Data struct {
 	Release               musicbrainz.Release
 	ReleaseDisambiguation string
-	Index                 int
 	Ext                   string
 	Track                 musicbrainz.Track
 	Tracks                []musicbrainz.Track
@@ -122,9 +141,10 @@ func validate(f Format) error {
 		release.Artists = append(release.Artists, musicbrainz.ArtistCredit{Name: artist, Artist: musicbrainz.Artist{Name: artist}})
 
 		var media musicbrainz.Media
-		for _, t := range tracks {
+		for i, t := range tracks {
 			media.Tracks = append(media.Tracks, musicbrainz.Track{
-				Title: t,
+				Title:    t,
+				Position: i + 1,
 			})
 			media.TrackCount++
 		}

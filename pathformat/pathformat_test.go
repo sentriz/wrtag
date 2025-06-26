@@ -41,7 +41,8 @@ func TestPathFormat(t *testing.T) {
 	t.Parallel()
 
 	track := musicbrainz.Track{
-		Title: "Sharon's Tone",
+		Title:    "Sharon's Tone",
+		Position: 1,
 	}
 	release := &musicbrainz.Release{
 		Title: "Valvable",
