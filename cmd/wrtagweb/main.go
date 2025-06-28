@@ -137,7 +137,7 @@ func main() {
 
 		var ic wrtag.ImportCondition
 		if job.Confirm {
-			ic = wrtag.Confirm
+			ic = wrtag.Always
 		}
 
 		searchResult, processErr := wrtag.ProcessDir(ctx, cfg, op, job.SourcePath, ic, job.UseMBID)

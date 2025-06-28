@@ -107,8 +107,8 @@ const (
 	// HighScoreOrMBID accepts either a high score or a matching MusicBrainz ID.
 	HighScoreOrMBID
 
-	// Confirm always imports regardless of score.
-	Confirm
+	// Always always imports regardless of score.
+	Always
 )
 
 // Config contains configuration options for processing music directories.
@@ -218,7 +218,7 @@ func ProcessDir(
 		shouldImport = score >= minScore || mbid != ""
 	case HighScore:
 		shouldImport = score >= minScore
-	case Confirm:
+	case Always:
 		shouldImport = true
 	}
 

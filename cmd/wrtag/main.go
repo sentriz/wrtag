@@ -77,7 +77,7 @@ func main() {
 
 		var importCondition wrtag.ImportCondition
 		if *yes {
-			importCondition = wrtag.Confirm
+			importCondition = wrtag.Always
 		}
 
 		if flag.NArg() != 1 {
