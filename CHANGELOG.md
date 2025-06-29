@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.14.0](https://www.github.com/sentriz/wrtag/compare/v0.13.0...v0.14.0) (2025-06-28)
+
+
+### ⚠ BREAKING CHANGES
+
+* **wrtag:** rename `tag-weight` option to `diff-weight`
+* **wrtag:** tag mainly as `BARCODE` instead of `UPC`, use `Barcode` in research-links
+* **wrtag:** clear unknown tags by default
+
+### Features
+
+* **config:** add discogs research-link example ([f3ddfef](https://www.github.com/sentriz/wrtag/commit/f3ddfefd3478155499da2b2394905361f2a02503))
+* **pathformat:** add `artistsSort` and `artistsSortString` helpers ([6f63702](https://www.github.com/sentriz/wrtag/commit/6f63702fefe02b79e017b9eaadc8053d985b744a))
+* **pathformat:** add `the` helper ([b53bccc](https://www.github.com/sentriz/wrtag/commit/b53bccc10027bfb9f54282540e40bc1f3eef76c3)), closes [#123](https://www.github.com/sentriz/wrtag/issues/123)
+* **pathformat:** set index to 0 for pregap tracks ([4f9c2c2](https://www.github.com/sentriz/wrtag/commit/4f9c2c2369ea450cf50819ac87cf6c1e5c130cfa)), closes [#124](https://www.github.com/sentriz/wrtag/issues/124)
+* **tagmap:** also keep ReplayGain range settings, and INITIALKEY ([7afda34](https://www.github.com/sentriz/wrtag/commit/7afda3446e4527539e834918a86c37a3338280a6))
+* **tagmap:** write "MUSICBRAINZ_RELEASETRACKID" tag ([4f13881](https://www.github.com/sentriz/wrtag/commit/4f13881adb7779eb08a5778f13f5cb6c69ade7b5))
+* **tagmap:** write "RELEASETYPE" tag ([c19bd5d](https://www.github.com/sentriz/wrtag/commit/c19bd5d270d7ef24dd067af2a2b60dd01d93f0d4))
+* **tags:** add more known tags and variants ([9fb9f2a](https://www.github.com/sentriz/wrtag/commit/9fb9f2ae2795791dc6fbfe91cdd41f6dcdeb5299))
+* **wrtag:** add `tag-config` option ([97acec5](https://www.github.com/sentriz/wrtag/commit/97acec5819607cb19b19f168ebadcb636f2abdff)), closes [#120](https://www.github.com/sentriz/wrtag/issues/120) [#107](https://www.github.com/sentriz/wrtag/issues/107)
+* **wrtag:** add some more tests ([b96b53f](https://www.github.com/sentriz/wrtag/commit/b96b53fe021695158e462ad4ac6a0234532d877a))
+* **wrtag:** clear unknown tags by default ([0c94f10](https://www.github.com/sentriz/wrtag/commit/0c94f100bf75e9e22a4a5219198af5482c67c2df)), closes [#115](https://www.github.com/sentriz/wrtag/issues/115)
+* **wrtag:** rename `tag-weight` option to `diff-weight` ([a25e256](https://www.github.com/sentriz/wrtag/commit/a25e256a061fe3bb2bb864cef59e89fd6a44ef3f))
+* **wrtag:** tag mainly as `BARCODE` instead of `UPC`, use `Barcode` in research-links ([e263dd6](https://www.github.com/sentriz/wrtag/commit/e263dd633970a6eebb31a23cc88de8bfea179aad)), closes [#121](https://www.github.com/sentriz/wrtag/issues/121)
+* **wrtag:** write REMIXER/REMIXERS tags ([238ef45](https://www.github.com/sentriz/wrtag/commit/238ef451e9a5ad6a5d3f2a68b2ed820def55b592)), closes [#77](https://www.github.com/sentriz/wrtag/issues/77)
+
+
+### Bug Fixes
+
+* **wrtag:** remove `TRACKC` tag alternative ([d1d41c5](https://www.github.com/sentriz/wrtag/commit/d1d41c5e9b9f8bb28811fdbcf43034b1b99c9491))
+
 ## [0.13.0](https://www.github.com/sentriz/wrtag/compare/v0.12.0...v0.13.0) (2025-05-30)
 
 
