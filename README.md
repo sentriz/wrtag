@@ -43,6 +43,7 @@ To describe the general workflow:
    - [Addon Lyrics](#addon-lyrics)
    - [Addon ReplayGain](#addon-replaygain)
    - [Addon Subprocess](#addon-subprocess)
+   - [Addon Music descriptors](#addon-music-descriptors)
 7. [Tagging](#tagging)
 8. [Notifications](#notifications)
 9. [Goals and non-goals](#goals-and-non-goals)
@@ -523,6 +524,22 @@ The subprocess addon is for running a user-provided program.
 The format of the addon config is `subproc <path> <args>...`, where `path` is the path to the program, or the program name itself if it’s in your `$PATH`. `args` are extra command line arguments to pass to the program. One of the `args` should be a special placeholder named `<files>`. This will be expanded to the paths to the files that were just processed by `wrtag`.
 
 For example, the addon `"subproc my-program a --b 'c d' <files>"` might call `my-program` with arguments `["a", "--b", "c d", "track 1.flac", "track 2.flac", "track 3.flac"]` after importing a release with 3 tracks.
+
+## Addon Music descriptors
+
+> [!NOTE]
+> The Music descriptors addon requires that `streaming_extractor_music` be available in your `$PATH`. See their [extractors](https://essentia.upf.edu/extractors/) download page.
+
+The `musicdesc` addon can calculate and embed music descriptors information using [`streaming_extractor_music`](https://essentia.upf.edu/streaming_extractor_music.html) from [Essentia](https://essentia.upf.edu/index.html).
+
+The format of the addon config is `musicdesc <opts>...` where opts can be only `force`. If the force option is passed, descriptor information is recomputed even if it’s already present in the files.
+
+Tags currently written are
+
+| Tag          | Example Value       |
+| ------------ | ------------------- |
+| `INITIALKEY` | `C`, `F#`, or `Dbm` |
+| `BPM`        | `120.21`            |
 
 # Tagging
 
