@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"go.senan.xyz/wrtag/addon"
-	"go.senan.xyz/wrtag/replaygain"
+	"go.senan.xyz/wrtag/rsgain"
 	"go.senan.xyz/wrtag/tags"
 )
 
@@ -51,7 +51,7 @@ func (a ReplayGainAddon) ProcessRelease(ctx context.Context, paths []string) err
 		}
 	}
 
-	albumLev, trackLevs, err := replaygain.Calculate(ctx, a.truePeak, paths)
+	albumLev, trackLevs, err := rsgain.Calculate(ctx, a.truePeak, paths)
 	if err != nil {
 		return fmt.Errorf("calculate: %w", err)
 	}

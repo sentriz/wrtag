@@ -1,4 +1,4 @@
-package replaygain
+package rsgain
 
 import (
 	"bytes"
@@ -11,6 +11,7 @@ import (
 	"strconv"
 )
 
+var ErrRsgain = errors.New("rsgain error")
 var ErrNoRsgain = errors.New("rsgain not found in PATH")
 
 const RsgainCommand = "rsgain"
@@ -94,6 +95,10 @@ func Calculate(ctx context.Context, truePeak bool, trackPaths []string) (album L
 	}
 	if err := cmd.Wait(); err != nil {
 		return Level{}, nil, fmt.Errorf("wait cmd: %w", err)
+	}
+
+	if len(tracks) != len(trackPaths) {
+		return Level{}, nil, fmt.Errorf("%w: didn't return a level for all tracks", err)
 	}
 
 	return album, tracks, nil
