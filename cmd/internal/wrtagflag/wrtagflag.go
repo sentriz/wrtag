@@ -22,6 +22,7 @@ import (
 	"go.senan.xyz/wrtag/researchlink"
 
 	_ "go.senan.xyz/wrtag/addon/lyrics"
+	_ "go.senan.xyz/wrtag/addon/musicdesc"
 	_ "go.senan.xyz/wrtag/addon/replaygain"
 	_ "go.senan.xyz/wrtag/addon/subproc"
 )
