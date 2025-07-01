@@ -73,8 +73,7 @@ func main() {
 		defer out.Flush()
 
 		args, paths := splitArgPaths(flag.Args())
-		keys := parseTagKeys(args)
-		if err := iterFiles(paths, func(p string) error { return cmdRead(out, p, *withProperties, keys) }); err != nil {
+		if err := iterFiles(paths, func(p string) error { return cmdRead(out, p, *withProperties, args) }); err != nil {
 			slog.Error("process read", "err", err)
 			return
 		}
@@ -87,8 +86,7 @@ func main() {
 		}
 	case "clear":
 		args, paths := splitArgPaths(args)
-		keys := parseTagKeys(args)
-		if err := iterFiles(paths, func(p string) error { return cmdClear(p, keys) }); err != nil {
+		if err := iterFiles(paths, func(p string) error { return cmdClear(p, args) }); err != nil {
 			slog.Error("process clear", "err", err)
 			return
 		}
@@ -98,7 +96,7 @@ func main() {
 	}
 }
 
-func cmdRead(to io.Writer, path string, withProperties bool, keys map[string]struct{}) error {
+func cmdRead(to io.Writer, path string, withProperties bool, keys []string) error {
 	t, err := tags.ReadTags(path)
 	if err != nil {
 		return fmt.Errorf("read: %w", err)
@@ -111,7 +109,7 @@ func cmdRead(to io.Writer, path string, withProperties bool, keys map[string]str
 			}
 		}
 	} else {
-		for k := range keys {
+		for _, k := range keys {
 			for _, v := range t.Values(k) {
 				fmt.Fprintf(to, "%s\t%s\t%s\n", path, tags.NormKey(k), v)
 			}
@@ -131,8 +129,10 @@ func cmdRead(to io.Writer, path string, withProperties bool, keys map[string]str
 		if len(keys) == 0 {
 			return true
 		}
-		_, want := keys[k]
-		return want
+		if slices.Contains(keys, k) {
+			return true
+		}
+		return false
 	}
 
 	if k := "length"; wantProperty(k) {
@@ -162,7 +162,7 @@ func cmdWrite(path string, keyValues map[string][]string) error {
 	return nil
 }
 
-func cmdClear(path string, keys map[string]struct{}) error {
+func cmdClear(path string, keys []string) error {
 	if len(keys) == 0 {
 		if err := tags.WriteTags(path, tags.Tags{}, tags.Clear); err != nil {
 			return err
@@ -170,7 +170,7 @@ func cmdClear(path string, keys map[string]struct{}) error {
 		return nil
 	}
 	var t = tags.Tags{}
-	for k := range keys {
+	for _, k := range keys {
 		t.Set(k)
 	}
 	if err := tags.WriteTags(path, t, 0); err != nil {
@@ -191,14 +191,6 @@ func splitArgPaths(argPaths []string) (args []string, paths []string) {
 		return argPaths[:i], argPaths[i+1:]
 	}
 	return nil, argPaths // no delimiter so presume paths
-}
-
-func parseTagKeys(args []string) map[string]struct{} {
-	var r = map[string]struct{}{}
-	for _, k := range args {
-		r[k] = struct{}{}
-	}
-	return r
 }
 
 func parseTagKeyValues(args []string) map[string][]string {
