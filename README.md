@@ -509,6 +509,9 @@ The format of the addon config is `lyrics <source>...` where the source is one o
 
 ## Addon ReplayGain
 
+> [!NOTE]
+> The ReplayGain addon requires the [`rsgain`](https://github.com/complexlogic/rsgain) program to available in your `$PATH`
+
 The `replaygain` addon computes and adds [ReplayGain 2.0](https://wiki.hydrogenaud.io/index.php?title=ReplayGain_2.0_specification) information to your files. It is great for normalising the perceived loudness of audio in your tracks.
 
 The format of the addon config is `replaygain <opts>...` where opts can be `true-peak` and `force`. If the force option is passed, ReplayGain information is recomputed even if it’s already present in the files.
