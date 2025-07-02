@@ -51,28 +51,28 @@ func (a ReplayGainAddon) ProcessRelease(ctx context.Context, paths []string) err
 		}
 	}
 
-	albumLev, trackLevs, err := rsgain.Calculate(ctx, a.truePeak, paths)
+	albumLev, pathLevs, err := rsgain.Calculate(ctx, a.truePeak, paths)
 	if err != nil {
 		return fmt.Errorf("calculate: %w", err)
 	}
 
-	var trackErrs []error
+	var pathErrs []error
 	for i := range paths {
-		trackL, path := trackLevs[i], paths[i]
+		pathL, path := pathLevs[i], paths[i]
 
 		t := tags.NewTags(
-			tags.ReplayGainTrackGain, fmtdB(trackL.GaindB),
-			tags.ReplayGainTrackPeak, fmtFloat(trackL.Peak, 6),
+			tags.ReplayGainTrackGain, fmtdB(pathL.GaindB),
+			tags.ReplayGainTrackPeak, fmtFloat(pathL.Peak, 6),
 			tags.ReplayGainAlbumGain, fmtdB(albumLev.GaindB),
 			tags.ReplayGainAlbumPeak, fmtFloat(albumLev.Peak, 6),
 		)
 		if err := tags.WriteTags(path, t, 0); err != nil {
-			trackErrs = append(trackErrs, err)
+			pathErrs = append(pathErrs, err)
 			continue
 		}
 	}
 
-	return errors.Join(trackErrs...)
+	return errors.Join(pathErrs...)
 }
 
 func (a ReplayGainAddon) String() string {
