@@ -199,21 +199,20 @@ type Alias struct {
 }
 
 type Relation struct {
-	TargetType   string `json:"target-type"`
-	TypeID       string `json:"type-id"`
-	SourceCredit string `json:"source-credit"`
-	TargetCredit string `json:"target-credit"`
-	AttributeIDs struct {
-	} `json:"attribute-ids"`
-	Direction       string `json:"direction"`
-	Attributes      []any  `json:"attributes"`
-	Type            string `json:"type"`
-	AttributeValues struct {
-	} `json:"attribute-values"`
-	Begin  any    `json:"begin"`
-	End    any    `json:"end"`
-	Ended  bool   `json:"ended"`
-	Artist Artist `json:"artist"`
+	TargetType      string   `json:"target-type"`
+	TypeID          string   `json:"type-id"`
+	SourceCredit    string   `json:"source-credit"`
+	TargetCredit    string   `json:"target-credit"`
+	AttributeIDs    struct{} `json:"attribute-ids"`
+	Direction       string   `json:"direction"`
+	Attributes      []any    `json:"attributes"`
+	Type            string   `json:"type"`
+	AttributeValues struct{} `json:"attribute-values"`
+	Begin           any      `json:"begin"`
+	End             any      `json:"end"`
+	Ended           bool     `json:"ended"`
+	Artist          Artist   `json:"artist"`
+	Work            Work     `json:"work"`
 }
 
 type Track struct {
@@ -235,6 +234,19 @@ type Track struct {
 	Position int            `json:"position"`
 	Title    string         `json:"title"`
 	Artists  []ArtistCredit `json:"artist-credit"`
+}
+
+type Work struct {
+	Type           any        `json:"type"`
+	Relations      []Relation `json:"relations"`
+	Language       string     `json:"language"`
+	Languages      []string   `json:"languages"`
+	Disambiguation string     `json:"disambiguation"`
+	Title          string     `json:"title"`
+	Iswcs          []any      `json:"iswcs"`
+	ID             string     `json:"id"`
+	Attributes     []any      `json:"attributes"`
+	TypeID         any        `json:"type-id"`
 }
 
 type Media struct {

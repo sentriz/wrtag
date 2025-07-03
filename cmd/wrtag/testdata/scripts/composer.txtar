@@ -1,0 +1,20 @@
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+
+exec tag write 'keyboard_c/1.flac'
+exec tag write 'keyboard_c/2.flac'
+exec tag write 'keyboard_c/3.flac'
+exec tag write 'keyboard_c/4.flac'
+exec tag write 'keyboard_c/5.flac'
+exec tag write 'keyboard_c/6.flac'
+exec tag write 'keyboard_c/7.flac'
+exec tag write 'keyboard_c/8.flac'
+exec tag write 'keyboard_c/9.flac'
+
+exec tag write 'keyboard_c/*' musicbrainz_albumid 'be3a32ec-8d3d-41de-b102-12bcaaa33e78'
+
+exec wrtag move -yes keyboard_c
+
+exec tag check 'albums/Keyboard Concertos no. 1, no. 2, no. 4/1.flac' composer 'Johann Sebastian Bach'
+exec tag check 'albums/Keyboard Concertos no. 1, no. 2, no. 4/1.flac' composers 'Johann Sebastian Bach'
+exec tag check 'albums/Keyboard Concertos no. 1, no. 2, no. 4/1.flac' composer_credit 'Johann Sebastian Bach'
+exec tag check 'albums/Keyboard Concertos no. 1, no. 2, no. 4/1.flac' composers_credit 'Johann Sebastian Bach'
