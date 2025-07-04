@@ -45,6 +45,8 @@ const (
 	TrackNumber   = "TRACKNUMBER" //tag: alts "TRACK" "TRACKNUM"
 	DiscNumber    = "DISCNUMBER"
 
+	ISRC = "ISRC"
+
 	Remixer        = "REMIXER"
 	Remixers       = "REMIXERS"
 	RemixerCredit  = "REMIXER_CREDIT"

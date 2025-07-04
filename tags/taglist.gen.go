@@ -24,6 +24,7 @@ var knownTags = map[string]struct{}{
 	"GENRE": {},
 	"GENRES": {},
 	"INITIALKEY": {},
+	"ISRC": {},
 	"LABEL": {},
 	"LYRICS": {},
 	"MEDIA": {},

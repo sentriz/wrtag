@@ -486,6 +486,8 @@ func WriteRelease(
 	t.Set(tags.TrackNumber, trimZero(strconv.Itoa(i+1))...)
 	t.Set(tags.DiscNumber, trimZero(strconv.Itoa(1))...)
 
+	t.Set(tags.ISRC, trimZero(trk.Recording.ISRCs...)...)
+
 	t.Set(tags.Remixer, trimZero(strings.Join(remixers, ", "))...)
 	t.Set(tags.Remixers, trimZero(remixers...)...)
 	t.Set(tags.RemixerCredit, trimZero(strings.Join(remixersCredit, ", "))...)
