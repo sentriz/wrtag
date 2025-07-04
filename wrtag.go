@@ -455,6 +455,16 @@ func WriteRelease(
 		}
 	}
 
+	var composers, composersCredit []string
+	for _, rel := range trk.Recording.Relations {
+		for _, rel := range rel.Work.Relations {
+			if rel.Artist.ID != "" && rel.Type == "composer" {
+				composers = append(composers, rel.Artist.Name)
+				composersCredit = append(composersCredit, cmp.Or(rel.TargetCredit, rel.Artist.Name))
+			}
+		}
+	}
+
 	// t.Set(x, trimZero(y)...) so that we clear out tags with no value from the map
 
 	t.Set(tags.Album, trimZero(release.Title)...)
@@ -492,6 +502,11 @@ func WriteRelease(
 	t.Set(tags.Remixers, trimZero(remixers...)...)
 	t.Set(tags.RemixerCredit, trimZero(strings.Join(remixersCredit, ", "))...)
 	t.Set(tags.RemixersCredit, trimZero(remixersCredit...)...)
+
+	t.Set(tags.Composer, trimZero(strings.Join(composers, ", "))...)
+	t.Set(tags.Composers, trimZero(composers...)...)
+	t.Set(tags.ComposerCredit, trimZero(strings.Join(composersCredit, ", "))...)
+	t.Set(tags.ComposersCredit, trimZero(composersCredit...)...)
 
 	t.Set(tags.MusicBrainzRecordingID, trimZero(trk.Recording.ID)...)
 	t.Set(tags.MusicBrainzTrackID, trimZero(trk.ID)...)

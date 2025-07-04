@@ -52,6 +52,11 @@ const (
 	RemixerCredit  = "REMIXER_CREDIT"
 	RemixersCredit = "REMIXERS_CREDIT"
 
+	Composer        = "COMPOSER"
+	Composers       = "COMPOSERS"
+	ComposerCredit  = "COMPOSER_CREDIT"
+	ComposersCredit = "COMPOSERS_CREDIT"
+
 	MusicBrainzRecordingID = "MUSICBRAINZ_TRACKID"
 	MusicBrainzTrackID     = "MUSICBRAINZ_RELEASETRACKID"
 	MusicBrainzArtistID    = "MUSICBRAINZ_ARTISTID"
