@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.15.0](https://www.github.com/sentriz/wrtag/compare/v0.14.0...v0.15.0) (2025-07-08)
+
+
+### Features
+
+* **metadata:** print keys in order they came ([7abac5d](https://www.github.com/sentriz/wrtag/commit/7abac5d507a135ef1e69fbc92e22ffebaeef68a7))
+* **musicdesc:** new addon for key and bpm detection ([53b79bd](https://www.github.com/sentriz/wrtag/commit/53b79bdb08dd4addb09aad740bfebe925cca16f2)), closes [#110](https://www.github.com/sentriz/wrtag/issues/110) [#109](https://www.github.com/sentriz/wrtag/issues/109)
+* **wrtag:** write `COMPOSER` tag ([1dad865](https://www.github.com/sentriz/wrtag/commit/1dad865699a635c402c39e21c8aa9d865ae25627))
+* **wrtag:** write `ISRC` tag ([5004569](https://www.github.com/sentriz/wrtag/commit/5004569b191e965b19c1abf31ddcf103b2614e37))
+
 ## [0.14.0](https://www.github.com/sentriz/wrtag/compare/v0.13.0...v0.14.0) (2025-06-28)
 
 
