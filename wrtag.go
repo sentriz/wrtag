@@ -66,6 +66,9 @@ func IsNonFatalError(err error) bool {
 // The minimum score required for a MusicBrainz match to be considered valid.
 const minScore = 95
 
+// Max number of genres to write to a track.
+const numTrackGenres = 6
+
 const (
 	// thresholdSizeClean is the maximum size (20MB) of a directory that can be
 	// automatically cleaned up.
@@ -431,7 +434,6 @@ func WriteRelease(
 		}
 		return d.Format(time.DateOnly)
 	}
-
 	formatBool := func(b bool) string {
 		if !b {
 			return ""
@@ -439,8 +441,8 @@ func WriteRelease(
 		return "1"
 	}
 
-	var genreNames []string
-	for _, g := range genres[:min(6, len(genres))] { // top 6 genre strings
+	genreNames := make([]string, 0, numTrackGenres)
+	for _, g := range genres[:min(6, len(genres))] {
 		genreNames = append(genreNames, g.Name)
 	}
 
