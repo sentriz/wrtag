@@ -1,0 +1,11 @@
+exec tag write albums-src/kat_moda/1.flac
+exec tag write albums-src/kat_moda/2.flac
+exec tag write albums-src/kat_moda/3.flac
+
+exec tag write albums-src/kat_moda/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+
+# even though the source directory is string prefixed with the path-format root (albums, albums-src), it should still be considered "outside"
+# if this takes too long or is blowing up, probably the move operation's post source routine thinks the src dir is in it's control
+exec wrtag move -yes albums-src/kat_moda

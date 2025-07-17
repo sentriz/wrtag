@@ -766,7 +766,7 @@ func (m Move) PostSource(dc DirContext, limit string, src string) error {
 	toRemove := []string{src}
 	toLock := src
 
-	if strings.HasPrefix(src, limit) {
+	if fileutil.HasPrefix(src, limit) {
 		for d := filepath.Dir(src); d != filepath.Clean(limit); d = filepath.Dir(d) {
 			toRemove = append(toRemove, d)
 			toLock = d // only highest parent

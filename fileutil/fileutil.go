@@ -91,3 +91,18 @@ func WalkLeaves(root string, fn func(path string, d fs.DirEntry) error) error {
 	}
 	return nil
 }
+
+// HasPrefix checks a path has a prefix, making sure to respect path boundaries. So that /aa & /a does not match, but /a/a & /a does.
+func HasPrefix(path, prefix string) bool {
+	if prefix == "" {
+		return true
+	}
+	if filepath.IsAbs(path) != filepath.IsAbs(prefix) {
+		return false
+	}
+
+	prefix = filepath.Clean(prefix)
+	path = filepath.Clean(path)
+
+	return path == prefix || strings.HasPrefix(path, prefix+string(filepath.Separator))
+}
