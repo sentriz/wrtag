@@ -62,6 +62,11 @@ func TestSelection(t *testing.T) {
 			expected: "cover_special.jpg",
 		},
 		{
+			name:     "folder vs CD",
+			covers:   []string{"CD.jpg", "folder.jpg"},
+			expected: "folder.jpg",
+		},
+		{
 			name: "cds",
 			covers: []string{
 				"cd 2/cover art file A10 01.png",

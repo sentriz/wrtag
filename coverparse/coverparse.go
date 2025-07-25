@@ -67,6 +67,9 @@ func init() {
 
 func posArtTypes(path string) []int {
 	matches := artTypeExpr.FindAllString(path, -1)
+	if len(matches) == 0 {
+		return []int{1} // a score of 1 is worse than any priority (which are <= 0)
+	}
 	r := make([]int, len(matches))
 	for i, m := range matches {
 		r[i] = -artTypePriorities[m]
