@@ -19,7 +19,6 @@ func IsCover(p string) bool {
 
 // Compare ranks two potential cover paths, suitable for [slices.SortFunc].
 func Compare(a, b string) int {
-	a, b = strings.ToLower(a), strings.ToLower(b)
 	return cmp.Or(
 		slices.Compare(posArtTypes(a), posArtTypes(b)),
 		slices.Compare(posNumbers(a), posNumbers(b)),
@@ -65,6 +64,7 @@ func init() {
 }
 
 func posArtTypes(path string) []int {
+	path = strings.ToLower(path)
 	matches := artTypeExpr.FindAllString(path, -1)
 	if len(matches) == 0 {
 		return []int{0}
@@ -102,5 +102,7 @@ var filetypePriorities = map[string]int{
 }
 
 func posFiletype(path string) int {
-	return filetypePriorities[filepath.Ext(path)]
+	path = strings.ToLower(path)
+	pos := filetypePriorities[filepath.Ext(path)]
+	return pos
 }
