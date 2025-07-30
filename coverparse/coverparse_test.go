@@ -5,8 +5,19 @@ import (
 	"slices"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"go.senan.xyz/wrtag/coverparse"
 )
+
+func TestIsCover(t *testing.T) {
+	t.Parallel()
+
+	assert.True(t, coverparse.IsCover("folder.PNG"))
+	assert.True(t, coverparse.IsCover("folder.Jpg"))
+	assert.True(t, coverparse.IsCover("folder.bmp"))
+	assert.False(t, coverparse.IsCover("folder.ok"))
+	assert.False(t, coverparse.IsCover("folder"))
+}
 
 func TestSelection(t *testing.T) {
 	t.Parallel()
@@ -62,7 +73,7 @@ func TestSelection(t *testing.T) {
 			expected: "cover_special.jpg",
 		},
 		{
-			name:     "folder vs CD",
+			name:     "folder vs cd",
 			covers:   []string{"CD.jpg", "folder.jpg"},
 			expected: "folder.jpg",
 		},

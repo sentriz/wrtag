@@ -2,6 +2,7 @@ package coverparse
 
 import (
 	"cmp"
+	"fmt"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -38,14 +39,12 @@ func BestBetween(cover string, other string) string {
 }
 
 var artTypePriorities = map[string]int{
-	"front":    3,
-	"cover":    3,
-	"album":    3,
-	"folder":   2,
-	"albumart": 2,
-	"scan":     1,
-	"back":     0, // ignore
-	"artist":   0, // ignore
+	"front":    -3,
+	"cover":    -3,
+	"album":    -3,
+	"folder":   -2,
+	"albumart": -2,
+	"scan":     -1,
 }
 
 var artTypeExpr *regexp.Regexp
@@ -68,11 +67,13 @@ func init() {
 func posArtTypes(path string) []int {
 	matches := artTypeExpr.FindAllString(path, -1)
 	if len(matches) == 0 {
-		return []int{1} // a score of 1 is worse than any priority (which are <= 0)
+		return []int{0}
 	}
-	r := make([]int, len(matches))
-	for i, m := range matches {
-		r[i] = -artTypePriorities[m]
+	r := make([]int, 0, len(matches))
+	for _, m := range matches {
+		if pos, ok := artTypePriorities[m]; ok {
+			r = append(r, pos)
+		}
 	}
 	return r
 }
@@ -81,21 +82,25 @@ var numbersExpr = regexp.MustCompile(`\d+`)
 
 func posNumbers(path string) []int {
 	matches := numbersExpr.FindAllString(path, -1)
-	r := make([]int, len(matches))
-	for i, m := range matches {
-		r[i], _ = strconv.Atoi(m)
+	r := make([]int, 0, len(matches))
+	for _, m := range matches {
+		pos, err := strconv.Atoi(m)
+		if err != nil {
+			panic(fmt.Errorf("parse int from numbers expr: %w", err))
+		}
+		r = append(r, pos)
 	}
 	return r
 }
 
 var filetypePriorities = map[string]int{
-	".png":  2,
-	".jpg":  1,
-	".jpeg": 1,
-	".bmp":  1,
-	".gif":  1,
+	".png":  -2,
+	".jpg":  -1,
+	".jpeg": -1,
+	".bmp":  -1,
+	".gif":  -1,
 }
 
 func posFiletype(path string) int {
-	return -filetypePriorities[filepath.Ext(path)]
+	return filetypePriorities[filepath.Ext(path)]
 }
