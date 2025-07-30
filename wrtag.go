@@ -197,7 +197,7 @@ func ProcessDir(
 	}
 
 	if mbid == "" {
-		if err := extendQueryWithOriginFile(&query, originFile); err != nil {
+		if err := extendQueryWithOriginFile(ctx, &query, originFile); err != nil {
 			return nil, fmt.Errorf("use origin file: %w", err)
 		}
 	}
@@ -260,7 +260,7 @@ func ProcessDir(
 	for i := range pathTags {
 		pt, rt, destPath := pathTags[i], releaseTracks[i], destPaths[i]
 
-		if err := op.ProcessPath(dc, pt.Path, destPath); err != nil {
+		if err := op.ProcessPath(ctx, dc, pt.Path, destPath); err != nil {
 			return nil, fmt.Errorf("process path %q: %w", filepath.Base(pt.Path), err)
 		}
 
@@ -299,19 +299,19 @@ func ProcessDir(
 	}
 
 	for kf := range cfg.KeepFiles {
-		if err := op.ProcessPath(dc, filepath.Join(srcDir, kf), filepath.Join(destDir, kf)); err != nil && !errors.Is(err, os.ErrNotExist) {
+		if err := op.ProcessPath(ctx, dc, filepath.Join(srcDir, kf), filepath.Join(destDir, kf)); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("process keep file %q: %w", kf, err)
 		}
 	}
 
-	if err := trimDestDir(dc, destDir, op.CanModifyDest()); err != nil {
+	if err := trimDestDir(ctx, dc, destDir, op.CanModifyDest()); err != nil {
 		return nil, fmt.Errorf("trim: %w", err)
 	}
 
 	unlock()
 
 	if srcDir != destDir {
-		if err := op.PostSource(dc, cfg.PathFormat.Root(), srcDir); err != nil {
+		if err := op.PostSource(ctx, dc, cfg.PathFormat.Root(), srcDir); err != nil {
 			return nil, fmt.Errorf("clean: %w", err)
 		}
 	}
@@ -681,14 +681,14 @@ type FileSystemOperation interface {
 	// It ensures the destination directory exists and records the path in the DirContext.
 	// The exact behaviour (move/copy/reflink) depends on the specific implementation.
 	// Returns an error if the operation fails.
-	ProcessPath(dc DirContext, src, dest string) error
+	ProcessPath(ctx context.Context, dc DirContext, src, dest string) error
 
 	// PostSource performs any cleanup or post-processing on the source directory
 	// after all files have been processed. For example, removing empty directories
 	// after a move operation.
 	// The limit parameter specifies a boundary directory that should not be removed.
 	// Returns an error if the cleanup operation fails.
-	PostSource(dc DirContext, limit string, src string) error
+	PostSource(ctx context.Context, dc DirContext, limit string, src string) error
 }
 
 // DirContext tracks known files in the destination directory. After a release is put in place,
@@ -720,7 +720,7 @@ func (m Move) CanModifyDest() bool {
 // ProcessPath moves a file from src to dest, ensuring the destination directory exists.
 // If the operation is in dry-run mode, it will only log the intended action.
 // If src and dest are the same, no action is taken.
-func (m Move) ProcessPath(dc DirContext, src, dest string) error {
+func (m Move) ProcessPath(ctx context.Context, dc DirContext, src, dest string) error {
 	dc.knownDestPaths[dest] = struct{}{}
 
 	if filepath.Clean(src) == filepath.Clean(dest) {
@@ -728,7 +728,7 @@ func (m Move) ProcessPath(dc DirContext, src, dest string) error {
 	}
 
 	if m.dryRun {
-		slog.Info("move", "from", src, "to", dest)
+		slog.InfoContext(ctx, "move", "from", src, "to", dest)
 		return nil
 	}
 
@@ -746,19 +746,19 @@ func (m Move) ProcessPath(dc DirContext, src, dest string) error {
 				return fmt.Errorf("remove from move: %w", err)
 			}
 
-			slog.Debug("moved path", "from", src, "to", dest)
+			slog.DebugContext(ctx, "moved path", "from", src, "to", dest)
 			return nil
 		}
 		return fmt.Errorf("rename: %w", err)
 	}
 
-	slog.Debug("moved path", "from", src, "to", dest)
+	slog.DebugContext(ctx, "moved path", "from", src, "to", dest)
 	return nil
 }
 
 // PostSource cleans up the source directory after all files have been moved.
 // It removes empty directories up to the specified limit directory.
-func (m Move) PostSource(dc DirContext, limit string, src string) error {
+func (m Move) PostSource(ctx context.Context, dc DirContext, limit string, src string) error {
 	if limit == "" {
 		panic("empty limit dir")
 	}
@@ -777,7 +777,7 @@ func (m Move) PostSource(dc DirContext, limit string, src string) error {
 	defer unlock()
 
 	for _, p := range toRemove {
-		if err := safeRemoveAll(p, m.dryRun); err != nil {
+		if err := safeRemoveAll(ctx, p, m.dryRun); err != nil {
 			return fmt.Errorf("safe remove all: %w", err)
 		}
 	}
@@ -803,7 +803,7 @@ func (c Copy) CanModifyDest() bool {
 // ProcessPath copies a file from src to dest, ensuring the destination directory exists.
 // If the operation is in dry-run mode, it will only log the intended action.
 // If src and dest are the same, it returns ErrSelfCopy.
-func (c Copy) ProcessPath(dc DirContext, src, dest string) error {
+func (c Copy) ProcessPath(ctx context.Context, dc DirContext, src, dest string) error {
 	dc.knownDestPaths[dest] = struct{}{}
 
 	if filepath.Clean(src) == filepath.Clean(dest) {
@@ -811,7 +811,7 @@ func (c Copy) ProcessPath(dc DirContext, src, dest string) error {
 	}
 
 	if c.dryRun {
-		slog.Info("copy", "from", src, "to", dest)
+		slog.InfoContext(ctx, "copy", "from", src, "to", dest)
 		return nil
 	}
 
@@ -823,13 +823,13 @@ func (c Copy) ProcessPath(dc DirContext, src, dest string) error {
 		return err
 	}
 
-	slog.Debug("copied path", "from", src, "to", dest)
+	slog.DebugContext(ctx, "copied path", "from", src, "to", dest)
 	return nil
 }
 
 // PostSource performs any necessary cleanup of the source directory.
 // For Copy operations, this is a no-op since the source files remain in place.
-func (Copy) PostSource(dc DirContext, limit string, src string) error {
+func (Copy) PostSource(ctx context.Context, dc DirContext, limit string, src string) error {
 	return nil
 }
 
@@ -851,7 +851,7 @@ func (c Reflink) CanModifyDest() bool {
 // ProcessPath creates a reflink (copy-on-write) clone of a file from src to dest.
 // If the operation is in dry-run mode, it will only log the intended action.
 // If src and dest are the same, it returns ErrSelfCopy.
-func (c Reflink) ProcessPath(dc DirContext, src, dest string) error {
+func (c Reflink) ProcessPath(ctx context.Context, dc DirContext, src, dest string) error {
 	dc.knownDestPaths[dest] = struct{}{}
 
 	if filepath.Clean(src) == filepath.Clean(dest) {
@@ -859,7 +859,7 @@ func (c Reflink) ProcessPath(dc DirContext, src, dest string) error {
 	}
 
 	if c.dryRun {
-		slog.Info("reflink", "from", src, "to", dest)
+		slog.InfoContext(ctx, "reflink", "from", src, "to", dest)
 		return nil
 	}
 
@@ -871,18 +871,18 @@ func (c Reflink) ProcessPath(dc DirContext, src, dest string) error {
 		return fmt.Errorf("reflink file: %w", err)
 	}
 
-	slog.Debug("reflinked path", "from", src, "to", dest)
+	slog.DebugContext(ctx, "reflinked path", "from", src, "to", dest)
 	return nil
 }
 
 // PostSource performs any necessary cleanup of the source directory.
 // For Reflink operations, this is a no-op since the source files remain in place.
-func (Reflink) PostSource(dc DirContext, limit string, src string) error {
+func (Reflink) PostSource(ctx context.Context, dc DirContext, limit string, src string) error {
 	return nil
 }
 
 // trimDestDir deletes all items in a destination dir that don't look like they should be there.
-func trimDestDir(dc DirContext, dest string, canModifyDest bool) error {
+func trimDestDir(ctx context.Context, dc DirContext, dest string, canModifyDest bool) error {
 	entries, err := os.ReadDir(dest)
 	if !canModifyDest && errors.Is(err, os.ErrNotExist) {
 		// this is fine if we're only doing a dry run
@@ -914,13 +914,13 @@ func trimDestDir(dc DirContext, dest string, canModifyDest bool) error {
 	var deleteErrs []error
 	for _, p := range toDelete {
 		if !canModifyDest {
-			slog.Info("delete extra file", "path", p)
+			slog.InfoContext(ctx, "delete extra file", "path", p)
 			continue
 		}
 		if err := os.Remove(p); err != nil {
 			deleteErrs = append(deleteErrs, err)
 		}
-		slog.Info("deleted extra file", "path", p)
+		slog.InfoContext(ctx, "deleted extra file", "path", p)
 	}
 	if err := errors.Join(deleteErrs...); err != nil {
 		return fmt.Errorf("delete extra files: %w", err)
@@ -1000,7 +1000,7 @@ func processCover(
 			return fmt.Errorf("maybe fetch better cover: %w", err)
 		}
 		if coverTmp != "" {
-			if err := (Move{}).ProcessPath(dc, coverTmp, coverPath(coverTmp)); err != nil {
+			if err := (Move{}).ProcessPath(ctx, dc, coverTmp, coverPath(coverTmp)); err != nil {
 				return fmt.Errorf("move new cover to dest: %w", err)
 			}
 			return nil
@@ -1009,7 +1009,7 @@ func processCover(
 
 	// process any existing cover if we didn't fetch (or find) any from musicbrainz
 	if cover != "" {
-		if err := op.ProcessPath(dc, cover, coverPath(cover)); err != nil {
+		if err := op.ProcessPath(ctx, dc, cover, coverPath(cover)); err != nil {
 			return fmt.Errorf("move file to dest: %w", err)
 		}
 	}
@@ -1075,7 +1075,7 @@ func dirSize(path string) (uint64, error) {
 	return size, err
 }
 
-func safeRemoveAll(src string, dryRun bool) error {
+func safeRemoveAll(ctx context.Context, src string, dryRun bool) error {
 	entries, err := os.ReadDir(src)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
@@ -1091,7 +1091,7 @@ func safeRemoveAll(src string, dryRun bool) error {
 	}
 
 	if dryRun {
-		slog.Info("remove all", "path", src)
+		slog.InfoContext(ctx, "remove all", "path", src)
 		return nil
 	}
 
@@ -1107,7 +1107,7 @@ func safeRemoveAll(src string, dryRun bool) error {
 		return fmt.Errorf("error cleaning up folder: %w", err)
 	}
 
-	slog.Debug("removed path", "path", src)
+	slog.DebugContext(ctx, "removed path", "path", src)
 	return nil
 }
 
@@ -1148,11 +1148,11 @@ func logTagChanges(ctx context.Context, fileKey string, lvl slog.Level, before, 
 	}
 }
 
-func extendQueryWithOriginFile(q *musicbrainz.ReleaseQuery, originFile *originfile.OriginFile) error { //nolint:unparam
+func extendQueryWithOriginFile(ctx context.Context, q *musicbrainz.ReleaseQuery, originFile *originfile.OriginFile) error { //nolint:unparam
 	if originFile == nil {
 		return nil
 	}
-	slog.Debug("using origin file", "file", originFile)
+	slog.DebugContext(ctx, "using origin file", "file", originFile)
 
 	if originFile.RecordLabel != "" {
 		q.Label = originFile.RecordLabel

@@ -111,3 +111,7 @@ linters:
       - path: '(.+)_test\.go'
         linters:
           - gosec
+      - path: "main.go"
+        linters:
+          - noctx
+        text: 'use log/slog\.'
