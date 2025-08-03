@@ -9,7 +9,7 @@ function _wrtag_completion() {
 
   declare -a opts
 
-  # if we haven't found a command yet so complete options before command
+  # we haven't found a command yet so complete options before command
   if [[ ! "${IFS}${PREV_COMP_WORDS[*]}${IFS}" =~ ${IFS}(move|copy|reflink|sync)${IFS} ]]; then
     opts=(
       -h
