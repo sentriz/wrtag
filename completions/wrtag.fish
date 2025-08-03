@@ -12,8 +12,6 @@ set addonoptions \
     musicdesc{," force"} \
     "subproc <path/command> <args>..."
 
-complete -c wrtag --erase
-
 # don't suggest files if we haven't seen a subcommand
 complete -c wrtag -n "not __fish_seen_subcommand_from $commands" --no-files
 
