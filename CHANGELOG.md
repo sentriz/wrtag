@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.16.0](https://www.github.com/sentriz/wrtag/compare/v0.15.0...v0.16.0) (2025-08-06)
+
+
+### Features
+
+* **contrib:** add shell completions for fish and bash ([#145](https://www.github.com/sentriz/wrtag/issues/145)) ([258e17e](https://www.github.com/sentriz/wrtag/commit/258e17ed1685a74d11ac74f952f094ef72506ecf)), closes [#140](https://www.github.com/sentriz/wrtag/issues/140)
+
+
+### Bug Fixes
+
+* **coverparse:** correctly prioritize filenames with keywords ([#143](https://www.github.com/sentriz/wrtag/issues/143)) ([01f0e83](https://www.github.com/sentriz/wrtag/commit/01f0e839f9a2bedb661a78026a295fdd49aa81a3))
+
 ## [0.15.0](https://www.github.com/sentriz/wrtag/compare/v0.14.0...v0.15.0) (2025-07-17)
 
 
