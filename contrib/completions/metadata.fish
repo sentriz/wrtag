@@ -8,6 +8,11 @@ function __is_long_option
     string match -r -- '^--.*$' (commandline -px)[-1]
 end
 
+function __complete_prefer_oldstyle
+    complete $argv
+    complete -n __is_long_option (string replace -r -- '^-o$' -l $argv )
+end
+
 set commands read write clear
 set tags album artists title genres
 
@@ -15,21 +20,11 @@ set tags album artists title genres
 complete -c metadata -n "not __fish_seen_subcommand_from --" --no-files
 
 # complete global options if we haven't seen a subcommand
-complete -c metadata -n "not __fish_seen_subcommand_from $commands" \
+__complete_prefer_oldstyle -c metadata -n "not __fish_seen_subcommand_from $commands" \
     -o h -o help -d "print help"
 
-complete -c metadata -n "not __fish_seen_subcommand_from $commands" \
+__complete_prefer_oldstyle -c metadata -n "not __fish_seen_subcommand_from $commands" \
     -o log-level -x -d "Set the logging level (default INFO)" \
-    -a "INFO WARN DEBUG ERROR"
-
-# complete gnu style global options if we haven't seen a subcommand
-complete -c metadata -n "not __fish_seen_subcommand_from $commands" \
-    -n __is_long_option \
-    -l h -l help -d "print help"
-
-complete -c metadata -n "not __fish_seen_subcommand_from $commands" \
-    -n __is_long_option \
-    -l log-level -x -d "Set the logging level (default INFO)" \
     -a "INFO WARN DEBUG ERROR"
 
 # complete subcommands if we haven't seen a subcommand
@@ -43,7 +38,7 @@ complete -c metadata -n "not __fish_seen_subcommand_from $commands" \
     -a clear -d "clear tags"
 
 # complete subcommand options
-complete -c metadata -n "__fish_seen_subcommand_from read" \
+__complete_prefer_oldstyle -c metadata -n "__fish_seen_subcommand_from read" \
     -n "not __fish_seen_subcommand_from - --" \
     -o properties -d "Read file properties like length and bitrate"
 
@@ -63,9 +58,3 @@ complete -c metadata -n "__fish_seen_subcommand_from $commands" \
 complete -c metadata -n "__fish_seen_subcommand_from $commands" \
     -n "not __fish_seen_subcommand_from - --" \
     -a -- -d "end of options, start of filenames"
-
-# complete gnu style subcommand options
-complete -c metadata -n "__fish_seen_subcommand_from read" \
-    -n "not __fish_seen_subcommand_from - --" \
-    -n __is_long_option \
-    -l properties -d "Read file properties like length and bitrate"
