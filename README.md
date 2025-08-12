@@ -305,6 +305,8 @@ services:
   wrtag:
     image: sentriz/wrtag
     environment:
+      # - PUID=1000 # optional user id for wrtag process
+      # - PGID=1000 # optional group id for wrtag process
       - WRTAG_WEB_API_KEY= # change this
       - WRTAG_WEB_LISTEN_ADDR=:80
       - WRTAG_WEB_PUBLIC_URL=https://wrtag.example.com

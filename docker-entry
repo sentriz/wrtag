@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -e
+
+PUID=${PUID:-0}
+PGID=${PGID:-0}
+USERNAME=wrtag
+
+[ "$PUID" -eq 0 ] && exec "$@"
+
+adduser -D -u "$PUID" -g "$PGID" "$USERNAME" 2>/dev/null
+
+[ -d "/data" ] && chown -R "$PGID:$PUID" /data
+[ -d "/config" ] && chown -R "$PGID:$PUID" /config
+
+exec su-exec "$PUID:$PGID" "$@"

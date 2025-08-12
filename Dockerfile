@@ -15,6 +15,9 @@ RUN  \
 FROM alpine:3.20
 LABEL org.opencontainers.image.source=https://github.com/sentriz/wrtag
 RUN apk add -U --no-cache \
+    su-exec \
     rsgain
 COPY --from=builder /out/* /usr/local/bin/
+COPY docker-entry /
+ENTRYPOINT ["/docker-entry"]
 CMD ["wrtagweb"]
