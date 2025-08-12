@@ -11,7 +11,7 @@ require (
 	github.com/goccy/go-yaml v1.18.0
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
-	github.com/ncruces/go-sqlite3 v0.26.3
+	github.com/ncruces/go-sqlite3 v0.27.1
 	github.com/rainycape/unidecode v0.0.0-20150907023854-cb7f23ec59be
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/sergi/go-diff v1.4.0
@@ -21,9 +21,9 @@ require (
 	go.senan.xyz/sqlb v0.2.7
 	go.senan.xyz/table v0.0.0-20240227175247-cf2c834b4c23
 	go.senan.xyz/taglib v0.7.2
-	golang.org/x/net v0.41.0
-	golang.org/x/sync v0.15.0
-	golang.org/x/text v0.26.0
+	golang.org/x/net v0.43.0
+	golang.org/x/sync v0.16.0
+	golang.org/x/text v0.28.0
 	golang.org/x/time v0.12.0
 )
 
@@ -37,8 +37,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/tetratelabs/wazero v1.9.0 // indirect
-	golang.org/x/sys v0.33.0 // indirect
-	golang.org/x/tools v0.34.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/tools v0.36.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
