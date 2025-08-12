@@ -92,6 +92,11 @@ func TestSelection(t *testing.T) {
 			},
 			expected: "cd 1/cover art file A10 01.png",
 		},
+		{
+			name:     "cover vs spec",
+			covers:   []string{"spectrogram.png", "cover.jpg"},
+			expected: "cover.jpg",
+		},
 	}
 
 	for _, test := range cases {
