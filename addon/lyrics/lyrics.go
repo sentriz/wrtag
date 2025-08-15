@@ -37,6 +37,10 @@ func NewLyricsAddon(conf string) (LyricsAddon, error) {
 	return LyricsAddon{sources}, nil
 }
 
+func (l LyricsAddon) Check() error {
+	return nil
+}
+
 func (l LyricsAddon) ProcessRelease(ctx context.Context, paths []string) error {
 	var wg sync.WaitGroup
 

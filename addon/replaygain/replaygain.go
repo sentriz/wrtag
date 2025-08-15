@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os/exec"
 	"strconv"
 	"strings"
 
@@ -34,6 +35,13 @@ func NewReplayGainAddon(conf string) (ReplayGainAddon, error) {
 		}
 	}
 	return a, nil
+}
+
+func (a ReplayGainAddon) Check() error {
+	if _, err := exec.LookPath(rsgain.RsgainCommand); err != nil {
+		return fmt.Errorf("required binary %q not found in PATH: %w", rsgain.RsgainCommand, err)
+	}
+	return nil
 }
 
 func (a ReplayGainAddon) ProcessRelease(ctx context.Context, paths []string) error {

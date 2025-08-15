@@ -9,6 +9,8 @@ import (
 
 // Addon represents a plugin that can process files after the main import operation.
 type Addon interface {
+	// Check validates that the addon has everything it needs to work properly.
+	Check() error
 	// ProcessRelease is called with the paths of the processed files after a successful import.
 	ProcessRelease(context.Context, []string) error
 }

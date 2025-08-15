@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os/exec"
 	"runtime"
 	"strconv"
 	"strings"
@@ -33,6 +34,13 @@ func NewMusicDescAddon(conf string) (MusicDescAddon, error) {
 		}
 	}
 	return a, nil
+}
+
+func (a MusicDescAddon) Check() error {
+	if _, err := exec.LookPath(essentia.StreamingExtractorMusicCommand); err != nil {
+		return fmt.Errorf("required binary %q not found in PATH: %w", essentia.StreamingExtractorMusicCommand, err)
+	}
+	return nil
 }
 
 func (a MusicDescAddon) ProcessRelease(ctx context.Context, paths []string) error {

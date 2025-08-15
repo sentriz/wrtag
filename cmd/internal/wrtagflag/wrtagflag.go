@@ -266,6 +266,9 @@ func (a *addonsParser) Set(value string) error {
 	if err != nil {
 		return fmt.Errorf("addon %q: %w", name, err)
 	}
+	if err := addn.Check(); err != nil {
+		return fmt.Errorf("addon %q check failed: %w", name, err)
+	}
 	*a.addons = append(*a.addons, addn)
 	return nil
 }
