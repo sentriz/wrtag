@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.16.0](https://www.github.com/sentriz/wrtag/compare/v0.15.0...v0.16.0) (2025-08-15)
+
+
+### Features
+
+* **contrib:** add shell completions for fish and bash ([#145](https://www.github.com/sentriz/wrtag/issues/145)) ([258e17e](https://www.github.com/sentriz/wrtag/commit/258e17ed1685a74d11ac74f952f094ef72506ecf)), closes [#140](https://www.github.com/sentriz/wrtag/issues/140)
+* **docker:** support PGID/PUID env vars ([4099679](https://www.github.com/sentriz/wrtag/commit/4099679a4bcbf74eb6dfab5666f56464e308fe96)), closes [#147](https://www.github.com/sentriz/wrtag/issues/147)
+* **wrtag:** support symlinks in operations and path-format root ([1c9b33b](https://www.github.com/sentriz/wrtag/commit/1c9b33b86f32e95205caf53bb3a78e48ce0d8ca6)), closes [#149](https://www.github.com/sentriz/wrtag/issues/149) [#141](https://www.github.com/sentriz/wrtag/issues/141)
+
+
+### Bug Fixes
+
+* **coverparse:** correctly prioritize filenames with keywords ([#143](https://www.github.com/sentriz/wrtag/issues/143)) ([01f0e83](https://www.github.com/sentriz/wrtag/commit/01f0e839f9a2bedb661a78026a295fdd49aa81a3))
+
 ## [0.15.0](https://www.github.com/sentriz/wrtag/compare/v0.14.0...v0.15.0) (2025-07-17)
 
 
