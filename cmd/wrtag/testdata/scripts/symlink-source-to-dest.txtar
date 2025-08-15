@@ -1,0 +1,48 @@
+# test case where source directory is a symlink pointing to where the destination should be
+# this tests the edge case that could cause files to be deleted instead of moved
+
+# set up the real destination directory structure first
+exec mkdir -p real_dest/albums/Jeff\ Mills/Kat\ Moda
+
+# create files in the real destination location
+exec tag write 'real_dest/albums/Jeff Mills/Kat Moda/01.flac' title 'alarms'
+exec tag write 'real_dest/albums/Jeff Mills/Kat Moda/02.flac' title 'the bells'
+exec tag write 'real_dest/albums/Jeff Mills/Kat Moda/03.flac' title 'the bells festival mix'
+
+exec tag write 'real_dest/albums/Jeff Mills/Kat Moda/*.flac' musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+exec tag write 'real_dest/albums/Jeff Mills/Kat Moda/*.flac' album 'kat moda ep'
+exec tag write 'real_dest/albums/Jeff Mills/Kat Moda/*.flac' albumartist 'jeff pills !! '
+exec tag write 'real_dest/albums/Jeff Mills/Kat Moda/*.flac' label 'purpose maker'
+exec tag write 'real_dest/albums/Jeff Mills/Kat Moda/*.flac' catalognumber 'PMD002'
+exec tag write 'real_dest/albums/Jeff Mills/Kat Moda/*.flac' media 'digital media'
+
+# create cover
+exec touch 'real_dest/albums/Jeff Mills/Kat Moda/cover.png'
+
+# create a symlink that points to the destination directory
+exec ln -s 'real_dest/albums/Jeff Mills/Kat Moda' source_link
+
+# set path format to write to the real destination
+env WRTAG_PATH_FORMAT='real_dest/albums/{{ artistsString .Release.Artists | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Title | safepath }}{{ .Ext }}'
+
+# this is the problematic case: moving from a symlink that points to where the dest should be
+# the move should be a no-op since source and dest resolve to the same location
+exec wrtag move -yes source_link/
+
+# check what files actually exist after the operation
+exec find real_dest/
+
+# files should still exist (not deleted) - but they might be renamed
+exists 'real_dest/albums/Jeff Mills/Kat Moda/Alarms.flac'
+exists 'real_dest/albums/Jeff Mills/Kat Moda/The Bells.flac'
+exists 'real_dest/albums/Jeff Mills/Kat Moda/The Bells (Festival mix).flac'
+exists 'real_dest/albums/Jeff Mills/Kat Moda/cover.png'
+
+# the symlink should still exist and point to the renamed files
+exists source_link/Alarms.flac
+exists 'source_link/The Bells.flac'
+
+# check that tags are correct
+cd 'real_dest/albums/Jeff Mills/Kat Moda/'
+exec tag check 'The Bells.flac' title 'The Bells'
+exec tag check 'The Bells.flac' albumartist 'Jeff Mills'

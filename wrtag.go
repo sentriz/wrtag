@@ -159,7 +159,10 @@ func ProcessDir(
 	if !filepath.IsAbs(srcDir) {
 		panic("src dir not abs") // this is a programmer error for now
 	}
-	srcDir = filepath.Clean(srcDir)
+
+	if dir, err := filepath.EvalSymlinks(srcDir); err == nil {
+		srcDir = dir
+	}
 
 	cover, pathTags, err := ReadReleaseDir(srcDir)
 	if err != nil {
@@ -232,6 +235,10 @@ func ProcessDir(
 	destDir, err := DestDir(&cfg.PathFormat, release)
 	if err != nil {
 		return nil, fmt.Errorf("gen dest dir: %w", err)
+	}
+
+	if dir, err := filepath.EvalSymlinks(destDir); err == nil {
+		destDir = dir
 	}
 
 	labelInfo := musicbrainz.AnyLabelInfo(release)
@@ -416,7 +423,6 @@ func DestDir(pathFormat *pathformat.Format, release *musicbrainz.Release) (strin
 		return "", fmt.Errorf("create path: %w", err)
 	}
 	dir := filepath.Dir(path)
-	dir = filepath.Clean(dir)
 	return dir, nil
 }
 

@@ -1,0 +1,57 @@
+# test the specific case from github issue #141
+# when path-format root is a symlink to the actual destination,
+# and source is already at the target location via symlink
+
+# set up actual destination directory
+exec mkdir -p real_music
+
+# create symlink for the music root
+exec ln -s real_music music_link
+
+# set up source folder inside the symlinked root
+exec tag write music_link/source/01.flac title 'alarms'
+exec tag write music_link/source/02.flac title 'the bells'
+exec tag write music_link/source/03.flac title 'the bells festival mix'
+
+exec tag write music_link/source/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+exec tag write music_link/source/*.flac album 'kat moda ep'
+exec tag write music_link/source/*.flac albumartist 'jeff pills !! '
+exec tag write music_link/source/*.flac label 'purpose maker'
+exec tag write music_link/source/*.flac catalognumber 'PMD002'
+exec tag write music_link/source/*.flac media 'digital media'
+
+# create cover file
+exec touch music_link/source/cover.png
+
+# set path format to use the symlinked root - this is the key scenario from the issue
+env WRTAG_PATH_FORMAT='music_link/albums/{{ artistsString .Release.Artists | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Title | safepath }}{{ .Ext }}'
+
+# move from source (which is inside symlinked root) to destination (also via symlinked root)
+# this should work correctly and not delete files
+exec wrtag move -yes music_link/source/
+
+# verify files were moved to the correct location (resolved destination)
+exec find real_music/
+cmp stdout exp-layout
+
+# source should be cleaned up
+! exists music_link/source
+
+# verify files are accessible via both the real path and symlink
+exists 'real_music/albums/Jeff Mills/Kat Moda/Alarms.flac'
+exists 'music_link/albums/Jeff Mills/Kat Moda/Alarms.flac'
+
+# check that tags were written correctly
+cd 'real_music/albums/Jeff Mills/Kat Moda/'
+exec tag check 'The Bells.flac' title 'The Bells'
+exec tag check 'The Bells.flac' albumartist 'Jeff Mills'
+
+-- exp-layout --
+real_music
+real_music/albums
+real_music/albums/Jeff Mills
+real_music/albums/Jeff Mills/Kat Moda
+real_music/albums/Jeff Mills/Kat Moda/Alarms.flac
+real_music/albums/Jeff Mills/Kat Moda/The Bells (Festival mix).flac
+real_music/albums/Jeff Mills/Kat Moda/The Bells.flac
+real_music/albums/Jeff Mills/Kat Moda/cover.png

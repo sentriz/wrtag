@@ -1,0 +1,57 @@
+exec tag write source/01.flac title 'alarms'
+exec tag write source/02.flac title 'the bells'
+exec tag write source/03.flac title 'the bells festival mix'
+
+exec tag write source/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+exec tag write source/*.flac album 'kat moda ep'
+exec tag write source/*.flac albumartist 'jeff pills !! '
+exec tag write source/*.flac label 'purpose maker'
+exec tag write source/*.flac catalognumber 'PMD002'
+exec tag write source/*.flac media 'digital media'
+
+# create cover file
+exec touch source/cover.png
+
+# create real destination directory
+exec mkdir -p real_dest
+
+# create symlinks: one for source directory and one for destination
+exec ln -s source source_link
+exec ln -s real_dest dest_link
+
+# set path format to use the destination symlink as root
+env WRTAG_PATH_FORMAT='dest_link/albums/{{ artistsString .Release.Artists | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Title | safepath }}{{ .Ext }}'
+
+# copy from symlinked source to symlinked destination
+exec wrtag copy -yes source_link/
+
+# verify files were copied to real destination (resolved from symlink)
+exec find real_dest/
+cmp stdout exp-layout
+
+# verify original source files are still there
+exists source/01.flac
+exists source/02.flac
+exists source/03.flac
+exists source/cover.png
+
+# verify symlinked source files are still there
+exists source_link/01.flac
+exists source_link/02.flac
+exists source_link/03.flac
+exists source_link/cover.png
+
+# check that tags were written correctly in destination
+cd 'real_dest/albums/Jeff Mills/Kat Moda/'
+exec tag check 'The Bells.flac' title 'The Bells'
+exec tag check 'The Bells.flac' albumartist 'Jeff Mills'
+
+-- exp-layout --
+real_dest
+real_dest/albums
+real_dest/albums/Jeff Mills
+real_dest/albums/Jeff Mills/Kat Moda
+real_dest/albums/Jeff Mills/Kat Moda/Alarms.flac
+real_dest/albums/Jeff Mills/Kat Moda/The Bells (Festival mix).flac
+real_dest/albums/Jeff Mills/Kat Moda/The Bells.flac
+real_dest/albums/Jeff Mills/Kat Moda/cover.png
