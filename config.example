@@ -11,7 +11,27 @@
 #research-link deezer https://www.deezer.com/search/{{ printf "%s %s" .Artist .Album | urlquery }}
 #research-link harmony https://harmony.pulsewidth.org.uk/release?url=&gtin={{ .Barcode | urlquery }}&region=&deezer=&itunes=&spotify=&tidal=&beatport=
 #research-link musicbrainz https://musicbrainz.org/taglookup?tag-lookup.artist={{ .Artist | urlquery }}&tag-lookup.release={{ .Album | urlquery }}
-#research-link discogs https://www.discogs.com/search/?type=release&q={{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link discogs https://www.discogs.com/search/?type=release&q={{ printf "%s %s" .Artist .Album | urlquery }}&barcode={{ .Barcode | urlquery }}
+#research-link google https://www.google.com/search?q={{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link google-shopping https://www.google.com/search?tbm=shop&q={{ .Barcode | urlquery }}
+#research-link rateyourmusic https://rateyourmusic.com/search?searchterm={{ printf "%s %s" .Artist .Album | urlquery }}&searchtype=l
+#research-link lastfm https://www.last.fm/search?q={{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link bandcamp https://bandcamp.com/search?q={{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link spotify https://open.spotify.com/search/{{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link apple-music https://music.apple.com/search?term={{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link youtube-music https://music.youtube.com/search?q={{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link beatport https://www.beatport.com/search?q={{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link traxsource https://www.traxsource.com/search?term={{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link soundcloud https://soundcloud.com/search?q={{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link amazon-music https://music.amazon.com/search/{{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link allmusic https://www.allmusic.com/search/all/{{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link metal-archives https://www.metal-archives.com/search/advanced/searching/albums?bandName={{ .Artist | urlquery }}&releaseTitle={{ .Album | urlquery }}
+#research-link prog-archives www.progarchives.com/google-search-results.asp?cx=artists&q={{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link cdandlp https://www.cdandlp.com/en/search/?q={{ printf "%s %s" .Artist .Album | urlquery }}&barcode={{ .Barcode | urlquery }}
+#research-link classical-archives https://www.classicalarchives.com/search.html?c=all&q={{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link musicstack https://www.musicstack.com/show.cgi?filter_submit=1&find={{ .Artist | urlquery }}&t={{ .Album | urlquery }}&barcode={{ .Barcode | urlquery }}&search=Search
+#research-link tidal https://tidal.com/search?q={{ printf "%s %s" .Artist .Album | urlquery }}
+#research-link qobuz https://www.qobuz.com/us-en/search?q={{ printf "%s %s" .Artist .Album | urlquery }}
 
 # add notification uri that are triggered by various events
 # see all available services here https://containrrr.dev/shoutrrr/v0.8/services/generic/
