@@ -24,7 +24,7 @@
         {{ template "originfile" .SearchResult.Data.OriginFile }}
       {{ end }}
       {{ if .ResearchLinks.Data }}
-        <p>research links <span class="inline-flex gap-2">{{ range .ResearchLinks.Data }}<a target="_blank" href="{{ .URL | url }}">{{ .Name }}</a>{{ end }}</span></p>
+        <p>research links <span class="inline-flex flex-wrap gap-2">{{ range .ResearchLinks.Data }}<a target="_blank" href="{{ .URL | url }}">{{ .Name }}</a>{{ end }}</span></p>
       {{ end }}
     {{ end }}
     {{ if eq .Status "needs-input" }}
