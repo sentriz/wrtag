@@ -92,6 +92,12 @@ origin file info
 </table>
 {{ end }}
 
+{{ define "dropdown" }}
+{{ range . }}
+  <option value="{{ . }}">{{ . }}</option>
+{{ end }}
+{{ end }}
+
 {{ define "index" }}
 <!DOCTYPE html>
 <html>
@@ -168,7 +174,13 @@ origin file info
             <label>reflink</label>
           </fieldset>
         </span>
-        <input name="path" placeholder="/mnt/media/music/The Fall - Dragnet" class="flex-1 min-w-0 max-w-[500px] border px-3 py-1 shadow-sm" />
+        <input name="path" list="path-dirs" placeholder="/mnt/media/music/The Fall - Dragnet" class="flex-1 min-w-0 max-w-[500px] border px-3 py-1 shadow-sm"
+          hx-get="/dirs"
+          hx-trigger="keyup changed delay:100ms"
+          hx-target="#path-dirs"
+          hx-include="[name='path']"
+        />
+        <datalist id="path-dirs"></datalist>
       </div>
       {{ end }}
     </form>

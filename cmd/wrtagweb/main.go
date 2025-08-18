@@ -352,6 +352,37 @@ func main() {
 		sse.send(0)
 	})
 
+	mux.HandleFunc("GET /dirs", func(w http.ResponseWriter, r *http.Request) {
+		path := r.URL.Query().Get("path")
+		if path == "" || !filepath.IsAbs(path) {
+			return
+		}
+		path = filepath.Clean(path)
+		path = os.ExpandEnv(path)
+
+		if entries, err := os.ReadDir(path); err == nil {
+			var dirs []string
+			for _, entry := range entries {
+				if entry.IsDir() {
+					dirs = append(dirs, filepath.Join(path, entry.Name()))
+				}
+			}
+			respTmpl(w, "dropdown", dirs)
+			return
+		}
+
+		if matches, err := filepath.Glob(path + "*"); err == nil {
+			var dirs []string
+			for _, match := range matches {
+				if stat, err := os.Stat(match); err == nil && stat.IsDir() {
+					dirs = append(dirs, match)
+				}
+			}
+			respTmpl(w, "dropdown", dirs)
+			return
+		}
+	})
+
 	mux.HandleFunc("/{$}", func(w http.ResponseWriter, r *http.Request) {
 		jl, err := listJobs(r.Context(), "", "", 0)
 		if err != nil {
