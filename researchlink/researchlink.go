@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"iter"
+	"slices"
 	"strings"
 	texttemplate "text/template"
 	"time"
@@ -29,9 +30,14 @@ func (b *Builder) IterSources() iter.Seq2[string, *texttemplate.Template] {
 }
 
 func (b *Builder) AddSource(name, templRaw string) error {
-	templ, err := texttemplate.New("template").Funcs(funcMap).Parse(templRaw)
+	templ, err := texttemplate.New("template").Parse(templRaw)
 	if err != nil {
 		return fmt.Errorf("parse template: %w", err)
+	}
+	if slices.ContainsFunc(b.sources, func(s source) bool {
+		return s.name == name
+	}) {
+		return fmt.Errorf("source %q already added", name)
 	}
 	b.sources = append(b.sources, source{
 		name:     name,
@@ -63,9 +69,4 @@ func (b *Builder) Build(query Query) ([]SearchResult, error) {
 		results = append(results, SearchResult{Name: s.name, URL: buff.String()})
 	}
 	return results, errors.Join(buildErrs...)
-}
-
-var funcMap = texttemplate.FuncMap{
-	"join": func(delim string, items []string) string { return strings.Join(items, delim) },
-	"pad0": func(amount, n int) string { return fmt.Sprintf("%0*d", amount, n) },
 }
