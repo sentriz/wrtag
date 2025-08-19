@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/rainycape/unidecode"
+	"github.com/gosimple/unidecode"
 	"golang.org/x/text/unicode/norm"
 )
 
