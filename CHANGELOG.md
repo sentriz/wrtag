@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.16.0](https://github.com/sentriz/wrtag/compare/v0.15.0...v0.16.0) (2025-08-20)
+
+
+### Features
+
+* **config:** add more research-link examples ([94ae218](https://github.com/sentriz/wrtag/commit/94ae2185b0bd35418bdd402bf6f97cbb224b0732))
+* **contrib:** add shell completions for fish and bash ([#145](https://github.com/sentriz/wrtag/issues/145)) ([258e17e](https://github.com/sentriz/wrtag/commit/258e17ed1685a74d11ac74f952f094ef72506ecf)), closes [#140](https://github.com/sentriz/wrtag/issues/140)
+* **docker:** support PGID/PUID env vars ([4099679](https://github.com/sentriz/wrtag/commit/4099679a4bcbf74eb6dfab5666f56464e308fe96)), closes [#147](https://github.com/sentriz/wrtag/issues/147)
+* **wrtag:** support symlinks in operations and path-format root ([1c9b33b](https://github.com/sentriz/wrtag/commit/1c9b33b86f32e95205caf53bb3a78e48ce0d8ca6)), closes [#149](https://github.com/sentriz/wrtag/issues/149) [#141](https://github.com/sentriz/wrtag/issues/141)
+* **wrtagweb:** autocomplete manual import dirs ([9783d7a](https://github.com/sentriz/wrtag/commit/9783d7a57a79fbf2d411dc22b269568df513e994)), closes [#151](https://github.com/sentriz/wrtag/issues/151)
+
+
+### Bug Fixes
+
+* **coverparse:** correctly prioritize filenames with keywords ([#143](https://github.com/sentriz/wrtag/issues/143)) ([01f0e83](https://github.com/sentriz/wrtag/commit/01f0e839f9a2bedb661a78026a295fdd49aa81a3))
+* **wrtagweb:** wrap multiple research-links ([b98a1e2](https://github.com/sentriz/wrtag/commit/b98a1e29e0a67733ed06c82a48bbbe46f51f575c))
+
 ## [0.15.0](https://www.github.com/sentriz/wrtag/compare/v0.14.0...v0.15.0) (2025-07-17)
 
 
