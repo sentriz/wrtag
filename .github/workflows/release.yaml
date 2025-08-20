@@ -32,13 +32,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Setup Release Please
-        uses: google-github-actions/release-please-action@v2
+        uses: googleapis/release-please-action@v4
         id: release
         with:
           token: ${{ secrets.CR_PAT }}
           release-type: simple
           changelog-path: CHANGELOG.md
-          package-name: wrtag
   build-binaries:
     name: Build binaries
     runs-on: ubuntu-latest
