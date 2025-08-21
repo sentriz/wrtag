@@ -151,6 +151,10 @@ func (g *Genius) String() string {
 }
 
 func findDocumentText(n *html.Node, buf *strings.Builder) {
+	if n == nil {
+		return
+	}
+
 	for n := range n.Descendants() {
 		switch n.Type {
 		case html.TextNode:
