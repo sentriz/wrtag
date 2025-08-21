@@ -175,7 +175,7 @@ func runOperation(
 	)
 
 	tbl := table.New(os.Stderr)
-	tbl.SetFormat("\t", "", "")
+	tbl.SetFormat("\t", " ", "")
 	for _, d := range r.Diff {
 		fmt.Fprintf(tbl, "%s\t%s\t%s\n", d.Field, fmtDiff(d.Before), fmtDiff(d.After))
 	}
