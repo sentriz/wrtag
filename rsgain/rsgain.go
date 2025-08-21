@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os/exec"
 	"strconv"
 )
@@ -53,6 +54,9 @@ func Calculate(ctx context.Context, truePeak bool, trackPaths []string) (album L
 	if err != nil {
 		return Level{}, nil, fmt.Errorf("get stdout pipe: %w", err)
 	}
+
+	slog.DebugContext(ctx, "starting subprocess", "command", cmd.Args)
+
 	if err := cmd.Start(); err != nil {
 		return Level{}, nil, fmt.Errorf("start cmd: %w", err)
 	}

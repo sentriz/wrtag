@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os/exec"
 	"strings"
 
@@ -39,8 +40,7 @@ const (
 )
 
 func (s SubprocAddon) Check() error {
-	_, err := exec.LookPath(s.command)
-	if err != nil {
+	if _, err := exec.LookPath(s.command); err != nil {
 		return fmt.Errorf("command %q not found in PATH: %w", s.command, err)
 	}
 	return nil
@@ -58,6 +58,9 @@ func (s SubprocAddon) ProcessRelease(ctx context.Context, paths []string) error 
 	}
 
 	cmd := exec.CommandContext(ctx, s.command, args...) //nolint:gosec // command name is from user config
+
+	slog.DebugContext(ctx, "starting subprocess", "command", cmd.Args)
+
 	if err := cmd.Run(); err != nil {
 		return fmt.Errorf("run cmd: %w", err)
 	}

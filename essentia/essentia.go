@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os/exec"
 )
 
@@ -34,6 +35,8 @@ func Read(ctx context.Context, path string) (info *Info, err error) {
 		return nil, fmt.Errorf("get stdout pipe: %w", err)
 	}
 	defer stdout.Close()
+
+	slog.DebugContext(ctx, "starting subprocess", "command", cmd.Args)
 
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("start cmd: %w", err)
