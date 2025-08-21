@@ -11,7 +11,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
-	"strings"
 	"sync"
 	"sync/atomic"
 	"syscall"
@@ -175,12 +174,13 @@ func runOperation(
 		"url", "https://musicbrainz.org/release/"+r.Release.ID,
 	)
 
-	t := table.NewStringWriter()
+	tbl := table.New(os.Stderr)
+	tbl.SetFormat("\t", "", "")
 	for _, d := range r.Diff {
-		fmt.Fprintf(t, "%s\t%s\t%s\n", d.Field, fmtDiff(d.Before), fmtDiff(d.After))
+		fmt.Fprintf(tbl, "%s\t%s\t%s\n", d.Field, fmtDiff(d.Before), fmtDiff(d.After))
 	}
-	for row := range strings.SplitSeq(strings.TrimRight(t.String(), "\n"), "\n") {
-		fmt.Fprintf(os.Stderr, "\t%s\n", row)
+	if err := tbl.Flush(); err != nil {
+		return fmt.Errorf("flush table: %w", err)
 	}
 
 	links, err := researchLinks.Build(researchlink.Query{

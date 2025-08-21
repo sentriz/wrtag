@@ -19,7 +19,7 @@ require (
 	go.senan.xyz/flagconf v0.1.9
 	go.senan.xyz/natcmp v0.1.2
 	go.senan.xyz/sqlb v0.2.7
-	go.senan.xyz/table v0.0.0-20240227175247-cf2c834b4c23
+	go.senan.xyz/table v0.0.0-20250821174317-af99c0096600
 	go.senan.xyz/taglib v0.7.2
 	golang.org/x/net v0.43.0
 	golang.org/x/sync v0.16.0
