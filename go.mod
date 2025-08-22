@@ -12,14 +12,14 @@ require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gosimple/unidecode v1.0.1
 	github.com/gregjones/httpcache v0.0.0-20190611155906-901d90724c79
-	github.com/ncruces/go-sqlite3 v0.27.1
+	github.com/ncruces/go-sqlite3 v0.28.0
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/sergi/go-diff v1.4.0
 	github.com/stretchr/testify v1.10.0
 	go.senan.xyz/flagconf v0.1.9
 	go.senan.xyz/natcmp v0.1.2
 	go.senan.xyz/sqlb v0.2.7
-	go.senan.xyz/table v0.0.0-20250821175445-efb0ef03d3fb
+	go.senan.xyz/table v0.0.0-20250822114859-74e687aa9b0c
 	go.senan.xyz/taglib v0.7.2
 	golang.org/x/net v0.43.0
 	golang.org/x/sync v0.16.0

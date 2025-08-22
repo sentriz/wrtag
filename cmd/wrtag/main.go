@@ -17,7 +17,7 @@ import (
 	"time"
 
 	dmp "github.com/sergi/go-diff/diffmatchpatch"
-	"go.senan.xyz/table/table"
+	"go.senan.xyz/table"
 
 	"go.senan.xyz/wrtag"
 	"go.senan.xyz/wrtag/cmd/internal/wrtagflag"
