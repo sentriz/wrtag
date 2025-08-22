@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.17.0](https://github.com/sentriz/wrtag/compare/v0.16.0...v0.17.0) (2025-08-22)
+
+
+### Features
+
+* **wrtag:** log all started subprocesses ([c9d5065](https://github.com/sentriz/wrtag/commit/c9d5065e6b58a2f49dc2fcee62294ba592b634c0))
+
+
+### Bug Fixes
+
+* **lyrics:** don't try recurse a null node ([6f7a173](https://github.com/sentriz/wrtag/commit/6f7a173f67a870a041e0cf38e552704bd902afb6)), closes [#153](https://github.com/sentriz/wrtag/issues/153)
+* **wrtag:** render space in diff table ([3db7fce](https://github.com/sentriz/wrtag/commit/3db7fceaf10b741e4b1a8e15066707a96805a33c))
+
 ## [0.16.0](https://github.com/sentriz/wrtag/compare/v0.15.0...v0.16.0) (2025-08-20)
 
 
