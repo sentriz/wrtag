@@ -46,9 +46,7 @@ func (l LyricsAddon) ProcessRelease(ctx context.Context, paths []string) error {
 
 	var pathErrs = make([]error, len(paths))
 	for i, path := range paths {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			pathErrs[i] = func() error {
 				t, err := tags.ReadTags(path)
 				if err != nil {
@@ -66,7 +64,7 @@ func (l LyricsAddon) ProcessRelease(ctx context.Context, paths []string) error {
 				}
 				return nil
 			}()
-		}()
+		})
 	}
 
 	wg.Wait()

@@ -225,9 +225,7 @@ func runSync(ctx context.Context, cfg *wrtag.Config, stats *syncStats, dirs []st
 
 	var wg sync.WaitGroup
 	for range numWorkers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+		wg.Go(func() {
 			ctxConsume(ctx, leaves, func(dir string) {
 				stats.saw.Add(1)
 				r, err := syncDir(ctx, cfg, ageYounger, ageOlder, wrtag.NewMove(dryRun), dir)
@@ -241,7 +239,7 @@ func runSync(ctx context.Context, cfg *wrtag.Config, stats *syncStats, dirs []st
 					slog.InfoContext(ctx, "processed dir", "dir", dir, "score", r.Score)
 				}
 			})
-		}()
+		})
 	}
 
 	wg.Wait()

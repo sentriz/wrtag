@@ -632,7 +632,7 @@ func diffNormText(input string) string {
 }
 
 // TagConfig defines which tags to preserve from source files and which to remove.
-// This allows fine-tuning of the tagging process beyond the default behavior.
+// This allows fine-tuning of the tagging process beyond the default behaviour.
 type TagConfig struct {
 	// Keep specifies additional tag fields to preserve from the source file
 	Keep []string
@@ -744,7 +744,7 @@ func (m Move) ProcessPath(ctx context.Context, dc DirContext, src, dest string) 
 
 	if err := os.Rename(src, dest); err != nil {
 		if errNo := syscall.Errno(0); errors.As(err, &errNo) && errNo == 18 /*  invalid cross-device link */ {
-			// we tried to rename across filesystems, copy and delete instead
+			// we tried to rename across filesystems. copy and delete instead
 			if err := copyFile(src, dest); err != nil {
 				return fmt.Errorf("copy from move: %w", err)
 			}

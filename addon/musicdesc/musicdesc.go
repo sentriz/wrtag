@@ -63,10 +63,7 @@ func (a MusicDescAddon) ProcessRelease(ctx context.Context, paths []string) erro
 
 	var pathErrs = make([]error, len(paths))
 	for i, path := range paths {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			sem <- struct{}{}
 			defer func() { <-sem }()
 
@@ -85,7 +82,7 @@ func (a MusicDescAddon) ProcessRelease(ctx context.Context, paths []string) erro
 				}
 				return nil
 			}()
-		}()
+		})
 	}
 
 	wg.Wait()

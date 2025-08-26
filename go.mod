@@ -1,6 +1,6 @@
 module go.senan.xyz/wrtag
 
-go 1.24
+go 1.25
 
 require (
 	github.com/KarpelesLab/reflink v1.0.2
@@ -15,11 +15,11 @@ require (
 	github.com/ncruces/go-sqlite3 v0.28.0
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/sergi/go-diff v1.4.0
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 	go.senan.xyz/flagconf v0.1.9
 	go.senan.xyz/natcmp v0.1.2
 	go.senan.xyz/sqlb v0.2.7
-	go.senan.xyz/table v0.0.0-20250822114859-74e687aa9b0c
+	go.senan.xyz/table v0.0.0-20250823140814-89c73cfe037e
 	go.senan.xyz/taglib v0.7.2
 	golang.org/x/net v0.43.0
 	golang.org/x/sync v0.16.0
