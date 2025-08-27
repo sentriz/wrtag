@@ -25,6 +25,21 @@ func TestSafePath(t *testing.T) {
 	assert.Equal(t, "(2007)", fileutil.SafePath("(2007) ✝")) // need to fix this
 }
 
+func TestSafePathUnicode(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "hello", fileutil.SafePathUnicode("hello"))
+	assert.Equal(t, "hello", fileutil.SafePathUnicode("hello/"))
+	assert.Equal(t, "hello a", fileutil.SafePathUnicode("hello/a"))
+	assert.Equal(t, "hello a", fileutil.SafePathUnicode("hello / a"))
+	assert.Equal(t, "hello", fileutil.SafePathUnicode("hel\x00lo"))
+	assert.Equal(t, "a b", fileutil.SafePathUnicode("a  b"))
+	assert.Equal(t, "(2004) Kesto (234.484)", fileutil.SafePathUnicode("(2004) Kesto (234.48:4)"))
+	assert.Equal(t, "01.33 Rähinä I Mayhem I", fileutil.SafePathUnicode("01.33 Rähinä I Mayhem I"))
+	assert.Equal(t, "50 ¢.flac", fileutil.SafePathUnicode("50 ¢.flac"))
+	assert.Equal(t, "(2007) ✝", fileutil.SafePathUnicode("(2007) ✝"))
+}
+
 func TestWalkLeaves(t *testing.T) {
 	t.Parallel()
 
