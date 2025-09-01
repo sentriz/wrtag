@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.1](https://github.com/sentriz/wrtag/compare/v0.17.0...v0.17.1) (2025-09-01)
+
+
+### Bug Fixes
+
+* **coverparse:** handle out of range integers ([d3da33c](https://github.com/sentriz/wrtag/commit/d3da33c5321cd2b2d17baa9ce568e0f8ef3412bb))
+
 ## [0.17.0](https://github.com/sentriz/wrtag/compare/v0.16.0...v0.17.0) (2025-08-22)
 
 
