@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.0](https://github.com/sentriz/wrtag/compare/v0.17.1...v0.18.0) (2025-09-03)
+
+
+### Features
+
+* **musicbrainz:** boost track num and label info search terms when searching ([18e27e3](https://github.com/sentriz/wrtag/commit/18e27e3a6dca25729a08fd46dd8f7d34e3ed8a05))
+
 ## [0.17.1](https://github.com/sentriz/wrtag/compare/v0.17.0...v0.17.1) (2025-09-01)
 
 
