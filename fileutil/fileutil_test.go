@@ -25,6 +25,21 @@ func TestSafePath(t *testing.T) {
 	assert.Equal(t, "(2007)", fileutil.SafePath("(2007) ✝")) // need to fix this
 }
 
+func TestSafePathNoNorm(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "hello", fileutil.SafePathNoNorm("hello"))
+	assert.Equal(t, "hello", fileutil.SafePathNoNorm("hello/"))
+	assert.Equal(t, "hello a", fileutil.SafePathNoNorm("hello/a"))
+	assert.Equal(t, "hello a", fileutil.SafePathNoNorm("hello / a"))
+	assert.Equal(t, "hello", fileutil.SafePathNoNorm("hel\x00lo"))
+	assert.Equal(t, "a b", fileutil.SafePathNoNorm("a  b"))
+	assert.Equal(t, "(2004) Kesto (234.484)", fileutil.SafePathNoNorm("(2004) Kesto (234.48:4)"))
+	assert.Equal(t, "01.33 Rähinä I Mayhem I", fileutil.SafePathNoNorm("01.33 Rähinä I Mayhem I"))
+	assert.Equal(t, "50 ¢.flac", fileutil.SafePathNoNorm("50 ¢.flac"))
+	assert.Equal(t, "(2007) ✝", fileutil.SafePathNoNorm("(2007) ✝"))
+}
+
 func TestWalkLeaves(t *testing.T) {
 	t.Parallel()
 

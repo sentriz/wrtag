@@ -53,6 +53,12 @@ func SafePath(path string) string {
 	return path
 }
 
+func SafePathNoNorm(path string) string {
+	path = safePathReplacer.Replace(path)
+	path = strings.Join(strings.Fields(path), " ")
+	return path
+}
+
 // normUnidecode tries to be compatible with beets.io's version, though there are some slight differences.
 // see https://github.com/beetbox/beets/blob/master/beets/library.py
 //   - unicodedata.normalize('NFC', path) (from https://docs.python.org/3/library/unicodedata.html)
