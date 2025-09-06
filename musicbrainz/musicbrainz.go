@@ -285,7 +285,7 @@ type Release struct {
 		Script   string `json:"script"`
 	} `json:"text-representation"`
 	StatusID        string  `json:"status-id"`
-	Asin            string  `json:"asin"`
+	ASIN            string  `json:"asin"`
 	Genres          []Genre `json:"genres"`
 	Country         string  `json:"country"`
 	Barcode         string  `json:"barcode"`

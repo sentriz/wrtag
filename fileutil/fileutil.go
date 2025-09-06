@@ -1,6 +1,7 @@
 package fileutil
 
 import (
+	"cmp"
 	"io/fs"
 	"path/filepath"
 	"strings"
@@ -50,6 +51,7 @@ func SafePath(path string) string {
 	path = normUnidecode(path)
 	path = safePathReplacer.Replace(path) // some unidecode replaces can result in slashes
 	path = strings.Join(strings.Fields(path), " ")
+	path = cmp.Or(path, "_") // never return ""
 	return path
 }
 
