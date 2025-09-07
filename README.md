@@ -449,7 +449,7 @@ In addition to what's provided by Go [text/template](https://pkg.go.dev/text/tem
 | `sort`                | Sorts a string array                                               | `{{ artists .Release.Artists \| sort }}`                     |
 | `the`                 | Moves `A` and `The` to the end of each string in the input         | `{{ artists .Release.Artists \| sort \| the \| join "; " }}` |
 | `safepath`            | Makes a string safe for filesystem use                             | `{{ .Track.Title \| safepath }}`                             |
-| `safepathNoNorm`      | Removes illegal characters from filenames while preserving Unicode | `{{ .Track.Title \| safepathNoNorm }}`                       |
+| `safepathUnicode`     | Removes illegal characters from filenames while preserving Unicode | `{{ .Track.Title \| safepathUnicode}}`                       |
 | `artists`             | Gets artist names from artist credits                              | `{{ artists .Release.Artists }}`                             |
 | `artistsString`       | Formats artists as a string                                        | `{{ artistsString .Track.Artists }}`                         |
 | `artistsEn`           | Gets artist names in English locale from artist credits            | `{{ artistsEn .Release.Artists }}`                           |
