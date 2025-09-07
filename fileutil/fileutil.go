@@ -55,7 +55,7 @@ func SafePath(path string) string {
 	return path
 }
 
-func SafePathNoNorm(path string) string {
+func SafePathUnicode(path string) string {
 	path = safePathReplacer.Replace(path)
 	path = strings.Join(strings.Fields(path), " ")
 	return path

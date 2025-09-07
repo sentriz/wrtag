@@ -191,11 +191,11 @@ func validate(f Format) error {
 }
 
 var funcMap = texttemplate.FuncMap{
-	"join":           func(delim string, items []string) string { return strings.Join(items, delim) },
-	"pad0":           func(amount, n int) string { return fmt.Sprintf("%0*d", amount, n) },
-	"sort":           func(strs []string) []string { sort.Strings(strs); return strs },
-	"safepath":       func(p string) string { return fileutil.SafePath(p) },
-	"safepathNoNorm": func(p string) string { return fileutil.SafePathNoNorm(p) },
+	"join":            func(delim string, items []string) string { return strings.Join(items, delim) },
+	"pad0":            func(amount, n int) string { return fmt.Sprintf("%0*d", amount, n) },
+	"sort":            func(strs []string) []string { sort.Strings(strs); return strs },
+	"safepath":        func(p string) string { return fileutil.SafePath(p) },
+	"safepathUnicode": func(p string) string { return fileutil.SafePathUnicode(p) },
 
 	"artists":             musicbrainz.ArtistsNames,
 	"artistsString":       musicbrainz.ArtistsString,
