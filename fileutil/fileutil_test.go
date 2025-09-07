@@ -38,6 +38,7 @@ func TestSafePathUnicode(t *testing.T) {
 	assert.Equal(t, "01.33 Rähinä I Mayhem I", fileutil.SafePathUnicode("01.33 Rähinä I Mayhem I"))
 	assert.Equal(t, "50 ¢.flac", fileutil.SafePathUnicode("50 ¢.flac"))
 	assert.Equal(t, "(2007) ✝", fileutil.SafePathUnicode("(2007) ✝"))
+	assert.Equal(t, "_", fileutil.SafePathUnicode(">///<"))
 }
 
 func TestWalkLeaves(t *testing.T) {

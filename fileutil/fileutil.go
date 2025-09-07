@@ -58,6 +58,7 @@ func SafePath(path string) string {
 func SafePathUnicode(path string) string {
 	path = safePathReplacer.Replace(path)
 	path = strings.Join(strings.Fields(path), " ")
+	path = cmp.Or(path, "_")
 	return path
 }
 
