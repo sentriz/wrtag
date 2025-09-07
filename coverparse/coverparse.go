@@ -2,7 +2,9 @@ package coverparse
 
 import (
 	"cmp"
+	"errors"
 	"fmt"
+	"math"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -85,7 +87,9 @@ func posNumbers(path string) []int {
 	r := make([]int, 0, len(matches))
 	for _, m := range matches {
 		pos, err := strconv.Atoi(m)
-		if err != nil {
+		if errors.Is(err, strconv.ErrRange) {
+			pos = math.MaxInt
+		} else if err != nil {
 			panic(fmt.Errorf("parse int from numbers expr: %w", err))
 		}
 		r = append(r, pos)

@@ -97,6 +97,12 @@ func TestSelection(t *testing.T) {
 			covers:   []string{"spectrogram.png", "cover.jpg"},
 			expected: "cover.jpg",
 		},
+		// https://github.com/sentriz/gonic/issues/594
+		{
+			name:     "big num",
+			covers:   []string{"cover 54726004201008202314524616977775956.png", "cover.jpg"},
+			expected: "cover.jpg",
+		},
 	}
 
 	for _, test := range cases {

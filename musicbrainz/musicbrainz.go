@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -89,19 +90,19 @@ func (c *MBClient) SearchRelease(ctx context.Context, q ReleaseQuery) (*Release,
 		params = append(params, field("date", q.Date.Format(time.DateOnly)))
 	}
 	if q.Format != "" {
-		params = append(params, field("format", strings.ToLower(q.Format)))
+		params = append(params, boostField(field("format", strings.ToLower(q.Format)), 3)) // boosted
 	}
 	if q.Label != "" {
-		params = append(params, field("label", strings.ToLower(q.Label)))
+		params = append(params, boostField(field("label", strings.ToLower(q.Label)), 3)) // boosted
 	}
 	if q.CatalogueNum != "" {
-		params = append(params, field("catno", strings.ToLower(q.CatalogueNum)))
+		params = append(params, boostField(field("catno", strings.ToLower(q.CatalogueNum)), 3)) // boosted
 	}
 	if q.Barcode != "" {
 		params = append(params, field("barcode", q.Barcode))
 	}
 	if q.NumTracks > 0 {
-		params = append(params, field("tracks", q.NumTracks))
+		params = append(params, boostField(field("tracks", q.NumTracks), 10)) // boosted
 	}
 	if len(params) == 0 {
 		return nil, ErrNoResults
@@ -284,7 +285,7 @@ type Release struct {
 		Script   string `json:"script"`
 	} `json:"text-representation"`
 	StatusID        string  `json:"status-id"`
-	Asin            string  `json:"asin"`
+	ASIN            string  `json:"asin"`
 	Genres          []Genre `json:"genres"`
 	Country         string  `json:"country"`
 	Barcode         string  `json:"barcode"`
@@ -575,6 +576,12 @@ func field(k string, v any) string {
 	vstr := fmt.Sprint(v)
 	vstr = escapeLucene.Replace(vstr)
 	return fmt.Sprintf("%s:(%v)", k, vstr)
+}
+
+func boostField(f string, boost float64) string {
+	b := strconv.FormatFloat(boost, 'f', -1, 64) // no trailing .0
+	f += "^" + b
+	return f
 }
 
 func joinPath(base string, p ...string) string {
