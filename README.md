@@ -442,21 +442,22 @@ The template has access to the following data:
 
 In addition to what's provided by Go [text/template](https://pkg.go.dev/text/template), several helper functions are available to format your paths:
 
-| Function              | Description                                                | Example                                                      |
-| --------------------- | ---------------------------------------------------------- | ------------------------------------------------------------ |
-| `join`                | Joins strings with a delimiter                             | `{{ artists .Release.Artists \| join "; " }}`                |
-| `pad0`                | Zero-pads a number to specified width                      | `{{ pad0 2 .TrackNum }}` → "01"                              |
-| `sort`                | Sorts a string array                                       | `{{ artists .Release.Artists \| sort }}`                     |
-| `the`                 | Moves `A` and `The` to the end of each string in the input | `{{ artists .Release.Artists \| sort \| the \| join "; " }}` |
-| `safepath`            | Makes a string safe for filesystem use                     | `{{ .Track.Title \| safepath }}`                             |
-| `artists`             | Gets artist names from artist credits                      | `{{ artists .Release.Artists }}`                             |
-| `artistsString`       | Formats artists as a string                                | `{{ artistsString .Track.Artists }}`                         |
-| `artistsEn`           | Gets artist names in English locale from artist credits    | `{{ artistsEn .Release.Artists }}`                           |
-| `artistsEnString`     | Formats artists names in English locale as a string        | `{{ artistsEnString .Track.Artists }}`                       |
-| `artistsCredit`       | Gets credit names from artist credits                      | `{{ artistsCredit .Release.Artists }}`                       |
-| `artistsCreditString` | Formats artist credits as a string                         | `{{ artistsCreditString .Release.Artists }}`                 |
-| `artistsSort`         | Gets sort names from artist credits                        | `{{ artistsSort .Release.Artists \| sort \| join "; " }}`    |
-| `artistsSortString`   | Formats artist sort names as a credits                     | `{{ artistsSortString .Release.Artists }}`                   |
+| Function              | Description                                                        | Example                                                      |
+| --------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------ |
+| `join`                | Joins strings with a delimiter                                     | `{{ artists .Release.Artists \| join "; " }}`                |
+| `pad0`                | Zero-pads a number to specified width                              | `{{ pad0 2 .TrackNum }}` → "01"                              |
+| `sort`                | Sorts a string array                                               | `{{ artists .Release.Artists \| sort }}`                     |
+| `the`                 | Moves `A` and `The` to the end of each string in the input         | `{{ artists .Release.Artists \| sort \| the \| join "; " }}` |
+| `safepath`            | Makes a string safe for filesystem use                             | `{{ .Track.Title \| safepath }}`                             |
+| `safepathUnicode`     | Removes illegal characters from filenames while preserving Unicode | `{{ .Track.Title \| safepathUnicode}}`                       |
+| `artists`             | Gets artist names from artist credits                              | `{{ artists .Release.Artists }}`                             |
+| `artistsString`       | Formats artists as a string                                        | `{{ artistsString .Track.Artists }}`                         |
+| `artistsEn`           | Gets artist names in English locale from artist credits            | `{{ artistsEn .Release.Artists }}`                           |
+| `artistsEnString`     | Formats artists names in English locale as a string                | `{{ artistsEnString .Track.Artists }}`                       |
+| `artistsCredit`       | Gets credit names from artist credits                              | `{{ artistsCredit .Release.Artists }}`                       |
+| `artistsCreditString` | Formats artist credits as a string                                 | `{{ artistsCreditString .Release.Artists }}`                 |
+| `artistsSort`         | Gets sort names from artist credits                                | `{{ artistsSort .Release.Artists \| sort \| join "; " }}`    |
+| `artistsSortString`   | Formats artist sort names as a credits                             | `{{ artistsSortString .Release.Artists }}`                   |
 
 ## Example formats
 
