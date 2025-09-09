@@ -10,7 +10,7 @@ USERNAME=wrtag
 
 adduser -D -u "$PUID" -g "$PGID" "$USERNAME" 2>/dev/null
 
-[ -d "/data" ] && chown -R "$PGID:$PUID" /data
-[ -d "/config" ] && chown -R "$PGID:$PUID" /config
+[ -d "/data" ] && chown -R "$PUID:$PGID" /data
+[ -d "/config" ] && chown -R "$PUID:$PGID" /config
 
 exec su-exec "$PUID:$PGID" "$@"
