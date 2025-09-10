@@ -14,7 +14,7 @@ RUN  \
 
 FROM alpine:3.22 AS essentia-extractors
 ARG TARGETARCH
-RUN if [ "$TARGETARCH" = "amd64" ] || [ "$TARGETARCH" = "x86_64" ]; then \
+RUN if [ "$TARGETARCH" = "amd64" ]; then \
       apk add --no-cache curl tar \
       && curl -L -o essentia-extractors.tar.gz https://essentia.upf.edu/extractors/essentia-extractors-v2.1_beta2-linux-x86_64.tar.gz \
       && tar -xzvf essentia-extractors.tar.gz; \
