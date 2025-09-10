@@ -21,7 +21,6 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
     fi
 
 FROM alpine:3.22
-ARG TARGETARCH
 LABEL org.opencontainers.image.source=https://github.com/sentriz/wrtag
 RUN apk add -U --no-cache \
     su-exec \
