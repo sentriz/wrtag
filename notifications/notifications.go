@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/url"
+	"time"
 
 	"github.com/containrrr/shoutrrr"
 	shoutrrrtypes "github.com/containrrr/shoutrrr/pkg/types"
@@ -44,6 +45,12 @@ func (n *Notifications) Sendf(ctx context.Context, event string, f string, a ...
 // Send a simple string for now, maybe later message could instead be a type which
 // implements a notifications.Bodyer or something so that notifiers can send rich notifications.
 func (n *Notifications) Send(ctx context.Context, event string, message string) {
+	if actionTime, ok := ctx.Value(actionKey{}).(time.Time); ok && time.Since(actionTime) < 30*time.Second {
+		slog.DebugContext(ctx, "suppressing notification for recent manual action",
+			"event", event, "since_manual", time.Since(actionTime))
+		return
+	}
+
 	uris := n.mappings[event]
 	if len(uris) == 0 {
 		return
@@ -62,4 +69,12 @@ func (n *Notifications) Send(ctx context.Context, event string, message string) 
 		slog.ErrorContext(ctx, "sending notifications", "err", err)
 		return
 	}
+}
+
+type actionKey struct{}
+
+// RecordAction records the current time of a user action and returns a context which may
+// be used to suppres notifications later.
+func RecordAction(ctx context.Context) context.Context {
+	return context.WithValue(ctx, actionKey{}, time.Now())
 }
