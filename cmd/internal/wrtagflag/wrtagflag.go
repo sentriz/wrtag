@@ -161,15 +161,28 @@ func (r researchLinkParser) String() string {
 type notificationsParser struct{ *notifications.Notifications }
 
 func (n *notificationsParser) Set(value string) error {
-	eventsRaw, uri, ok := strings.Cut(value, " ")
-	if !ok {
-		return errors.New("invalid notification uri format. expected eg \"ev1,ev2 uri\"")
+	parts := strings.Fields(value)
+	if len(parts) < 2 {
+		return errors.New("invalid notification uri format. expected eg \"ev1,ev2 uri [suppress-after-action 30s]\"")
 	}
+	eventsRaw, uri := parts[0], parts[1]
+
+	var suppressAfterAction time.Duration
+	if len(parts) >= 4 && parts[2] == "suppress-after-action" {
+		var err error
+		suppressAfterAction, err = time.ParseDuration(parts[3])
+		if err != nil {
+			return fmt.Errorf("parse suppress duration: %w", err)
+		}
+	}
+
 	var lineErrs []error
 	for ev := range strings.SplitSeq(eventsRaw, ",") {
-		ev, uri = strings.TrimSpace(ev), strings.TrimSpace(uri)
-		err := n.AddURI(ev, uri)
-		lineErrs = append(lineErrs, err)
+		ev = strings.TrimSpace(ev)
+		if err := n.AddDestination(ev, uri, suppressAfterAction); err != nil {
+			lineErrs = append(lineErrs, err)
+			continue
+		}
 	}
 	return errors.Join(lineErrs...)
 }
@@ -178,10 +191,14 @@ func (n notificationsParser) String() string {
 		return ""
 	}
 	var parts []string
-	n.Notifications.IterMappings(func(e string, uri string) {
-		url, _ := url.Parse(uri)
-		parts = append(parts, fmt.Sprintf("%s: %s://%s/...", e, url.Scheme, url.Host))
-	})
+	for ev, dest := range n.Notifications.Destinations() {
+		uri, _ := url.Parse(dest.URI)
+		part := fmt.Sprintf("%s: %s://%s/...", ev, uri.Scheme, uri.Host)
+		if dest.SuppressAfterAction > 0 {
+			part += fmt.Sprintf(" (suppress after action %s)", dest.SuppressAfterAction)
+		}
+		parts = append(parts, part)
+	}
 	return strings.Join(parts, ", ")
 }
 

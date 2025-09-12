@@ -36,8 +36,9 @@
 # add notification uri that are triggered by various events
 # see all available services here https://containrrr.dev/shoutrrr/v0.8/services/generic/
 # possible events are complete, needs-input, sync-complete, sync-error
+# optional "suppress-after-action" prevents notifications for specified duration after manual actions
 
-#notification-uri complete,needs-input,sync-error smtp://username:password@host:port/?from=from@example.com&to=recipient@example.com
+#notification-uri complete,needs-input,sync-error smtp://username:password@host:port/?from=from@example.com&to=recipient@example.com suppress-after-action 30s
 #notification-uri complete,sync-complete          generic+https://my.subsonic.com/rest/startScan.view?c=wrtag&v=1.16&u=user&p=password
 
 # set a list of files to keep when moving or copying

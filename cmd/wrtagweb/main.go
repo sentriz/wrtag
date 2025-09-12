@@ -28,6 +28,7 @@ import (
 	"go.senan.xyz/wrtag"
 	wrtagflag "go.senan.xyz/wrtag/cmd/internal/wrtagflag"
 	"go.senan.xyz/wrtag/cmd/internal/wrtaglog"
+	"go.senan.xyz/wrtag/notifications"
 	"go.senan.xyz/wrtag/researchlink"
 
 	_ "github.com/ncruces/go-sqlite3/driver"
@@ -58,7 +59,7 @@ func main() {
 	wrtagflag.DefaultClient()
 	var (
 		cfg                 = wrtagflag.Config()
-		notifications       = wrtagflag.Notifications()
+		notifs              = wrtagflag.Notifications()
 		researchLinkQuerier = wrtagflag.ResearchLinks()
 		apiKey              = flag.String("web-api-key", "", "API key for web interface")
 		listenAddr          = flag.String("web-listen-addr", ":7373", "Listen address for web interface (optional)")
@@ -185,11 +186,20 @@ func main() {
 			return err
 		}
 
-		switch job.Status {
-		case StatusComplete:
-			go notifications.Send(context.WithoutCancel(ctx), notifComplete, jobNotificationMessage(*publicURL, job))
-		case StatusNeedsInput:
-			go notifications.Send(context.WithoutCancel(ctx), notifNeedsInput, jobNotificationMessage(*publicURL, job))
+		{
+			ctx := context.WithoutCancel(ctx)
+
+			// If we have no action time in the ctx, use the job's updated at
+			if job.UpdatedTime.Valid && notifications.ActionTime(ctx).IsZero() {
+				ctx = notifications.RecordActionTime(ctx, job.UpdatedTime.Time)
+			}
+
+			switch job.Status {
+			case StatusComplete:
+				go notifs.Send(ctx, notifComplete, jobNotificationMessage(*publicURL, job))
+			case StatusNeedsInput:
+				go notifs.Send(ctx, notifNeedsInput, jobNotificationMessage(*publicURL, job))
+			}
 		}
 
 		return nil
@@ -266,7 +276,9 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		rc.Flush()
 
-		for id := range sse.receive(r.Context(), 0) {
+		ctx := r.Context()
+
+		for id := range sse.receive(ctx, 0) {
 			fmt.Fprintf(w, "data: %d\n\n", id)
 			rc.Flush()
 		}
@@ -276,7 +288,10 @@ func main() {
 		search := r.URL.Query().Get("search")
 		filter := JobStatus(r.URL.Query().Get("filter"))
 		page, _ := strconv.Atoi(r.URL.Query().Get("page"))
-		jl, err := listJobs(r.Context(), filter, search, page)
+
+		ctx := r.Context()
+
+		jl, err := listJobs(ctx, filter, search, page)
 		if err != nil {
 			respErrf(w, http.StatusInternalServerError, "error listing jobs: %v", err)
 			return
@@ -301,8 +316,10 @@ func main() {
 		}
 		path = filepath.Clean(path)
 
+		ctx := r.Context()
+
 		var job Job
-		if err := sqlb.ScanRow(r.Context(), db, &job, "insert into jobs (source_path, operation, time) values (?, ?, ?) returning *", path, operationStr, time.Now()); err != nil {
+		if err := sqlb.ScanRow(ctx, db, &job, "insert into jobs (source_path, operation, time) values (?, ?, ?) returning *", path, operationStr, time.Now()); err != nil {
 			http.Error(w, fmt.Sprintf("error saving job: %v", err), http.StatusInternalServerError)
 			return
 		}
@@ -314,8 +331,11 @@ func main() {
 
 	mux.HandleFunc("GET /jobs/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id, _ := strconv.Atoi(r.PathValue("id"))
+
+		ctx := r.Context()
+
 		var job Job
-		if err := sqlb.ScanRow(r.Context(), db, &job, "select * from jobs where id=?", id); err != nil {
+		if err := sqlb.ScanRow(ctx, db, &job, "select * from jobs where id=?", id); err != nil {
 			respErrf(w, http.StatusInternalServerError, "error getting job")
 			return
 		}
@@ -332,8 +352,10 @@ func main() {
 			useMBID = filepath.Base(useMBID) // accept release URL
 		}
 
+		ctx := r.Context()
+
 		var job Job
-		if err := sqlb.ScanRow(r.Context(), db, &job, "update jobs set confirm=?, use_mbid=?, status=?, updated_time=? where id=? and status<>? returning *", confirm, useMBID, StatusEnqueued, time.Now(), id, StatusInProgress); err != nil {
+		if err := sqlb.ScanRow(ctx, db, &job, "update jobs set confirm=?, use_mbid=?, status=?, updated_time=? where id=? and status<>? returning *", confirm, useMBID, StatusEnqueued, time.Now(), id, StatusInProgress); err != nil {
 			respErrf(w, http.StatusInternalServerError, "error getting job")
 			return
 		}
@@ -345,7 +367,10 @@ func main() {
 
 	mux.HandleFunc("DELETE /jobs/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id, _ := strconv.Atoi(r.PathValue("id"))
-		if err := sqlb.Exec(r.Context(), db, "delete from jobs where id=? and status<>?", id, StatusInProgress); err != nil {
+
+		ctx := r.Context()
+
+		if err := sqlb.Exec(ctx, db, "delete from jobs where id=? and status<>?", id, StatusInProgress); err != nil {
 			respErrf(w, http.StatusInternalServerError, "error getting job")
 			return
 		}
@@ -384,7 +409,9 @@ func main() {
 	})
 
 	mux.HandleFunc("/{$}", func(w http.ResponseWriter, r *http.Request) {
-		jl, err := listJobs(r.Context(), "", "", 0)
+		ctx := r.Context()
+
+		jl, err := listJobs(ctx, "", "", 0)
 		if err != nil {
 			respErrf(w, http.StatusInternalServerError, "error listing jobs: %v", err)
 			return
@@ -417,7 +444,9 @@ func main() {
 		}
 		path = filepath.Clean(path)
 
-		if err := sqlb.Exec(r.Context(), db, "insert into jobs (source_path, operation, time) values (?, ?, ?)", path, operationStr, time.Now()); err != nil {
+		ctx := r.Context()
+
+		if err := sqlb.Exec(ctx, db, "insert into jobs (source_path, operation, time) values (?, ?, ?)", path, operationStr, time.Now()); err != nil {
 			http.Error(w, fmt.Sprintf("error saving job: %v", err), http.StatusInternalServerError)
 			return
 		}

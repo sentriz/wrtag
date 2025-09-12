@@ -23,6 +23,7 @@ import (
 	"go.senan.xyz/wrtag/cmd/internal/wrtagflag"
 	"go.senan.xyz/wrtag/cmd/internal/wrtaglog"
 	"go.senan.xyz/wrtag/fileutil"
+	"go.senan.xyz/wrtag/notifications"
 	"go.senan.xyz/wrtag/researchlink"
 )
 
@@ -49,7 +50,7 @@ func main() {
 	wrtagflag.DefaultClient()
 	var (
 		cfg                 = wrtagflag.Config()
-		notifications       = wrtagflag.Notifications()
+		notifs              = wrtagflag.Notifications()
 		researchLinkQuerier = wrtagflag.ResearchLinks()
 	)
 	wrtagflag.Parse()
@@ -74,6 +75,8 @@ func main() {
 		)
 		flag.Parse(args)
 
+		ctx := notifications.RecordAction(context.Background())
+
 		var importCondition wrtag.ImportCondition
 		if *yes {
 			importCondition = wrtag.Always
@@ -91,7 +94,7 @@ func main() {
 			return
 		}
 
-		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 		defer cancel()
 
 		op, err := wrtagflag.OperationByName(command, *dryRun)
@@ -115,6 +118,8 @@ func main() {
 		)
 		flag.Parse(args)
 
+		ctx := notifications.RecordAction(context.Background())
+
 		// walk the whole root dir by default, or some user provided dirs if provided
 		var dirs []string
 		if args := flag.Args(); len(args) > 0 {
@@ -132,7 +137,7 @@ func main() {
 			}
 		}
 
-		ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+		ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 		defer cancel()
 
 		start := time.Now()
@@ -148,10 +153,10 @@ func main() {
 		switch {
 		case stats.errors.Load() > 0:
 			slog.Error("sync finished", "took", took, "", &stats)
-			notifications.Sendf(ctx, notifSyncError, "sync finished in %v %v", took, &stats)
+			notifs.Sendf(ctx, notifSyncError, "sync finished in %v %v", took, &stats)
 		default:
 			slog.Info("sync finished", "took", took, "", &stats)
-			notifications.Sendf(ctx, notifSyncComplete, "sync finished in %v %v", took, &stats)
+			notifs.Sendf(ctx, notifSyncComplete, "sync finished in %v %v", took, &stats)
 		}
 
 	default:
