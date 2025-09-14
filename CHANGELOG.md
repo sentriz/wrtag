@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.18.0](https://github.com/sentriz/wrtag/compare/v0.17.1...v0.18.0) (2025-09-14)
+
+
+### Features
+
+* **docker:** include essentia extractor binary in container image ([#162](https://github.com/sentriz/wrtag/issues/162)) ([4aa435e](https://github.com/sentriz/wrtag/commit/4aa435e8b332507a8e17f4a4caf6208cd9e24fe5))
+* **musicbrainz:** boost track num and label info search terms when searching ([18e27e3](https://github.com/sentriz/wrtag/commit/18e27e3a6dca25729a08fd46dd8f7d34e3ed8a05))
+* **notifications:** add `suppress-after-action` notification-uri config option ([31beddc](https://github.com/sentriz/wrtag/commit/31beddccee021c883a3285765bae24d4512a26c6))
+* **pathformat:** add `safepathUnicode` function ([#160](https://github.com/sentriz/wrtag/issues/160)) ([f2bd09c](https://github.com/sentriz/wrtag/commit/f2bd09c260c1aede172944c2e1f717e03506bddf))
+* **wrtagweb:** record job update time ([57b6276](https://github.com/sentriz/wrtag/commit/57b62769b52b2f5eacf680bac7729b092643d9b9))
+
+
+### Bug Fixes
+
+* **docker:** fix `chown` calls in `docker-entry` ([#163](https://github.com/sentriz/wrtag/issues/163)) ([535a93e](https://github.com/sentriz/wrtag/commit/535a93e34984c9d44218d52600dc014f107771b4))
+
 ## [0.17.1](https://github.com/sentriz/wrtag/compare/v0.17.0...v0.17.1) (2025-09-01)
 
 
