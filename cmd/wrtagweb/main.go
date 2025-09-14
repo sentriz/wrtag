@@ -333,7 +333,7 @@ func main() {
 		}
 
 		var job Job
-		if err := sqlb.ScanRow(r.Context(), db, &job, "update jobs set confirm=?, use_mbid=?, status=? where id=? and status<>? returning *", confirm, useMBID, StatusEnqueued, id, StatusInProgress); err != nil {
+		if err := sqlb.ScanRow(r.Context(), db, &job, "update jobs set confirm=?, use_mbid=?, status=?, updated_time=? where id=? and status<>? returning *", confirm, useMBID, StatusEnqueued, time.Now(), id, StatusInProgress); err != nil {
 			respErrf(w, http.StatusInternalServerError, "error getting job")
 			return
 		}
@@ -514,6 +514,7 @@ type Job struct {
 	Error         string
 	Operation     string
 	Time          time.Time
+	UpdatedTime   sql.NullTime
 	UseMBID       string
 	SourcePath    string
 	DestPath      string

@@ -10,7 +10,7 @@ import (
 func _() {
 	// Validate the struct fields haven't changed. If this doesn't compile you probably need to `go generate` again.
 	var j Job
-	_ = Job{j.ID, j.Status, j.Error, j.Operation, j.Time, j.UseMBID, j.SourcePath, j.DestPath, j.SearchResult, j.ResearchLinks, j.Confirm}
+	_ = Job{j.ID, j.Status, j.Error, j.Operation, j.Time, j.UpdatedTime, j.UseMBID, j.SourcePath, j.DestPath, j.SearchResult, j.ResearchLinks, j.Confirm}
 }
 
 func (Job) PrimaryKey() string {
@@ -18,7 +18,7 @@ func (Job) PrimaryKey() string {
 }
 
 func (j Job) Values() []sql.NamedArg {
-	return []sql.NamedArg{sql.Named("id", j.ID), sql.Named("status", j.Status), sql.Named("error", j.Error), sql.Named("operation", j.Operation), sql.Named("time", j.Time), sql.Named("use_mbid", j.UseMBID), sql.Named("source_path", j.SourcePath), sql.Named("dest_path", j.DestPath), sql.Named("search_result", j.SearchResult), sql.Named("research_links", j.ResearchLinks), sql.Named("confirm", j.Confirm)}
+	return []sql.NamedArg{sql.Named("id", j.ID), sql.Named("status", j.Status), sql.Named("error", j.Error), sql.Named("operation", j.Operation), sql.Named("time", j.Time), sql.Named("updated_time", j.UpdatedTime), sql.Named("use_mbid", j.UseMBID), sql.Named("source_path", j.SourcePath), sql.Named("dest_path", j.DestPath), sql.Named("search_result", j.SearchResult), sql.Named("research_links", j.ResearchLinks), sql.Named("confirm", j.Confirm)}
 }
 
 func (j *Job) ScanFrom(rows *sql.Rows) error {
@@ -39,6 +39,8 @@ func (j *Job) ScanFrom(rows *sql.Rows) error {
 			dests = append(dests, &j.Operation)
 		case "time":
 			dests = append(dests, &j.Time)
+		case "updated_time":
+			dests = append(dests, &j.UpdatedTime)
 		case "use_mbid":
 			dests = append(dests, &j.UseMBID)
 		case "source_path":

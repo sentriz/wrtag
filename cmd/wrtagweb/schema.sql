@@ -26,3 +26,7 @@ alter table jobs
 -- 2024.04.01 add confirm bool --
 alter table jobs
     add column confirm boolean default false;
+
+-- 2025.09.14 add updated_time timestamp --
+alter table jobs
+    add column updated_time timestamp;
