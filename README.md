@@ -1,6 +1,13 @@
 ![wrtag](https://share.senan.xyz/wrtag.svg)
 
-_Fast automated music tagging and organisation based on MusicBrainz_
+<h4 align="center">Fast automated music tagging and organisation based on MusicBrainz</h4>
+
+<p align="center">
+  <a href="http://hub.docker.com/r/sentriz/wrtag"><img src="https://img.shields.io/docker/pulls/sentriz/wrtag.svg"></a>
+  <a href="https://repology.org/project/wrtag/"><img src="https://repology.org/badge/tiny-repos/wrtag.svg"></a>
+  <a href="https://github.com/sentriz/wrtag/releases"><img src="https://img.shields.io/github/v/release/sentriz/wrtag.svg"></a>
+  <a href="https://web.libera.chat/#wrtag"><img src="https://img.shields.io/badge/libera.chat-%23wrtag-blue.svg"></a>
+</p>
 
 ---
 
