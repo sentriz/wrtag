@@ -117,7 +117,9 @@ func WriteTags(path string, tags Tags, opts WriteOption) error {
 	return taglib.WriteTags(path, tags, opts)
 }
 
-func ReadProperties(path string) (taglib.Properties, error) {
+type Properties = taglib.Properties
+
+func ReadProperties(path string) (Properties, error) {
 	return taglib.ReadProperties(path)
 }
 
