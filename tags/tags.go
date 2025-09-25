@@ -117,6 +117,10 @@ func WriteTags(path string, tags Tags, opts WriteOption) error {
 	return taglib.WriteTags(path, tags, opts)
 }
 
+func ReadImage(path string) ([]byte, error) {
+	return taglib.ReadImage(path)
+}
+
 type Properties = taglib.Properties
 
 func ReadProperties(path string) (Properties, error) {
