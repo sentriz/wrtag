@@ -16,6 +16,7 @@ import (
 
 	"go.senan.xyz/wrtag/cmd/internal/wrtaglog"
 	"go.senan.xyz/wrtag/tags"
+	"go.senan.xyz/wrtag/tags/normtag"
 )
 
 func init() {
@@ -110,8 +111,8 @@ func cmdRead(to io.Writer, path string, withProperties bool, keys []string) erro
 		}
 	} else {
 		for _, k := range keys {
-			for _, v := range t.Values(k) {
-				fmt.Fprintf(to, "%s\t%s\t%s\n", path, tags.NormKey(k), v)
+			for _, v := range normtag.Values(t, k) {
+				fmt.Fprintf(to, "%s\t%s\t%s\n", path, normtag.NormKey(k), v)
 			}
 		}
 	}
@@ -152,9 +153,9 @@ func cmdRead(to io.Writer, path string, withProperties bool, keys []string) erro
 }
 
 func cmdWrite(path string, keyValues map[string][]string) error {
-	var t = tags.Tags{}
+	var t = map[string][]string{}
 	for k, vs := range keyValues {
-		t.Set(k, vs...)
+		normtag.Set(t, k, vs...)
 	}
 	if err := tags.WriteTags(path, t, 0); err != nil {
 		return fmt.Errorf("save: %w", err)
@@ -164,14 +165,14 @@ func cmdWrite(path string, keyValues map[string][]string) error {
 
 func cmdClear(path string, keys []string) error {
 	if len(keys) == 0 {
-		if err := tags.WriteTags(path, tags.Tags{}, tags.Clear); err != nil {
+		if err := tags.WriteTags(path, map[string][]string{}, tags.Clear); err != nil {
 			return err
 		}
 		return nil
 	}
-	var t = tags.Tags{}
+	var t = map[string][]string{}
 	for _, k := range keys {
-		t.Set(k)
+		normtag.Set(t, k)
 	}
 	if err := tags.WriteTags(path, t, 0); err != nil {
 		return err

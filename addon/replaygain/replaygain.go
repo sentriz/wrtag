@@ -11,6 +11,7 @@ import (
 	"go.senan.xyz/wrtag/addon"
 	"go.senan.xyz/wrtag/rsgain"
 	"go.senan.xyz/wrtag/tags"
+	"go.senan.xyz/wrtag/tags/normtag"
 )
 
 func init() {
@@ -54,7 +55,7 @@ func (a ReplayGainAddon) ProcessRelease(ctx context.Context, paths []string) err
 		if err != nil {
 			return fmt.Errorf("read first file: %w", err)
 		}
-		if first.Get(tags.ReplayGainTrackGain) != "" {
+		if normtag.Get(first, normtag.ReplayGainTrackGain) != "" {
 			return nil
 		}
 	}
@@ -68,12 +69,12 @@ func (a ReplayGainAddon) ProcessRelease(ctx context.Context, paths []string) err
 	for i := range paths {
 		pathL, path := pathLevs[i], paths[i]
 
-		t := tags.NewTags(
-			tags.ReplayGainTrackGain, fmtdB(pathL.GaindB),
-			tags.ReplayGainTrackPeak, fmtFloat(pathL.Peak, 6),
-			tags.ReplayGainAlbumGain, fmtdB(albumLev.GaindB),
-			tags.ReplayGainAlbumPeak, fmtFloat(albumLev.Peak, 6),
-		)
+		t := map[string][]string{}
+		normtag.Set(t, normtag.ReplayGainTrackGain, fmtdB(pathL.GaindB))
+		normtag.Set(t, normtag.ReplayGainTrackPeak, fmtFloat(pathL.Peak, 6))
+		normtag.Set(t, normtag.ReplayGainAlbumGain, fmtdB(albumLev.GaindB))
+		normtag.Set(t, normtag.ReplayGainAlbumPeak, fmtFloat(albumLev.Peak, 6))
+
 		if err := tags.WriteTags(path, t, 0); err != nil {
 			pathErrs = append(pathErrs, err)
 			continue

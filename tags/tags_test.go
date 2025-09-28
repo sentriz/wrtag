@@ -12,20 +12,21 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.senan.xyz/taglib"
+	"go.senan.xyz/wrtag/tags/normtag"
 )
 
 func TestTrackNum(t *testing.T) {
 	t.Parallel()
 
 	path := newFile(t, emptyFLAC, ".flac")
-	withf(t, path, func(f Tags) {
-		f.Set(TrackNumber, strconv.Itoa(69))
+	withf(t, path, func(f map[string][]string) {
+		normtag.Set(f, normtag.TrackNumber, strconv.Itoa(69))
 	})
-	withf(t, path, func(f Tags) {
-		f.Set(TrackNumber, strconv.Itoa(69))
+	withf(t, path, func(f map[string][]string) {
+		normtag.Set(f, normtag.TrackNumber, strconv.Itoa(69))
 	})
-	withf(t, path, func(f Tags) {
-		assert.Equal(t, "69", f.Get(TrackNumber))
+	withf(t, path, func(f map[string][]string) {
+		assert.Equal(t, "69", normtag.Get(f, normtag.TrackNumber))
 	})
 }
 
@@ -36,11 +37,11 @@ func TestDoubleSave(t *testing.T) {
 	f, err := ReadTags(path)
 	require.NoError(t, err)
 
-	f.Set(Album, "a")
+	normtag.Set(f, normtag.Album, "a")
 	require.NoError(t, WriteTags(path, f, Clear))
-	f.Set(Album, "b")
+	normtag.Set(f, normtag.Album, "b")
 	require.NoError(t, WriteTags(path, f, Clear))
-	f.Set(Album, "c")
+	normtag.Set(f, normtag.Album, "c")
 	require.NoError(t, WriteTags(path, f, Clear))
 }
 
@@ -64,12 +65,12 @@ func TestNormalise(t *testing.T) {
 
 	tags, err := ReadTags(path)
 	require.NoError(t, err)
-	assert.Equal(t, "1970-01-02", tags.Get(Date))
-	assert.Equal(t, "24", tags.Get(TrackNumber)) // prefer non alt
-	assert.Equal(t, "1234", tags.Get(Barcode))
-	assert.Equal(t, "this is lyrics maybe", tags.Get(Lyrics))
-	assert.Equal(t, "CD", tags.Get(MediaFormat))
-	assert.Equal(t, "Steve", tags.Get(AlbumArtistCredit))
+	assert.Equal(t, "1970-01-02", normtag.Get(tags, normtag.Date))
+	assert.Equal(t, "24", normtag.Get(tags, normtag.TrackNumber)) // prefer non alt
+	assert.Equal(t, "1234", normtag.Get(tags, normtag.Barcode))
+	assert.Equal(t, "this is lyrics maybe", normtag.Get(tags, normtag.Lyrics))
+	assert.Equal(t, "CD", normtag.Get(tags, normtag.MediaFormat))
+	assert.Equal(t, "Steve", normtag.Get(tags, normtag.AlbumArtistCredit))
 }
 
 func TestExtendedTags(t *testing.T) {
@@ -80,15 +81,15 @@ func TestExtendedTags(t *testing.T) {
 			t.Parallel()
 
 			p := newFile(t, tf.data, tf.ext)
-			withf(t, p, func(f Tags) {
-				f.Set(Artist, "1. steely dan")            // standard
-				f.Set(AlbumArtist, "2. steely dan")       // extended
-				f.Set(AlbumArtistCredit, "3. steely dan") // non standard
+			withf(t, p, func(f map[string][]string) {
+				normtag.Set(f, normtag.Artist, "1. steely dan")            // standard
+				normtag.Set(f, normtag.AlbumArtist, "2. steely dan")       // extended
+				normtag.Set(f, normtag.AlbumArtistCredit, "3. steely dan") // non standard
 			})
-			withf(t, p, func(f Tags) {
-				assert.Equal(t, "1. steely dan", f.Get(Artist))
-				assert.Equal(t, "2. steely dan", f.Get(AlbumArtist))
-				assert.Equal(t, "3. steely dan", f.Get(AlbumArtistCredit))
+			withf(t, p, func(f map[string][]string) {
+				assert.Equal(t, "1. steely dan", normtag.Get(f, normtag.Artist))
+				assert.Equal(t, "2. steely dan", normtag.Get(f, normtag.AlbumArtist))
+				assert.Equal(t, "3. steely dan", normtag.Get(f, normtag.AlbumArtistCredit))
 			})
 		})
 	}
@@ -126,7 +127,7 @@ func newFile(t *testing.T, data []byte, ext string) string {
 	return f.Name()
 }
 
-func withf(t *testing.T, path string, fn func(Tags)) {
+func withf(t *testing.T, path string, fn func(map[string][]string)) {
 	t.Helper()
 
 	tags, err := ReadTags(path)

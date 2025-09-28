@@ -11,6 +11,7 @@ import (
 	"go.senan.xyz/wrtag/addon"
 	"go.senan.xyz/wrtag/lyrics"
 	"go.senan.xyz/wrtag/tags"
+	"go.senan.xyz/wrtag/tags/normtag"
 )
 
 func init() {
@@ -52,14 +53,18 @@ func (l LyricsAddon) ProcessRelease(ctx context.Context, paths []string) error {
 				if err != nil {
 					return fmt.Errorf("read first: %w", err)
 				}
-				if t.Get(tags.Lyrics) != "" {
+				if normtag.Get(t, normtag.Lyrics) != "" {
 					return nil
 				}
-				lyricData, err := l.source.Search(ctx, t.Get(tags.ArtistCredit), t.Get(tags.Title))
+				lyricData, err := l.source.Search(ctx, normtag.Get(t, normtag.ArtistCredit), normtag.Get(t, normtag.Title))
 				if err != nil && !errors.Is(err, lyrics.ErrLyricsNotFound) {
 					return err
 				}
-				if err := tags.WriteTags(path, tags.NewTags(tags.Lyrics, lyricData), 0); err != nil {
+
+				lt := map[string][]string{}
+				normtag.Set(lt, normtag.Lyrics, lyricData)
+
+				if err := tags.WriteTags(path, lt, 0); err != nil {
 					return fmt.Errorf("write new lyrics: %w", err)
 				}
 				return nil

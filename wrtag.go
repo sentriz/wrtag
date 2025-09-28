@@ -35,6 +35,7 @@ import (
 	"go.senan.xyz/wrtag/originfile"
 	"go.senan.xyz/wrtag/pathformat"
 	"go.senan.xyz/wrtag/tags"
+	"go.senan.xyz/wrtag/tags/normtag"
 )
 
 var (
@@ -174,22 +175,22 @@ func ProcessDir(
 
 	searchTags := pathTags[0].Tags
 
-	var mbid = searchTags.Get(tags.MusicBrainzReleaseID)
+	var mbid = normtag.Get(searchTags, normtag.MusicBrainzReleaseID)
 	if useMBID != "" {
 		mbid = useMBID
 	}
 
 	query := musicbrainz.ReleaseQuery{
 		MBReleaseID:      mbid,
-		MBArtistID:       searchTags.Get(tags.MusicBrainzArtistID),
-		MBReleaseGroupID: searchTags.Get(tags.MusicBrainzReleaseGroupID),
-		Release:          searchTags.Get(tags.Album),
-		Artist:           cmp.Or(searchTags.Get(tags.AlbumArtist), searchTags.Get(tags.Artist)),
-		Date:             parseAnyTime(searchTags.Get(tags.Date)),
-		Format:           searchTags.Get(tags.MediaFormat),
-		Label:            searchTags.Get(tags.Label),
-		CatalogueNum:     searchTags.Get(tags.CatalogueNum),
-		Barcode:          searchTags.Get(tags.Barcode),
+		MBArtistID:       normtag.Get(searchTags, normtag.MusicBrainzArtistID),
+		MBReleaseGroupID: normtag.Get(searchTags, normtag.MusicBrainzReleaseGroupID),
+		Release:          normtag.Get(searchTags, normtag.Album),
+		Artist:           cmp.Or(normtag.Get(searchTags, normtag.AlbumArtist), normtag.Get(searchTags, normtag.Artist)),
+		Date:             parseAnyTime(normtag.Get(searchTags, normtag.Date)),
+		Format:           normtag.Get(searchTags, normtag.MediaFormat),
+		Label:            normtag.Get(searchTags, normtag.Label),
+		CatalogueNum:     normtag.Get(searchTags, normtag.CatalogueNum),
+		Barcode:          normtag.Get(searchTags, normtag.Barcode),
 		NumTracks:        len(pathTags),
 	}
 
@@ -212,7 +213,11 @@ func ProcessDir(
 
 	releaseTracks := musicbrainz.FlatTracks(release.Media)
 
-	score, diff := DiffRelease(cfg.DiffWeights, release, releaseTracks, pathTags)
+	tagFiles := mapFunc(pathTags, func(_ int, pt PathTags) map[string][]string {
+		return pt.Tags
+	})
+
+	score, diff := DiffRelease(cfg.DiffWeights, release, releaseTracks, tagFiles)
 
 	if len(pathTags) != len(releaseTracks) {
 		return &SearchResult{release, query, 0, "", diff, originFile}, fmt.Errorf("%w: %d remote / %d local", ErrTrackCountMismatch, len(releaseTracks), len(pathTags))
@@ -271,7 +276,7 @@ func ProcessDir(
 			return nil, fmt.Errorf("process path %q: %w", filepath.Base(pt.Path), err)
 		}
 
-		var destTags = tags.Tags{}
+		var destTags = map[string][]string{}
 		WriteRelease(destTags, release, labelInfo, genres, i, &rt)
 		ApplyTagConfig(destTags, pt.Tags, cfg.TagConfig)
 
@@ -332,7 +337,7 @@ type PathTags struct {
 	Path string
 
 	// Tags contains the audio file's metadata tags
-	tags.Tags
+	Tags map[string][]string
 }
 
 // ReadReleaseDir reads a directory containing music files and extracts tags from each file.
@@ -392,7 +397,7 @@ func ReadReleaseDir(dirPath string) (string, []PathTags, error) {
 		// then releases that consist only of untitled tracks may get mixed up
 		var haveNum, havePath = true, true
 		for _, pt := range pathTags {
-			if haveNum && pt.Get(tags.TrackNumber) == "" {
+			if haveNum && normtag.Get(pt.Tags, normtag.TrackNumber) == "" {
 				haveNum = false
 			}
 			if havePath && !strings.ContainsFunc(filepath.Base(pt.Path), func(r rune) bool { return '0' <= r && r <= '9' }) {
@@ -406,10 +411,10 @@ func ReadReleaseDir(dirPath string) (string, []PathTags, error) {
 
 	slices.SortFunc(pathTags, func(a, b PathTags) int {
 		return cmp.Or(
-			natcmp.Compare(a.Get(tags.DiscNumber), b.Get(tags.DiscNumber)),   // disc numbers like "1", "2", "disc 1", "disc 10"
-			natcmp.Compare(filepath.Dir(a.Path), filepath.Dir(b.Path)),       // might have disc folders instead of tags
-			natcmp.Compare(a.Get(tags.TrackNumber), b.Get(tags.TrackNumber)), // track numbers, could be "A1" "B1" "1" "10" "100" "1/10" "2/10"
-			natcmp.Compare(a.Path, b.Path),                                   // fallback to paths
+			natcmp.Compare(normtag.Get(a.Tags, normtag.DiscNumber), normtag.Get(b.Tags, normtag.DiscNumber)),   // disc numbers like "1", "2", "disc 1", "disc 10"
+			natcmp.Compare(filepath.Dir(a.Path), filepath.Dir(b.Path)),                                         // might have disc folders instead of tags
+			natcmp.Compare(normtag.Get(a.Tags, normtag.TrackNumber), normtag.Get(b.Tags, normtag.TrackNumber)), // track numbers, could be "A1" "B1" "1" "10" "100" "1/10" "2/10"
+			natcmp.Compare(a.Path, b.Path), // fallback to paths
 		)
 	})
 
@@ -430,7 +435,7 @@ func DestDir(pathFormat *pathformat.Format, release *musicbrainz.Release) (strin
 // It writes both album-level tags (release title, artists, dates, labels) and track-level tags
 // (track title, artists, track number) to the provided Tags instance.
 func WriteRelease(
-	t tags.Tags,
+	t map[string][]string,
 	release *musicbrainz.Release, labelInfo musicbrainz.LabelInfo, genres []musicbrainz.Genre,
 	i int, trk *musicbrainz.Track,
 ) {
@@ -473,52 +478,52 @@ func WriteRelease(
 		}
 	}
 
-	// t.Set(x, trimZero(y)...) so that we clear out tags with no value from the map
+	// normtag.Set(t, x, trimZero(y)...) so that we clear out tags with no value from the map
 
-	t.Set(tags.Album, trimZero(release.Title)...)
-	t.Set(tags.AlbumArtist, trimZero(musicbrainz.ArtistsString(release.Artists))...)
-	t.Set(tags.AlbumArtists, trimZero(musicbrainz.ArtistsNames(release.Artists)...)...)
-	t.Set(tags.AlbumArtistCredit, trimZero(musicbrainz.ArtistsCreditString(release.Artists))...)
-	t.Set(tags.AlbumArtistsCredit, trimZero(musicbrainz.ArtistsCreditNames(release.Artists)...)...)
-	t.Set(tags.Date, trimZero(formatDate(release.Date.Time))...)
-	t.Set(tags.OriginalDate, trimZero(formatDate(release.ReleaseGroup.FirstReleaseDate.Time))...)
-	t.Set(tags.MediaFormat, trimZero(release.Media[0].Format)...)
-	t.Set(tags.Label, trimZero(labelInfo.Label.Name)...)
-	t.Set(tags.CatalogueNum, trimZero(labelInfo.CatalogNumber)...)
-	t.Set(tags.Barcode, trimZero(release.Barcode)...)
-	t.Set(tags.Compilation, trimZero(formatBool(musicbrainz.IsCompilation(release.ReleaseGroup)))...)
-	t.Set(tags.ReleaseType, trimZero(strings.ToLower(string(release.ReleaseGroup.PrimaryType)))...)
+	normtag.Set(t, normtag.Album, trimZero(release.Title)...)
+	normtag.Set(t, normtag.AlbumArtist, trimZero(musicbrainz.ArtistsString(release.Artists))...)
+	normtag.Set(t, normtag.AlbumArtists, trimZero(musicbrainz.ArtistsNames(release.Artists)...)...)
+	normtag.Set(t, normtag.AlbumArtistCredit, trimZero(musicbrainz.ArtistsCreditString(release.Artists))...)
+	normtag.Set(t, normtag.AlbumArtistsCredit, trimZero(musicbrainz.ArtistsCreditNames(release.Artists)...)...)
+	normtag.Set(t, normtag.Date, trimZero(formatDate(release.Date.Time))...)
+	normtag.Set(t, normtag.OriginalDate, trimZero(formatDate(release.ReleaseGroup.FirstReleaseDate.Time))...)
+	normtag.Set(t, normtag.MediaFormat, trimZero(release.Media[0].Format)...)
+	normtag.Set(t, normtag.Label, trimZero(labelInfo.Label.Name)...)
+	normtag.Set(t, normtag.CatalogueNum, trimZero(labelInfo.CatalogNumber)...)
+	normtag.Set(t, normtag.Barcode, trimZero(release.Barcode)...)
+	normtag.Set(t, normtag.Compilation, trimZero(formatBool(musicbrainz.IsCompilation(release.ReleaseGroup)))...)
+	normtag.Set(t, normtag.ReleaseType, trimZero(strings.ToLower(string(release.ReleaseGroup.PrimaryType)))...)
 
-	t.Set(tags.MusicBrainzReleaseID, trimZero(release.ID)...)
-	t.Set(tags.MusicBrainzReleaseGroupID, trimZero(release.ReleaseGroup.ID)...)
-	t.Set(tags.MusicBrainzAlbumArtistID, trimZero(mapFunc(release.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
-	t.Set(tags.MusicBrainzAlbumComment, trimZero(disambiguation)...)
+	normtag.Set(t, normtag.MusicBrainzReleaseID, trimZero(release.ID)...)
+	normtag.Set(t, normtag.MusicBrainzReleaseGroupID, trimZero(release.ReleaseGroup.ID)...)
+	normtag.Set(t, normtag.MusicBrainzAlbumArtistID, trimZero(mapFunc(release.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
+	normtag.Set(t, normtag.MusicBrainzAlbumComment, trimZero(disambiguation)...)
 
-	t.Set(tags.Title, trimZero(trk.Title)...)
-	t.Set(tags.Artist, trimZero(musicbrainz.ArtistsString(trk.Artists))...)
-	t.Set(tags.Artists, trimZero(musicbrainz.ArtistsNames(trk.Artists)...)...)
-	t.Set(tags.ArtistCredit, trimZero(musicbrainz.ArtistsCreditString(trk.Artists))...)
-	t.Set(tags.ArtistsCredit, trimZero(musicbrainz.ArtistsCreditNames(trk.Artists)...)...)
-	t.Set(tags.Genre, trimZero(cmp.Or(genreNames...))...)
-	t.Set(tags.Genres, trimZero(genreNames...)...)
-	t.Set(tags.TrackNumber, trimZero(strconv.Itoa(i+1))...)
-	t.Set(tags.DiscNumber, trimZero(strconv.Itoa(1))...)
+	normtag.Set(t, normtag.Title, trimZero(trk.Title)...)
+	normtag.Set(t, normtag.Artist, trimZero(musicbrainz.ArtistsString(trk.Artists))...)
+	normtag.Set(t, normtag.Artists, trimZero(musicbrainz.ArtistsNames(trk.Artists)...)...)
+	normtag.Set(t, normtag.ArtistCredit, trimZero(musicbrainz.ArtistsCreditString(trk.Artists))...)
+	normtag.Set(t, normtag.ArtistsCredit, trimZero(musicbrainz.ArtistsCreditNames(trk.Artists)...)...)
+	normtag.Set(t, normtag.Genre, trimZero(cmp.Or(genreNames...))...)
+	normtag.Set(t, normtag.Genres, trimZero(genreNames...)...)
+	normtag.Set(t, normtag.TrackNumber, trimZero(strconv.Itoa(i+1))...)
+	normtag.Set(t, normtag.DiscNumber, trimZero(strconv.Itoa(1))...)
 
-	t.Set(tags.ISRC, trimZero(trk.Recording.ISRCs...)...)
+	normtag.Set(t, normtag.ISRC, trimZero(trk.Recording.ISRCs...)...)
 
-	t.Set(tags.Remixer, trimZero(strings.Join(remixers, ", "))...)
-	t.Set(tags.Remixers, trimZero(remixers...)...)
-	t.Set(tags.RemixerCredit, trimZero(strings.Join(remixersCredit, ", "))...)
-	t.Set(tags.RemixersCredit, trimZero(remixersCredit...)...)
+	normtag.Set(t, normtag.Remixer, trimZero(strings.Join(remixers, ", "))...)
+	normtag.Set(t, normtag.Remixers, trimZero(remixers...)...)
+	normtag.Set(t, normtag.RemixerCredit, trimZero(strings.Join(remixersCredit, ", "))...)
+	normtag.Set(t, normtag.RemixersCredit, trimZero(remixersCredit...)...)
 
-	t.Set(tags.Composer, trimZero(strings.Join(composers, ", "))...)
-	t.Set(tags.Composers, trimZero(composers...)...)
-	t.Set(tags.ComposerCredit, trimZero(strings.Join(composersCredit, ", "))...)
-	t.Set(tags.ComposersCredit, trimZero(composersCredit...)...)
+	normtag.Set(t, normtag.Composer, trimZero(strings.Join(composers, ", "))...)
+	normtag.Set(t, normtag.Composers, trimZero(composers...)...)
+	normtag.Set(t, normtag.ComposerCredit, trimZero(strings.Join(composersCredit, ", "))...)
+	normtag.Set(t, normtag.ComposersCredit, trimZero(composersCredit...)...)
 
-	t.Set(tags.MusicBrainzRecordingID, trimZero(trk.Recording.ID)...)
-	t.Set(tags.MusicBrainzTrackID, trimZero(trk.ID)...)
-	t.Set(tags.MusicBrainzArtistID, trimZero(mapFunc(trk.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
+	normtag.Set(t, normtag.MusicBrainzRecordingID, trimZero(trk.Recording.ID)...)
+	normtag.Set(t, normtag.MusicBrainzTrackID, trimZero(trk.ID)...)
+	normtag.Set(t, normtag.MusicBrainzArtistID, trimZero(mapFunc(trk.Artists, func(_ int, v musicbrainz.ArtistCredit) string { return v.Artist.ID })...)...)
 }
 
 // Diff represents a comparison between two tag values, showing the differences
@@ -539,7 +544,7 @@ type DiffWeights map[string]float64
 // DiffRelease compares local tag files against a MusicBrainz release and calculates a match score.
 // It returns a score (0-100) indicating match confidence and detailed diffs for each compared field.
 // The weights parameter allows customizing the importance of different tag fields in the score calculation.
-func DiffRelease[T interface{ Get(string) string }](weights DiffWeights, release *musicbrainz.Release, tracks []musicbrainz.Track, tagFiles []T) (float64, []Diff) {
+func DiffRelease(weights DiffWeights, release *musicbrainz.Release, tracks []musicbrainz.Track, tagFiles []map[string][]string) (float64, []Diff) {
 	if len(tracks) == 0 {
 		return 0, nil
 	}
@@ -560,22 +565,24 @@ func DiffRelease[T interface{ Get(string) string }](weights DiffWeights, release
 	{
 		tf := tagFiles[0]
 		diffs = append(diffs,
-			diff(weight("release"), "release", tf.Get(tags.Album), release.Title),
-			diff(weight("artist"), "artist", tf.Get(tags.AlbumArtist), musicbrainz.ArtistsString(release.Artists)),
-			diff(weight("label"), "label", tf.Get(tags.Label), labelInfo.Label.Name),
-			diff(weight("catalogue num"), "catalogue num", tf.Get(tags.CatalogueNum), labelInfo.CatalogNumber),
-			diff(weight("barcode"), "barcode", tf.Get(tags.Barcode), release.Barcode),
-			diff(weight("media format"), "media format", tf.Get(tags.MediaFormat), release.Media[0].Format),
+			diff(weight("release"), "release", normtag.Get(tf, normtag.Album), release.Title),
+			diff(weight("artist"), "artist", normtag.Get(tf, normtag.AlbumArtist), musicbrainz.ArtistsString(release.Artists)),
+			diff(weight("label"), "label", normtag.Get(tf, normtag.Label), labelInfo.Label.Name),
+			diff(weight("catalogue num"), "catalogue num", normtag.Get(tf, normtag.CatalogueNum), labelInfo.CatalogNumber),
+			diff(weight("barcode"), "barcode", normtag.Get(tf, normtag.Barcode), release.Barcode),
+			diff(weight("media format"), "media format", normtag.Get(tf, normtag.MediaFormat), release.Media[0].Format),
 		)
 	}
 
 	for i := range max(len(tagFiles), len(tracks)) {
 		var a, b string
 		if i < len(tagFiles) {
-			a = strings.Join(trimZero(tagFiles[i].Get(tags.Artist), tagFiles[i].Get(tags.Title)), " – ")
+			tagFile := tagFiles[i]
+			a = strings.Join(trimZero(normtag.Get(tagFile, normtag.Artist), normtag.Get(tagFile, normtag.Title)), " – ")
 		}
 		if i < len(tracks) {
-			b = strings.Join(trimZero(musicbrainz.ArtistsString(tracks[i].Artists), tracks[i].Title), " – ")
+			track := tracks[i]
+			b = strings.Join(trimZero(musicbrainz.ArtistsString(track.Artists), track.Title), " – ")
 		}
 		diffs = append(diffs, diff(weight("track"), fmt.Sprintf("track %d", i+1), a, b))
 	}
@@ -643,37 +650,37 @@ type TagConfig struct {
 // ApplyTagConfig applies tag configuration rules to merge source tags into destination tags.
 // It preserves specified tags from the source and removes unwanted tags according to the config.
 func ApplyTagConfig(
-	dest, source tags.Tags,
+	dest, source map[string][]string,
 	conf TagConfig,
 ) {
 	for _, k := range defaultKeepConfig {
-		dest.Set(k, source.Values(k)...)
+		normtag.Set(dest, k, normtag.Values(source, k)...)
 	}
 	for _, k := range conf.Keep {
-		dest.Set(k, source.Values(k)...)
+		normtag.Set(dest, k, normtag.Values(source, k)...)
 	}
 	for _, k := range conf.Drop {
-		dest.Set(k)
+		normtag.Set(dest, k)
 	}
 }
 
 // defaultKeepConfig is set of tags which are kept as-is when replacing tags.
 var defaultKeepConfig = []string{
-	tags.ReplayGainTrackGain,
-	tags.ReplayGainTrackPeak,
-	tags.ReplayGainAlbumGain,
-	tags.ReplayGainAlbumPeak,
-	tags.ReplayGainTrackRange,
-	tags.ReplayGainAlbumRange,
-	tags.ReplayGainReferenceLoudness,
-	tags.BPM,
-	tags.Key,
-	tags.Lyrics,
-	tags.AcoustIDFingerprint,
-	tags.AcoustIDID,
-	tags.Encoder,
-	tags.EncodedBy,
-	tags.Comment,
+	normtag.ReplayGainTrackGain,
+	normtag.ReplayGainTrackPeak,
+	normtag.ReplayGainAlbumGain,
+	normtag.ReplayGainAlbumPeak,
+	normtag.ReplayGainTrackRange,
+	normtag.ReplayGainAlbumRange,
+	normtag.ReplayGainReferenceLoudness,
+	normtag.BPM,
+	normtag.Key,
+	normtag.Lyrics,
+	normtag.AcoustIDFingerprint,
+	normtag.AcoustIDID,
+	normtag.Encoder,
+	normtag.EncodedBy,
+	normtag.Comment,
 }
 
 // FileSystemOperation defines operations that can be performed on files during the import/tagging process.
@@ -1145,7 +1152,7 @@ func parseAnyTime(str string) time.Time {
 	return t
 }
 
-func logTagChanges(ctx context.Context, fileKey string, lvl slog.Level, before, after tags.Tags) {
+func logTagChanges(ctx context.Context, fileKey string, lvl slog.Level, before, after map[string][]string) {
 	fileKey = filepath.Base(fileKey)
 	for k := range after {
 		if before, after := before[k], after[k]; !slices.Equal(before, after) {

@@ -20,6 +20,7 @@ import (
 	"github.com/rogpeppe/go-internal/testscript"
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/tags"
+	"go.senan.xyz/wrtag/tags/normtag"
 )
 
 //go:embed testdata/responses
@@ -81,9 +82,9 @@ func mainTag() {
 			if err := ensureAudioFile(p); err != nil {
 				log.Fatalf("ensure flac: %v", err)
 			}
-			var t = tags.Tags{}
+			var t = map[string][]string{}
 			for k, vs := range pairs {
-				t.Set(k, vs...)
+				normtag.Set(t, k, vs...)
 			}
 			if err := tags.WriteTags(p, t, 0); err != nil {
 				log.Fatalf("write tag file: %v", err)
@@ -94,7 +95,7 @@ func mainTag() {
 				log.Fatalf("read tags: %v", err)
 			}
 			for k, vs := range pairs {
-				if got := t.Values(k); !slices.Equal(vs, got) {
+				if got := normtag.Values(t, k); !slices.Equal(vs, got) {
 					log.Printf("%s exp %q got %q", p, vs, got)
 					exit = 1
 				}

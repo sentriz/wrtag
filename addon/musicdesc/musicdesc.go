@@ -13,6 +13,7 @@ import (
 	"go.senan.xyz/wrtag/addon"
 	"go.senan.xyz/wrtag/essentia"
 	"go.senan.xyz/wrtag/tags"
+	"go.senan.xyz/wrtag/tags/normtag"
 )
 
 func init() {
@@ -53,7 +54,7 @@ func (a MusicDescAddon) ProcessRelease(ctx context.Context, paths []string) erro
 		if err != nil {
 			return fmt.Errorf("read first file: %w", err)
 		}
-		if first.Get(tags.BPM) != "" && first.Get(tags.Key) != "" {
+		if normtag.Get(first, normtag.BPM) != "" && normtag.Get(first, normtag.Key) != "" {
 			return nil
 		}
 	}
@@ -73,10 +74,10 @@ func (a MusicDescAddon) ProcessRelease(ctx context.Context, paths []string) erro
 					return fmt.Errorf("read essentia: %w", err)
 				}
 
-				t := tags.NewTags(
-					tags.BPM, fmtBPM(info.Rhythm.BPM),
-					tags.Key, fmtKey(info.Tonal.KeyKey, info.Tonal.KeyScale),
-				)
+				t := map[string][]string{}
+				normtag.Set(t, normtag.BPM, fmtBPM(info.Rhythm.BPM))
+				normtag.Set(t, normtag.Key, fmtKey(info.Tonal.KeyKey, info.Tonal.KeyScale))
+
 				if err := tags.WriteTags(path, t, 0); err != nil {
 					return fmt.Errorf("write new tags: %w", err)
 				}
