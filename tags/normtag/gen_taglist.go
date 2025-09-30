@@ -93,6 +93,9 @@ L:
 			if strings.Contains(alt, "_") {
 				fmt.Fprintf(outFile, "\t%q: %q,\n", strings.ReplaceAll(alt, "_", " "), key)
 			}
+			if strings.Contains(alt, "-") {
+				fmt.Fprintf(outFile, "\t%q: %q,\n", strings.ReplaceAll(alt, "-", " "), key)
+			}
 		}
 	}
 	fmt.Fprintf(outFile, "}\n")

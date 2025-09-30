@@ -11,18 +11,18 @@ import (
 //go:generate go run gen_taglist.go -- taglist.go
 //nolint:gosec
 const (
-	Album              = "ALBUM"
-	AlbumArtist        = "ALBUMARTIST"         //tag: alts "ALBUM_ARTIST"
+	Album              = "ALBUM"               //tag: alts "TALB" "©ALB" "TAL"
+	AlbumArtist        = "ALBUMARTIST"         //tag: alts "ALBUM_ARTIST" "TPE2" "AART" "TP2"
 	AlbumArtists       = "ALBUMARTISTS"        //tag: alts "ALBUM_ARTISTS"
 	AlbumArtistCredit  = "ALBUMARTIST_CREDIT"  //tag: alts "ALBUM_ARTIST_CREDIT"
 	AlbumArtistsCredit = "ALBUMARTISTS_CREDIT" //tag: alts "ALBUM_ARTISTS_CREDIT"
-	Date               = "DATE"                //tag: alts "YEAR" "RELEASEDATE"
+	Date               = "DATE"                //tag: alts "YEAR" "RELEASEDATE" "TDRC" "TYER" "©DAY" "TYE"
 	OriginalDate       = "ORIGINALDATE"        //tag: alts "ORIGINAL_YEAR"
 	MediaFormat        = "MEDIA"
-	Label              = "LABEL"
+	Label              = "LABEL"         //tag: alts "TPUB"
 	CatalogueNum       = "CATALOGNUMBER" //tag: alts "CATALOGNUM" "CAT#" "CATALOGID" "CATNUM"
 	Barcode            = "BARCODE"       //tag: alts "UPC" "MCN"
-	Compilation        = "COMPILATION"
+	Compilation        = "COMPILATION"   //tag: alts "TCMP" "CPIL"
 	ReleaseType        = "RELEASETYPE"
 
 	MusicBrainzReleaseID      = "MUSICBRAINZ_ALBUMID"
@@ -30,15 +30,15 @@ const (
 	MusicBrainzAlbumArtistID  = "MUSICBRAINZ_ALBUMARTISTID"
 	MusicBrainzAlbumComment   = "MUSICBRAINZ_ALBUMCOMMENT"
 
-	Title         = "TITLE"
-	Artist        = "ARTIST"
+	Title         = "TITLE"  //tag: alts "TIT2" "©NAM" "TT2"
+	Artist        = "ARTIST" //tag: alts "TPE1" "©ART" "TP1"
 	Artists       = "ARTISTS"
 	ArtistCredit  = "ARTIST_CREDIT"  //tag: alts "ARTISTCREDIT"
 	ArtistsCredit = "ARTISTS_CREDIT" //tag: alts "ARTISTSCREDIT"
-	Genre         = "GENRE"
+	Genre         = "GENRE"          //tag: alts "TCON" "©GEN" "TCO"
 	Genres        = "GENRES"
-	TrackNumber   = "TRACKNUMBER" //tag: alts "TRACK" "TRACKNUM"
-	DiscNumber    = "DISCNUMBER"
+	TrackNumber   = "TRACKNUMBER" //tag: alts "TRACK" "TRACKNUM" "TRCK" "TRKN" "TRK"
+	DiscNumber    = "DISCNUMBER"  //tag: alts "DISC" "TPOS" "DISK" "TPA"
 
 	ISRC = "ISRC"
 
@@ -47,7 +47,7 @@ const (
 	RemixerCredit  = "REMIXER_CREDIT"
 	RemixersCredit = "REMIXERS_CREDIT"
 
-	Composer        = "COMPOSER"
+	Composer        = "COMPOSER" //tag: alts "TCOM" "©WRT" "TCM"
 	Composers       = "COMPOSERS"
 	ComposerCredit  = "COMPOSER_CREDIT"
 	ComposersCredit = "COMPOSERS_CREDIT"
@@ -64,18 +64,18 @@ const (
 	ReplayGainAlbumRange        = "REPLAYGAIN_ALBUM_RANGE"
 	ReplayGainReferenceLoudness = "REPLAYGAIN_REFERENCE_LOUDNESS"
 
-	BPM = "BPM"
-	Key = "INITIALKEY" //tag: alts "INITIAL_KEY"
+	BPM = "BPM"        //tag: alts "TBPM" "TMPO" "TBP"
+	Key = "INITIALKEY" //tag: alts "INITIAL_KEY" "TKEY" "TKE"
 
-	Lyrics = "LYRICS" //tag: alts "LYRICS:DESCRIPTION" "USLT:DESCRIPTION" "©LYR"
+	Lyrics = "LYRICS" //tag: alts "LYRICS:DESCRIPTION" "USLT:DESCRIPTION" "©LYR" "USLT" "ULT"
 
 	AcoustIDFingerprint = "ACOUSTID_FINGERPRINT"
 	AcoustIDID          = "ACOUSTID_ID"
 
-	Encoder   = "ENCODER"
-	EncodedBy = "ENCODEDBY"
+	Encoder   = "ENCODER"   //tag: alts "TSSE" "©TOO" "TSS"
+	EncodedBy = "ENCODEDBY" //tag: alts "TENC" "ENCODED_BY" "TEN"
 
-	Comment = "COMMENT"
+	Comment = "COMMENT" //tag: alts "COMM" "©CMT" "COM"
 )
 
 func Set(t map[string][]string, key string, values ...string) {
