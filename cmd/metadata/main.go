@@ -28,10 +28,14 @@ func init() {
 		fmt.Fprintf(flag.Output(), "  $ %s [<options>] read  <tag>... -- <path>...\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ %s [<options>] write ( <tag> <value>... , )... -- <path>...\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ %s [<options>] clear <tag>... -- <path>...\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s [<options>] image-read [-index <n>] -- <path>\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s [<options>] image-write [-index <n>] [-type <type>] [-desc <desc>] <image-path> -- <path>...\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s [<options>] image-clear -- <path>...\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "\n")
 		fmt.Fprintf(flag.Output(), "  # <tag> is an audio metadata tag key\n")
 		fmt.Fprintf(flag.Output(), "  # <value> is an audio metadata tag value\n")
 		fmt.Fprintf(flag.Output(), "  # <path> is path(s) to audio files, dir(s) to find audio files in, or \"-\" for list audio file paths from stdin\n")
+		fmt.Fprintf(flag.Output(), "  # <image-path> is path to an image file to embed\n")
 		fmt.Fprintf(flag.Output(), "\n")
 		fmt.Fprintf(flag.Output(), "Options:\n")
 		flag.PrintDefaults()
@@ -46,12 +50,19 @@ func init() {
 		fmt.Fprintf(flag.Output(), "  $ %s write artist \"Sensient\" , genres \"psy\" \"minimal\" \"techno\" -- dir/\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ %s clear -- a.flac\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ %s clear lyrics artist_credit -- *.flac\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s image-read -- a.flac > cover.jpg\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s image-read -index 1 -- a.flac > back.jpg\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s image-write cover.jpg -- a.flac b.flac\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s image-write -index 2 -type \"Back Cover\" -desc \"Album back\" back.jpg -- a.flac\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s image-clear -- a.flac b.flac\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ find x/ -type f | %s write artist \"Sensient\" , album \"Blue Neevus\" -\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ find y/ -type f | %s read artist title -\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "  $ find y/ -type f -name \"*extended*\" | %s read -properties length -\n", flag.Name())
 		fmt.Fprintf(flag.Output(), "\n")
 		fmt.Fprintf(flag.Output(), "See also:\n")
 		fmt.Fprintf(flag.Output(), "  $ %s read -h\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s image-read -h\n", flag.Name())
+		fmt.Fprintf(flag.Output(), "  $ %s image-write -h\n", flag.Name())
 	}
 }
 
@@ -91,6 +102,54 @@ func main() {
 		args, paths := splitArgPaths(args)
 		if err := iterFiles(paths, func(p string) error { return cmdClear(p, args) }); err != nil {
 			slog.Error("process clear", "err", err)
+			return
+		}
+	case "image-read":
+		flag := flag.NewFlagSet(command, flag.ExitOnError)
+		var (
+			index = flag.Int("index", 0, "Image index to read (0 = first)")
+		)
+		flag.Parse(args)
+
+		_, paths := splitArgPaths(flag.Args())
+		if len(paths) != 1 {
+			slog.Error("image-read requires exactly one audio file path")
+			return
+		}
+		path := paths[0]
+
+		out := bufio.NewWriter(os.Stdout)
+		defer out.Flush()
+
+		if err := cmdImageRead(out, path, *index); err != nil {
+			slog.Error("process image-read", "err", err)
+			return
+		}
+	case "image-write":
+		flag := flag.NewFlagSet(command, flag.ExitOnError)
+		var (
+			index = flag.Int("index", 0, "Image index to write to (0 indexed)")
+			typ   = flag.String("type", "Front Cover", "Picture type")
+			mime  = flag.String("mime-type", "", "Image MIME type")
+			desc  = flag.String("desc", "", "Image description")
+		)
+		flag.Parse(args)
+
+		args, paths := splitArgPaths(flag.Args())
+		if len(args) != 1 {
+			slog.Error("image-write requires exactly one image file path")
+			return
+		}
+		imagePath := args[0]
+
+		if err := iterFiles(paths, func(p string) error { return cmdImageWrite(p, imagePath, *index, *typ, *desc, *mime) }); err != nil {
+			slog.Error("process image-write", "err", err)
+			return
+		}
+	case "image-clear":
+		_, paths := splitArgPaths(args)
+		if err := iterFiles(paths, func(p string) error { return cmdImageClear(p) }); err != nil {
+			slog.Error("process image-clear", "err", err)
 			return
 		}
 	default:
@@ -151,6 +210,21 @@ func cmdRead(to io.Writer, path string, withProperties bool, keys []string) erro
 		fmt.Fprintf(to, "%s\t%s\t%d\n", path, k, properties.Channels)
 	}
 
+	for i, image := range properties.Images {
+		if k := "image_index"; wantProperty(k) {
+			fmt.Fprintf(to, "%s\t%s\t%d\n", path, k, i)
+		}
+		if k := "image_type"; wantProperty(k) {
+			fmt.Fprintf(to, "%s\t%s\t%s\n", path, k, image.Type)
+		}
+		if k := "image_description"; wantProperty(k) {
+			fmt.Fprintf(to, "%s\t%s\t%s\n", path, k, image.Description)
+		}
+		if k := "image_mime_type"; wantProperty(k) {
+			fmt.Fprintf(to, "%s\t%s\t%s\n", path, k, image.MimeType)
+		}
+	}
+
 	return nil
 }
 
@@ -178,6 +252,39 @@ func cmdClear(path string, keys []string) error {
 	}
 	if err := tags.WriteTags(path, t, 0); err != nil {
 		return err
+	}
+	return nil
+}
+
+func cmdImageRead(to io.Writer, path string, index int) error {
+	data, err := tags.ReadImageOptions(path, index)
+	if err != nil {
+		return fmt.Errorf("read image: %w", err)
+	}
+	if len(data) == 0 {
+		return fmt.Errorf("no image found at index %d in %s", index, path)
+	}
+	if _, err := to.Write(data); err != nil {
+		return fmt.Errorf("write image: %w", err)
+	}
+	return nil
+}
+
+func cmdImageWrite(audioPath string, imagePath string, index int, imageType, description, imageMIMEType string) error {
+	data, err := os.ReadFile(imagePath) //nolint:gosec // path is from user's argument
+	if err != nil {
+		return fmt.Errorf("read image file: %w", err)
+	}
+
+	if err := tags.WriteImageOptions(audioPath, data, index, imageType, description, imageMIMEType); err != nil {
+		return fmt.Errorf("write image: %w", err)
+	}
+	return nil
+}
+
+func cmdImageClear(audioPath string) error {
+	if err := tags.WriteImage(audioPath, nil); err != nil {
+		return fmt.Errorf("clear images: %w", err)
 	}
 	return nil
 }

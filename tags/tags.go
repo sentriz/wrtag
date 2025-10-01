@@ -40,6 +40,18 @@ func ReadImage(path string) ([]byte, error) {
 	return taglib.ReadImage(path)
 }
 
+func ReadImageOptions(path string, index int) ([]byte, error) {
+	return taglib.ReadImageOptions(path, index)
+}
+
+func WriteImage(path string, image []byte) error {
+	return taglib.WriteImage(path, image)
+}
+
+func WriteImageOptions(path string, image []byte, index int, imageType, description, mimeType string) error {
+	return taglib.WriteImageOptions(path, image, index, imageType, description, mimeType)
+}
+
 type Properties = taglib.Properties
 
 func ReadProperties(path string) (Properties, error) {
