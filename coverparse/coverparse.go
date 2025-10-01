@@ -1,3 +1,6 @@
+// Package coverparse provides utilities for identifying and ranking cover art files.
+// It implements heuristics to select the best cover image from multiple candidates
+// based on filename patterns, art type keywords, and file format.
 package coverparse
 
 import (

@@ -1,3 +1,5 @@
+// Package subproc provides an addon for executing arbitrary subprocesses
+// as part of the music file processing pipeline.
 package subproc
 
 import (

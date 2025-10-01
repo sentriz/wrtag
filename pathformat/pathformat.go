@@ -1,3 +1,6 @@
+// Package pathformat provides template-based path formatting for organizing music files.
+// It uses Go templates to generate file paths based on MusicBrainz release metadata,
+// allowing flexible organization schemes.
 package pathformat
 
 import (

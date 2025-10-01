@@ -1,3 +1,5 @@
+// Package notifications provides a notification system using shoutrrr
+// for sending event-based notifications to various platforms.
 package notifications
 
 import (

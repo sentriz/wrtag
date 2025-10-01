@@ -1,3 +1,5 @@
+// Package rsgain provides a wrapper for the rsgain command-line tool
+// to calculate ReplayGain values for audio files.
 package rsgain
 
 import (

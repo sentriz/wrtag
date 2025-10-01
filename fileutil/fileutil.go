@@ -1,3 +1,5 @@
+// Package fileutil provides file system utilities for safe path handling,
+// directory globbing, and walking directory trees.
 package fileutil
 
 import (

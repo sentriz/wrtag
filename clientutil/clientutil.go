@@ -1,3 +1,5 @@
+// Package clientutil provides HTTP client middleware for common functionality
+// like rate limiting, caching, logging, and user agent management.
 package clientutil
 
 import (

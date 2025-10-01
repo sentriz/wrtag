@@ -1,3 +1,6 @@
+// Package musicbrainz provides a client for querying the MusicBrainz API.
+// It supports searching for releases by various criteria and retrieving detailed
+// release information including recordings, artists, labels, and genres.
 package musicbrainz
 
 import (

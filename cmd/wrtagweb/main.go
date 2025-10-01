@@ -1,3 +1,5 @@
+// Command wrtagweb provides a web interface for wrtag,
+// allowing users to queue and manage music tagging operations through a browser.
 package main
 
 import (

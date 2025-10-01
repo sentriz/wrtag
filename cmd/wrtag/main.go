@@ -1,3 +1,6 @@
+// Command wrtag is a command-line tool for tagging and organizing music files
+// using metadata from MusicBrainz. It supports moving, copying, and reflinking files
+// as well as bulk synchronization operations.
 package main
 
 import (

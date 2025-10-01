@@ -1,3 +1,5 @@
+// Package lyrics provides an addon for fetching and writing lyrics
+// to audio files from various online sources.
 package lyrics
 
 import (

@@ -1,3 +1,5 @@
+// Package wrtagflag provides command-line flag parsing and configuration
+// management utilities for wrtag commands.
 package wrtagflag
 
 import (

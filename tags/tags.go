@@ -1,3 +1,5 @@
+// Package tags provides functionality for reading and writing audio file metadata tags.
+// It wraps taglib to provide a simple interface for working with various audio formats.
 package tags
 
 import (

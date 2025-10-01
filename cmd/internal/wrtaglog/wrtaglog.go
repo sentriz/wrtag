@@ -1,3 +1,4 @@
+// Package wrtaglog provides logging setup and configuration utilities for wrtag commands.
 package wrtaglog
 
 import (

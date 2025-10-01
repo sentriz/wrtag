@@ -1,3 +1,6 @@
+// Package normtag provides normalized tag key mapping for audio file metadata.
+// It handles conversion between different tag naming conventions (e.g., ID3v2, Vorbis Comments, MP4)
+// and provides a consistent interface for reading and writing tags across different formats.
 package normtag
 
 import (

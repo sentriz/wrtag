@@ -1,3 +1,5 @@
+// Package researchlink provides utilities for generating research URLs
+// to help find information about music releases using various search engines and databases.
 package researchlink
 
 import (

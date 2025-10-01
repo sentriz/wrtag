@@ -1,3 +1,5 @@
+// Package originfile provides parsing for gazelle-origin files.
+// These YAML files contain metadata about music releases from Gazelle-based music trackers.
 package originfile
 
 import (

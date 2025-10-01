@@ -1,3 +1,5 @@
+// Command metadata is a utility for reading, writing, and clearing
+// audio file metadata tags in various formats.
 package main
 
 import (

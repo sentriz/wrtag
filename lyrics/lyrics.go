@@ -1,3 +1,5 @@
+// Package lyrics provides functionality for fetching song lyrics from various sources.
+// It supports multiple lyrics providers including Genius and Musixmatch.
 package lyrics
 
 import (

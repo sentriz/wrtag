@@ -1,3 +1,5 @@
+// Package essentia provides a wrapper for the streaming_extractor_music tool
+// from the Essentia audio analysis library, enabling extraction of BPM and key information.
 package essentia
 
 import (
