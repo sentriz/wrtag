@@ -22,14 +22,14 @@ type Source interface {
 	Search(ctx context.Context, artist, song string, duration time.Duration) (string, error)
 }
 
-func NewSource(name string, rateLimit time.Duration) (Source, error) {
+func NewSource(name string) (Source, error) {
 	switch name {
 	case "genius":
-		return &Genius{RateLimit: rateLimit}, nil
+		return &Genius{RateLimit: 500 * time.Millisecond}, nil
 	case "musixmatch":
-		return &Musixmatch{RateLimit: rateLimit}, nil
+		return &Musixmatch{RateLimit: 500 * time.Millisecond}, nil
 	case "lrclib":
-		return &LRCLib{RateLimit: rateLimit}, nil
+		return &LRCLib{RateLimit: 100 * time.Millisecond}, nil
 	default:
 		return nil, errors.New("unknown source")
 	}

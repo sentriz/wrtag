@@ -27,7 +27,7 @@ type LyricsAddon struct {
 func NewLyricsAddon(conf string) (LyricsAddon, error) {
 	var sources lyrics.MultiSource
 	for arg := range strings.FieldsSeq(conf) {
-		source, err := lyrics.NewSource(arg, 500*time.Millisecond)
+		source, err := lyrics.NewSource(arg)
 		if err != nil {
 			return LyricsAddon{}, fmt.Errorf("source %q: %w", arg, err)
 		}
