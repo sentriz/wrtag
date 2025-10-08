@@ -517,9 +517,11 @@ For example:
 
 ## Addon Lyrics
 
-The `lyrics` addon can fetch and embed lyric information from [Genius](https://genius.com/) and [Musixmatch](https://www.musixmatch.com/) in your tracks.
+The `lyrics` addon can fetch and embed lyric information from [LRCLib](https://lrclib.net/), [Genius](https://genius.com/), and [Musixmatch](https://www.musixmatch.com/) in your tracks.
 
-The format of the addon config is `lyrics <source>...` where the source is one of `genius` or `musixmatch`. For example, `"lyrics genius musixmatch"`. Note that sources will be tried in the order they are specified.
+The format of the addon config is `lyrics <source>...` where the source is one of `lrclib`, `genius`, or `musixmatch`. For example, `"lyrics lrclib genius"`. Note that sources will be tried in the order they are specified.
+
+LRCLib provides synchronized lyrics (LRC format) when available, which includes timestamps for karaoke-style display in compatible players. If synchronized lyrics are not available, plain lyrics will be used instead.
 
 ## Addon ReplayGain
 

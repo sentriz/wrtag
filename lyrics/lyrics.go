@@ -1,9 +1,10 @@
 // Package lyrics provides functionality for fetching song lyrics from various sources.
-// It supports multiple lyrics providers including Genius and Musixmatch.
+// It supports multiple lyrics providers including LRCLib, Genius, and Musixmatch.
 package lyrics
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -27,6 +28,8 @@ func NewSource(name string, rateLimit time.Duration) (Source, error) {
 		return &Genius{RateLimit: rateLimit}, nil
 	case "musixmatch":
 		return &Musixmatch{RateLimit: rateLimit}, nil
+	case "lrclib":
+		return &LRCLib{RateLimit: rateLimit}, nil
 	default:
 		return nil, errors.New("unknown source")
 	}
@@ -191,4 +194,75 @@ func (ms MultiSource) String() string {
 		parts = append(parts, fmt.Sprint(s))
 	}
 	return strings.Join(parts, ", ")
+}
+
+var lrclibBaseURL = `https://lrclib.net/api/get`
+
+type LRCLib struct {
+	RateLimit time.Duration
+
+	initOnce   sync.Once
+	HTTPClient *http.Client
+}
+
+type lrclibResponse struct {
+	ID           int     `json:"id"`
+	Name         string  `json:"name"`
+	TrackName    string  `json:"trackName"`
+	ArtistName   string  `json:"artistName"`
+	AlbumName    string  `json:"albumName"`
+	Duration     float64 `json:"duration"`
+	Instrumental bool    `json:"instrumental"`
+	PlainLyrics  string  `json:"plainLyrics"`
+	SyncedLyrics string  `json:"syncedLyrics"`
+}
+
+func (l *LRCLib) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
+	l.initOnce.Do(func() {
+		l.HTTPClient = clientutil.Wrap(l.HTTPClient, clientutil.Chain(
+			clientutil.WithRateLimit(l.RateLimit),
+		))
+	})
+
+	u, _ := url.Parse(lrclibBaseURL)
+	q := u.Query()
+	q.Set("artist_name", artist)
+	q.Set("track_name", song)
+	if duration > 0 {
+		q.Set("duration", fmt.Sprintf("%.0f", duration.Seconds()))
+	}
+	u.RawQuery = q.Encode()
+
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	resp, err := l.HTTPClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("req page: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return "", ErrLyricsNotFound
+	}
+	if resp.StatusCode/100 != 2 {
+		return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
+	var result lrclibResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", fmt.Errorf("decode response: %w", err)
+	}
+
+	// Prefer synced lyrics if available, otherwise fall back to plain lyrics
+	if result.SyncedLyrics != "" {
+		return result.SyncedLyrics, nil
+	}
+	if result.PlainLyrics != "" {
+		return result.PlainLyrics, nil
+	}
+
+	return "", ErrLyricsNotFound
+}
+
+func (l *LRCLib) String() string {
+	return "lrclib"
 }
