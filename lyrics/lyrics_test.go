@@ -27,7 +27,12 @@ func TestMusixmatch(t *testing.T) {
 	assert.Contains(t, resp, "\nThe stuffing loss made me hit a timelock.\n")
 
 	resp, err = src.Search(t.Context(), "The Fall", "Uhh yeah - uh greath", 0)
-	require.ErrorIs(t, err, lyrics.ErrLyricsNotFound)
+	require.ErrorIs(t, err, lyrics.ErrTrackNotFound)
+	assert.Empty(t, resp)
+
+	// instrumental
+	resp, err = src.Search(t.Context(), "Miles Davis", "Blue In Green", 0)
+	require.NoError(t, err)
 	assert.Empty(t, resp)
 }
 
@@ -45,7 +50,12 @@ func TestGenius(t *testing.T) {
 	assert.Contains(t, resp, "\nAnd then I took some of these\n")
 
 	resp, err = src.Search(t.Context(), "the fall", "uhh yeah - uh greath", 0)
-	require.ErrorIs(t, err, lyrics.ErrLyricsNotFound)
+	require.ErrorIs(t, err, lyrics.ErrTrackNotFound)
+	assert.Empty(t, resp)
+
+	// instrumental
+	resp, err = src.Search(t.Context(), "miles davis", "blue in green", 0)
+	require.NoError(t, err)
 	assert.Empty(t, resp)
 }
 

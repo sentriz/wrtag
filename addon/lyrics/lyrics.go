@@ -65,7 +65,7 @@ func (l LyricsAddon) ProcessRelease(ctx context.Context, paths []string) error {
 				}
 
 				lyricData, err := l.source.Search(ctx, normtag.Get(t, normtag.ArtistCredit), normtag.Get(t, normtag.Title), duration)
-				if err != nil && !errors.Is(err, lyrics.ErrLyricsNotFound) {
+				if err != nil && !errors.Is(err, lyrics.ErrTrackNotFound) {
 					return err
 				}
 

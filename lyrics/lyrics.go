@@ -4,17 +4,11 @@ package lyrics
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"net/http"
-	"net/url"
 	"strings"
-	"sync"
 	"time"
 
-	"github.com/andybalholm/cascadia"
-	"go.senan.xyz/wrtag/clientutil"
 	"golang.org/x/net/html"
 )
 
@@ -35,124 +29,34 @@ func NewSource(name string) (Source, error) {
 	}
 }
 
-var ErrLyricsNotFound = errors.New("lyrics not found")
+var ErrTrackNotFound = errors.New("track not found")
 
-var musixmatchBaseURL = `https://www.musixmatch.com/lyrics`
-var musixmatchSelectContent = cascadia.MustCompile(`div.r-1v1z2uz:nth-child(1)`)
-var musixmatchIgnore = []string{"Still no lyrics here"}
-var musixmatchEsc = strings.NewReplacer(
-	" ", "-",
-	"(", "",
-	")", "",
-	"[", "",
-	"]", "",
-)
+type MultiSource []Source
 
-type Musixmatch struct {
-	RateLimit time.Duration
-
-	initOnce   sync.Once
-	HTTPClient *http.Client
-}
-
-func (mm *Musixmatch) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
-	mm.initOnce.Do(func() {
-		mm.HTTPClient = clientutil.Wrap(mm.HTTPClient, clientutil.Chain(
-			clientutil.WithRateLimit(mm.RateLimit),
-		))
-	})
-
-	url, _ := url.Parse(musixmatchBaseURL)
-	url = url.JoinPath(musixmatchEsc.Replace(artist))
-	url = url.JoinPath(musixmatchEsc.Replace(song))
-
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
-	resp, err := mm.HTTPClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("req page: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode/100 != 2 {
-		return "", ErrLyricsNotFound
-	}
-
-	node, err := html.Parse(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("parse page: %w", err)
-	}
-
-	var out strings.Builder
-	findDocumentText(cascadia.Query(node, musixmatchSelectContent), &out)
-
-	for _, ig := range musixmatchIgnore {
-		if strings.Contains(out.String(), ig) {
+func (ms MultiSource) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
+	for _, src := range ms {
+		lyricData, err := src.Search(ctx, artist, song, duration)
+		if err != nil && !errors.Is(err, ErrTrackNotFound) {
+			return "", err
+		}
+		if lyricData != "" {
+			return lyricData, nil
+		}
+		// if we got empty lyrics without ErrTrackNotFound, the track was found but has no lyrics
+		// stop trying other sources
+		if err == nil {
 			return "", nil
 		}
 	}
-	return out.String(), nil
+	return "", ErrTrackNotFound
 }
 
-func (mm *Musixmatch) String() string {
-	return "musixmatch"
-}
-
-var geniusBaseURL = `https://genius.com`
-var geniusSelectContent = cascadia.MustCompile(`div[class^="Lyrics__Container-"]`)
-var geniusEsc = strings.NewReplacer(
-	" ", "-",
-	"(", "",
-	")", "",
-	"[", "",
-	"]", "",
-	"&", "and",
-)
-
-type Genius struct {
-	RateLimit time.Duration
-
-	initOnce   sync.Once
-	HTTPClient *http.Client
-}
-
-func (g *Genius) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
-	g.initOnce.Do(func() {
-		g.HTTPClient = clientutil.Wrap(g.HTTPClient, clientutil.Chain(
-			clientutil.WithRateLimit(g.RateLimit),
-		))
-	})
-
-	// use genius case rules to miminise redirects
-	page := fmt.Sprintf("%s-%s-lyrics", artist, song)
-	page = strings.ToUpper(string(page[0])) + strings.ToLower(page[1:])
-
-	url, _ := url.Parse(geniusBaseURL)
-	url = url.JoinPath(geniusEsc.Replace(page))
-
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
-	resp, err := g.HTTPClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("req page: %w", err)
+func (ms MultiSource) String() string {
+	var parts []string
+	for _, s := range ms {
+		parts = append(parts, fmt.Sprint(s))
 	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode/100 != 2 {
-		return "", ErrLyricsNotFound
-	}
-
-	node, err := html.Parse(resp.Body)
-	if err != nil {
-		return "", fmt.Errorf("parse page: %w", err)
-	}
-
-	var out strings.Builder
-	findDocumentText(cascadia.Query(node, geniusSelectContent), &out)
-
-	return out.String(), nil
-}
-
-func (g *Genius) String() string {
-	return "genius"
+	return strings.Join(parts, ", ")
 }
 
 func findDocumentText(n *html.Node, buf *strings.Builder) {
@@ -171,98 +75,4 @@ func findDocumentText(n *html.Node, buf *strings.Builder) {
 			}
 		}
 	}
-}
-
-type MultiSource []Source
-
-func (ms MultiSource) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
-	for _, src := range ms {
-		lyricData, err := src.Search(ctx, artist, song, duration)
-		if err != nil && !errors.Is(err, ErrLyricsNotFound) {
-			return "", err
-		}
-		if lyricData != "" {
-			return lyricData, nil
-		}
-	}
-	return "", ErrLyricsNotFound
-}
-
-func (ms MultiSource) String() string {
-	var parts []string
-	for _, s := range ms {
-		parts = append(parts, fmt.Sprint(s))
-	}
-	return strings.Join(parts, ", ")
-}
-
-var lrclibBaseURL = `https://lrclib.net/api/get`
-
-type LRCLib struct {
-	RateLimit time.Duration
-
-	initOnce   sync.Once
-	HTTPClient *http.Client
-}
-
-type lrclibResponse struct {
-	ID           int     `json:"id"`
-	Name         string  `json:"name"`
-	TrackName    string  `json:"trackName"`
-	ArtistName   string  `json:"artistName"`
-	AlbumName    string  `json:"albumName"`
-	Duration     float64 `json:"duration"`
-	Instrumental bool    `json:"instrumental"`
-	PlainLyrics  string  `json:"plainLyrics"`
-	SyncedLyrics string  `json:"syncedLyrics"`
-}
-
-func (l *LRCLib) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
-	l.initOnce.Do(func() {
-		l.HTTPClient = clientutil.Wrap(l.HTTPClient, clientutil.Chain(
-			clientutil.WithRateLimit(l.RateLimit),
-		))
-	})
-
-	u, _ := url.Parse(lrclibBaseURL)
-	q := u.Query()
-	q.Set("artist_name", artist)
-	q.Set("track_name", song)
-	if duration > 0 {
-		q.Set("duration", fmt.Sprintf("%.0f", duration.Seconds()))
-	}
-	u.RawQuery = q.Encode()
-
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
-	resp, err := l.HTTPClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("req page: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode == http.StatusNotFound {
-		return "", ErrLyricsNotFound
-	}
-	if resp.StatusCode/100 != 2 {
-		return "", fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-	}
-
-	var result lrclibResponse
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", fmt.Errorf("decode response: %w", err)
-	}
-
-	// Prefer synced lyrics if available, otherwise fall back to plain lyrics
-	if result.SyncedLyrics != "" {
-		return result.SyncedLyrics, nil
-	}
-	if result.PlainLyrics != "" {
-		return result.PlainLyrics, nil
-	}
-
-	return "", ErrLyricsNotFound
-}
-
-func (l *LRCLib) String() string {
-	return "lrclib"
 }
