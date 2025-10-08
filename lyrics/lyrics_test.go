@@ -20,13 +20,13 @@ func TestMusixmatch(t *testing.T) {
 	var src lyrics.Musixmatch
 	src.HTTPClient = fsClient(responses, "testdata/musixmatch")
 
-	resp, err := src.Search(t.Context(), "The Fall", "Wings")
+	resp, err := src.Search(t.Context(), "The Fall", "Wings", 0)
 	require.NoError(t, err)
 	assert.Contains(t, resp, "\nI paid them off with stuffing from my wings.\n")
 	assert.Contains(t, resp, "\nThey had some fun with those cheapo airline snobs.\n")
 	assert.Contains(t, resp, "\nThe stuffing loss made me hit a timelock.\n")
 
-	resp, err = src.Search(t.Context(), "The Fall", "Uhh yeah - uh greath")
+	resp, err = src.Search(t.Context(), "The Fall", "Uhh yeah - uh greath", 0)
 	require.ErrorIs(t, err, lyrics.ErrLyricsNotFound)
 	assert.Empty(t, resp)
 }
@@ -37,14 +37,14 @@ func TestGenius(t *testing.T) {
 	var src lyrics.Genius
 	src.HTTPClient = fsClient(responses, "testdata/genius")
 
-	resp, err := src.Search(t.Context(), "the fall", "totally wired")
+	resp, err := src.Search(t.Context(), "the fall", "totally wired", 0)
 	require.NoError(t, err)
 
 	assert.Contains(t, resp, "\nI'm totally wired (can't you see?)\n")
 	assert.Contains(t, resp, "\nI drank a jar of coffee\n")
 	assert.Contains(t, resp, "\nAnd then I took some of these\n")
 
-	resp, err = src.Search(t.Context(), "the fall", "uhh yeah - uh greath")
+	resp, err = src.Search(t.Context(), "the fall", "uhh yeah - uh greath", 0)
 	require.ErrorIs(t, err, lyrics.ErrLyricsNotFound)
 	assert.Empty(t, resp)
 }
@@ -55,7 +55,7 @@ func TestGeniusLineBreak(t *testing.T) {
 	var src lyrics.Genius
 	src.HTTPClient = fsClient(responses, "testdata/genius")
 
-	resp, err := src.Search(t.Context(), "pink floyd", "breathe in the air")
+	resp, err := src.Search(t.Context(), "pink floyd", "breathe in the air", 0)
 	require.NoError(t, err)
 
 	// assert it's one line, even though there's a link

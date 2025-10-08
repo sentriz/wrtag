@@ -18,7 +18,7 @@ import (
 )
 
 type Source interface {
-	Search(ctx context.Context, artist, song string) (string, error)
+	Search(ctx context.Context, artist, song string, duration time.Duration) (string, error)
 }
 
 func NewSource(name string, rateLimit time.Duration) (Source, error) {
@@ -52,7 +52,7 @@ type Musixmatch struct {
 	HTTPClient *http.Client
 }
 
-func (mm *Musixmatch) Search(ctx context.Context, artist, song string) (string, error) {
+func (mm *Musixmatch) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
 	mm.initOnce.Do(func() {
 		mm.HTTPClient = clientutil.Wrap(mm.HTTPClient, clientutil.Chain(
 			clientutil.WithRateLimit(mm.RateLimit),
@@ -112,7 +112,7 @@ type Genius struct {
 	HTTPClient *http.Client
 }
 
-func (g *Genius) Search(ctx context.Context, artist, song string) (string, error) {
+func (g *Genius) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
 	g.initOnce.Do(func() {
 		g.HTTPClient = clientutil.Wrap(g.HTTPClient, clientutil.Chain(
 			clientutil.WithRateLimit(g.RateLimit),
@@ -172,9 +172,9 @@ func findDocumentText(n *html.Node, buf *strings.Builder) {
 
 type MultiSource []Source
 
-func (ms MultiSource) Search(ctx context.Context, artist, song string) (string, error) {
+func (ms MultiSource) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
 	for _, src := range ms {
-		lyricData, err := src.Search(ctx, artist, song)
+		lyricData, err := src.Search(ctx, artist, song, duration)
 		if err != nil && !errors.Is(err, ErrLyricsNotFound) {
 			return "", err
 		}
