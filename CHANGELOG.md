@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.19.0](https://github.com/sentriz/wrtag/compare/v0.18.0...v0.19.0) (2025-10-09)
+
+
+### Features
+
+* **lyrics:** add LRCLib support ([2879598](https://github.com/sentriz/wrtag/commit/2879598cb73fc3f1d01ce6d4258dc8610add770e)), closes [#166](https://github.com/sentriz/wrtag/issues/166)
+* **metadata:** add image properties, image-read, image-write, image-clear ([f50eb9f](https://github.com/sentriz/wrtag/commit/f50eb9fa5fe86137c649a9bfcac97d2ce19e77de))
+* **normtag:** add more alternatives ([19bf034](https://github.com/sentriz/wrtag/commit/19bf03481e5e4c5322fd1ca508c9f4b23228d81a))
+* **tags:** expose ReadImage ([d759d9b](https://github.com/sentriz/wrtag/commit/d759d9bc343f0ed6a29faee7144bb61940f45d10))
+
+
+### Bug Fixes
+
+* **lyrics:** add more query replacements ([33a2787](https://github.com/sentriz/wrtag/commit/33a27876ae95b57f48244f1e4bedd62caffa7a92))
+* **lyrics:** handle track not found vs track has no lyrics ([08db046](https://github.com/sentriz/wrtag/commit/08db046f652919f3b3b443aa5e8ea236c43118d5))
+* **metadata:** make image-clear clear all images not first index ([5fee9b1](https://github.com/sentriz/wrtag/commit/5fee9b15100a22c474c038f7e37c35e9c0b110fc))
+
 ## [0.18.0](https://github.com/sentriz/wrtag/compare/v0.17.1...v0.18.0) (2025-09-14)
 
 
