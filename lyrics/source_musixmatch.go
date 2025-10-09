@@ -20,10 +20,16 @@ var musixmatchNotFound = []string{"Still no lyrics here"}
 var musixmatchInstrumental = []string{"This music is instrumental"}
 var musixmatchEsc = strings.NewReplacer(
 	" ", "-",
+	"'", "-",
 	"(", "",
 	")", "",
 	"[", "",
 	"]", "",
+	".", "",
+	"/", "",
+	"?", "",
+	"!", "",
+	",", "",
 )
 
 type Musixmatch struct {

@@ -18,11 +18,17 @@ var geniusBaseURL = `https://genius.com`
 var geniusSelectContent = cascadia.MustCompile(`div[class^="Lyrics__Container-"]`)
 var geniusEsc = strings.NewReplacer(
 	" ", "-",
+	"&", "and",
+	"'", "",
 	"(", "",
 	")", "",
 	"[", "",
 	"]", "",
-	"&", "and",
+	".", "",
+	"/", "",
+	"?", "",
+	"!", "",
+	",", "",
 )
 
 type Genius struct {
