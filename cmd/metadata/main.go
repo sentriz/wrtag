@@ -283,8 +283,14 @@ func cmdImageWrite(audioPath string, imagePath string, index int, imageType, des
 }
 
 func cmdImageClear(audioPath string) error {
-	if err := tags.WriteImage(audioPath, nil); err != nil {
-		return fmt.Errorf("clear images: %w", err)
+	properties, err := tags.ReadProperties(audioPath)
+	if err != nil {
+		return err
+	}
+	for i := range properties.Images {
+		if err := tags.WriteImageOptions(audioPath, nil, i, "", "", ""); err != nil {
+			return fmt.Errorf("clear images: %w", err)
+		}
 	}
 	return nil
 }
