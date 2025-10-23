@@ -19,12 +19,12 @@ require (
 	go.senan.xyz/flagconf v0.1.9
 	go.senan.xyz/natcmp v0.1.2
 	go.senan.xyz/sqlb v0.2.7
-	go.senan.xyz/table v0.0.0-20250823140814-89c73cfe037e
-	go.senan.xyz/taglib v0.10.1
-	golang.org/x/net v0.44.0
+	go.senan.xyz/table v0.0.0-20251023151529-96acc7f0ad6c
+	go.senan.xyz/taglib v0.10.4
+	golang.org/x/net v0.46.0
 	golang.org/x/sync v0.17.0
-	golang.org/x/text v0.29.0
-	golang.org/x/time v0.13.0
+	golang.org/x/text v0.30.0
+	golang.org/x/time v0.14.0
 )
 
 require (
@@ -37,8 +37,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/tetratelabs/wazero v1.9.0 // indirect
-	golang.org/x/sys v0.36.0 // indirect
-	golang.org/x/tools v0.37.0 // indirect
+	golang.org/x/sys v0.37.0 // indirect
+	golang.org/x/tools v0.38.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

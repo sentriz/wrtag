@@ -221,7 +221,7 @@ func cmdRead(to io.Writer, path string, withProperties bool, keys []string) erro
 			fmt.Fprintf(to, "%s\t%s\t%s\n", path, k, image.Description)
 		}
 		if k := "image_mime_type"; wantProperty(k) {
-			fmt.Fprintf(to, "%s\t%s\t%s\n", path, k, image.MimeType)
+			fmt.Fprintf(to, "%s\t%s\t%s\n", path, k, image.MIMEType)
 		}
 	}
 
