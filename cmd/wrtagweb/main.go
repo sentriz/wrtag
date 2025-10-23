@@ -67,6 +67,7 @@ func main() {
 		listenAddr          = flag.String("web-listen-addr", ":7373", "Listen address for web interface (optional)")
 		dbPath              = flag.String("web-db-path", "", "Path to persistent database path for web interface (optional)")
 		publicURL           = flag.String("web-public-url", "", "Public URL for web interface (optional)")
+		disableAuth         = flag.Bool("web-disable-auth", false, "Disable basic authentication on the web ui (optional)")
 	)
 	wrtagflag.Parse()
 
@@ -75,7 +76,7 @@ func main() {
 		return
 	}
 
-	if *apiKey == "" {
+	if *apiKey == "" && !*disableAuth {
 		slog.Error("need an api key")
 		return
 	}
@@ -472,7 +473,9 @@ func main() {
 
 		var h http.Handler
 		h = mux
-		h = authMiddleware(h, *apiKey)
+		if !*disableAuth {
+			h = authMiddleware(h, *apiKey)
+		}
 		h = logMiddleware(h)
 
 		server := &http.Server{Addr: *listenAddr, Handler: h, ReadHeaderTimeout: 2 * time.Second}
