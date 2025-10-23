@@ -165,11 +165,13 @@ flowchart LR
     d["Release imported"]
 ```
 
+The admin interface has HTTP Basic authentication enabled by default with password **_wrtagadmin_** and **without a username**. It is recommended to change the default password. See the [`web-admin-password`](#options-1) option.
+
 ### API
 
 Jobs are added to the queue with an HTTP request like `POST <wrtag.host>/op/<copy|move>` with form value `path=<absolute path to directory>`. The form value can be an `application/x-www-form-urlencoded` form body, or URL query parameter.
 
-Authentication is done via a HTTP Basic authentication password **without a username**. The password is configured with the `web-api-key` config option.
+Authentication is done via a HTTP Basic authentication password **without a username**. The API password is configured with the `web-api-key` config option.
 
 > [!WARNING]
 > HTTP Basic Authentication is only as secure as the transport layer it runs on. Make sure `wrtagweb` is secured using TLS behind your reverse proxy.
@@ -271,13 +273,14 @@ Configuration for `wrtagweb` works the same as [Global configuration](#global-co
 
 <!-- gen with ```go run ./cmd/wrtagweb -h 2>&1 | ./gen-docs | wl-copy``` -->
 
-| CLI argument     | Environment variable  | Config file key | Description                                                   |
-| ---------------- | --------------------- | --------------- | ------------------------------------------------------------- |
-| -web-api-key     | WRTAG_WEB_API_KEY     | web-api-key     | API key for web interface                                     |
-| -web-db-path     | WRTAG_WEB_DB_PATH     | web-db-path     | Path to persistent database path for web interface (optional) |
-| -web-listen-addr | WRTAG_WEB_LISTEN_ADDR | web-listen-addr | Listen address for web interface (optional) (default ":7373") |
-| -web-num-workers | WRTAG_WEB_NUM_WORKERS | web-num-workers | Number of directories to process concurrently                 |
-| -web-public-url  | WRTAG_WEB_PUBLIC_URL  | web-public-url  | Public URL for web interface (optional)                       |
+| CLI argument        | Environment variable     | Config file key    | Description                                                                                        |
+| ------------------- | ------------------------ | ------------------ | -------------------------------------------------------------------------------------------------- |
+| -web-api-key        | WRTAG_WEB_API_KEY        | web-api-key        | API key (required)                                                                                 |
+| -web-admin-password | WRTAG_WEB_ADMIN_PASSWORD | web-admin-password | Admin password for the web interface. If set to empty string there's no authentication. (optional) |
+| -web-db-path        | WRTAG_WEB_DB_PATH        | web-db-path        | Path to database path for web interface (optional)                                                 |
+| -web-listen-addr    | WRTAG_WEB_LISTEN_ADDR    | web-listen-addr    | Listen address for web interface                                                                   |
+| -web-num-workers    | WRTAG_WEB_NUM_WORKERS    | web-num-workers    | Number of directories to process concurrently                                                      |
+| -web-public-url     | WRTAG_WEB_PUBLIC_URL     | web-public-url     | Public URL for web interface (optional)                                                            |
 
 ## Tool `metadata`
 

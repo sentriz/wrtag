@@ -60,11 +60,13 @@ const (
 func main() {
 	defer wrtaglog.Setup()()
 	wrtagflag.DefaultClient()
+	defaultAdminPw := "wrtagadmin"
 	var (
 		cfg                 = wrtagflag.Config()
 		notifs              = wrtagflag.Notifications()
 		researchLinkQuerier = wrtagflag.ResearchLinks()
-		apiKey              = flag.String("web-api-key", "", "API key for web interface")
+		apiKey              = flag.String("web-api-key", "", "API key (required)")
+		adminPassword       = flag.String("web-admin-password", defaultAdminPw, "Admin password for the web interface. If set to empty string there's no authentication. (optional)")
 		listenAddr          = flag.String("web-listen-addr", ":7373", "Listen address for web interface (optional)")
 		dbPath              = flag.String("web-db-path", "", "Path to persistent database path for web interface (optional)")
 		publicURL           = flag.String("web-public-url", "", "Public URL for web interface (optional)")
@@ -81,6 +83,11 @@ func main() {
 		slog.Error("need an api key")
 		return
 	}
+
+	if *adminPassword == defaultAdminPw {
+		slog.Warn("admin interface password is default.")
+	}
+
 	if *listenAddr == "" {
 		slog.Error("need a listen addr")
 		return
@@ -129,6 +136,7 @@ func main() {
 	var jobQueue = make(chan uint64, 32_768)
 
 	mux := http.NewServeMux()
+	apiMux := http.NewServeMux()
 
 	mux.HandleFunc("GET /sse", func(w http.ResponseWriter, r *http.Request) {
 		rc := http.NewResponseController(w)
@@ -292,7 +300,7 @@ func main() {
 	mux.Handle("/", http.FileServer(http.FS(ui)))
 
 	// external API
-	mux.HandleFunc("POST /op/{operation}", func(w http.ResponseWriter, r *http.Request) {
+	apiMux.HandleFunc("POST /op/{operation}", func(w http.ResponseWriter, r *http.Request) {
 		operationStr := r.PathValue("operation")
 		if _, err := wrtagflag.OperationByName(operationStr, false); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -335,14 +343,21 @@ func main() {
 	errgrp.Go(func() error {
 		defer logJob("http", "addr", *listenAddr)()
 
-		var h http.Handler
-		h = mux
-		h = authMiddleware(h, *apiKey)
-		h = logMiddleware(h)
+		var webH http.Handler
+		webH = mux
+		if *adminPassword != "" {
+			webH = authMiddleware(webH, *adminPassword, "admin-key")
+		}
+		apiH := authMiddleware(apiMux, *apiKey, "api-key")
+
+		rootMux := http.NewServeMux()
+		rootMux.Handle("/api/", apiH)
+		rootMux.Handle("/", webH)
+		rootH := logMiddleware(rootMux)
 
 		server := &http.Server{
 			Addr:              *listenAddr,
-			Handler:           h,
+			Handler:           rootH,
 			ReadHeaderTimeout: 2 * time.Second,
 			BaseContext:       func(l net.Listener) context.Context { return ctx },
 		}
@@ -594,9 +609,7 @@ func logJob(jobName string, args ...any) func() {
 	return func() { slog.Info("stopping job", "job", jobName) }
 }
 
-const cookieKey = "api-key"
-
-func authMiddleware(next http.Handler, apiKey string) http.Handler {
+func authMiddleware(next http.Handler, apiKey string, cookieKey string) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// exchange a valid basic auth request for a cookie that lasts 30 days
 		if cookie, _ := r.Cookie(cookieKey); cookie != nil && subtle.ConstantTimeCompare([]byte(cookie.Value), []byte(apiKey)) == 1 {
