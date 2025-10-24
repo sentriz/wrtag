@@ -240,10 +240,10 @@ integration:
       on:
         - DownloadDirectoryComplete
       run:
-        command: '/autotag.sh'
+        command: "/autotag.sh"
 ```
 
-And have the executable script `/autotag.sh` with the following torrent. Slskd will have `SLSKD_SCRIPT_DATA` variable as a json string with `localDirectoryName` key being the path of the directory. See the [scripts](https://github.com/slskd/slskd/blob/master/docs/config.md#scripts) documentation and all avialable [events](https://github.com/slskd/slskd/blob/master/src/slskd/Events/Types/Events.cs).
+And have the executable script `/autotag.sh` with the following torrent. Slskd will have `SLSKD_SCRIPT_DATA` variable as a json string with `localDirectoryName` key being the path of the directory. See the [scripts](https://github.com/slskd/slskd/blob/master/docs/config.md#scripts) documentation and all available [events](https://github.com/slskd/slskd/blob/master/src/slskd/Events/Types/Events.cs).
 
 ```bash
 #!/usr/bin/bash
