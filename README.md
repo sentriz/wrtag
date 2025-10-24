@@ -229,9 +229,37 @@ curl \
 </details>
 
 <details>
-<summary><b>Example with <i>sldkd</i></b></summary>
+<summary><b>Example with <i>slskd</i></b></summary>
 
-> TODO
+Edit your `config.yaml` like this:
+
+```yaml
+integration:
+  scripts:
+    write_tags:
+      on:
+        - DownloadDirectoryComplete
+      run:
+        command: '/autotag.sh'
+```
+
+And have the executable script `/autotag.sh` with the following torrent. Slskd will have `SLSKD_SCRIPT_DATA` variable as a json string with `localDirectoryName` key being the path of the directory. See the [scripts](https://github.com/slskd/slskd/blob/master/docs/config.md#scripts) documentation and all avialable [events](https://github.com/slskd/slskd/blob/master/src/slskd/Events/Types/Events.cs).
+
+```bash
+#!/usr/bin/bash
+download_path=$(echo "${SLSKD_SCRIPT_DATA}" | jq -r .localDirectoryName)
+
+# wget is the only thing available in the slskd container
+wget -q -O/dev/null \
+    --post-data "path=${download_path}" \
+    "https://'':<wrtag api key>@<wrtag host>/op/move"
+
+# if you have curl available then
+# curl \
+#     --request POST \
+#     --data-urlencode "path=${download_path}" \
+#     "https://:<wrtag api key>@<wrtag host>/op/move"
+```
 
 </details>
 
