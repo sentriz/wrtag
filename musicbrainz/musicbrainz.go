@@ -461,7 +461,7 @@ func IsCompilation(rg ReleaseGroup) bool {
 func FlatTracks(media []Media) []Track {
 	var tracks []Track
 	for _, media := range media {
-		if strings.Contains(media.Format, "DVD") {
+		if strings.Contains(media.Format, "DVD") || strings.Contains(media.Format, "Blu-ray") {
 			// not supported for now
 			continue
 		}
