@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.19.1](https://github.com/sentriz/wrtag/compare/v0.19.0...v0.19.1) (2025-10-31)
+
+
+### Bug Fixes
+
+* **musicbrainz:** filter Blu-ray media in FlatTracks ([#174](https://github.com/sentriz/wrtag/issues/174)) ([0b89f40](https://github.com/sentriz/wrtag/commit/0b89f403c0e46bcf7b11b6bfef8f202835692e6a))
+
 ## [0.19.0](https://github.com/sentriz/wrtag/compare/v0.18.0...v0.19.0) (2025-10-09)
 
 
