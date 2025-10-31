@@ -1,0 +1,100 @@
+# Test multi-disc release tag writing
+# Uses the 2-disc Rammstein "Reise, Reise" release (bdc01183-d1c9-378f-a209-a6145fa596c9)
+# Verifies:
+# - Per-disc track numbering (tracks 1,2,3,4 on disc 1, then 1,2,3,4 on disc 2)
+# - Disc numbers in N/M format (1/2, 2/2)
+# - Path organization with disc folders
+
+# Set up source files for 2-disc release (8 tracks total: 4 per disc with pregaps)
+exec tag write 'reise/d1-00.flac' title 'd1 hidden track'
+exec tag write 'reise/d1-01.flac' title 'Reise, Reise'
+exec tag write 'reise/d1-02.flac' title 'Mein Teil'
+exec tag write 'reise/d1-03.flac' title 'Dalai Lama'
+
+exec tag write 'reise/d2-00.flac' title 'd2 hidden track'
+exec tag write 'reise/d2-01.flac' title 'Keine Lust'
+exec tag write 'reise/d2-02.flac' title 'Los'
+exec tag write 'reise/d2-03.flac' title 'Amerika'
+
+exec tag write 'reise/*.flac' musicbrainz_albumid 'bdc01183-d1c9-378f-a209-a6145fa596c9'
+exec tag write 'reise/*.flac' album               'old album name'
+exec tag write 'reise/*.flac' albumartist         'old artist'
+
+# Use path format with disc folders
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}{{if gt .TotalDiscs 1}}/Disc {{ .DiscNum }}{{end}}/{{ pad0 2 .Track.Position }} {{ .Track.Title }}{{ .Ext }}'
+
+# Process the release
+exec wrtag move -yes reise
+
+# Verify folder structure has disc folders
+exec find albums/
+cmp stdout exp-layout
+
+# Verify disc 1 tags
+cd 'albums/Reise, Reise/Disc 1'
+
+# Pregap track (track 0) on disc 1
+exec tag check '00*.flac' tracknumber  '0'
+exec tag check '00*.flac' discnumber   '1/2'
+exec tag check '00*.flac' title        '[ohne Titel]'
+
+# Regular tracks on disc 1 should have per-disc numbering (1, 2, 3)
+exec tag check '01*.flac' tracknumber  '1'
+exec tag check '01*.flac' discnumber   '1/2'
+exec tag check '01*.flac' title        'Reise, Reise'
+
+exec tag check '02*.flac' tracknumber  '2'
+exec tag check '02*.flac' discnumber   '1/2'
+exec tag check '02*.flac' title        'Mein Teil'
+
+exec tag check '03*.flac' tracknumber  '3'
+exec tag check '03*.flac' discnumber   '1/2'
+exec tag check '03*.flac' title        'Dalai Lama'
+
+# Verify all disc 1 tracks have correct album metadata
+exec tag check '*.flac' album          'Reise, Reise'
+exec tag check '*.flac' albumartist    'Rammstein'
+exec tag check '*.flac' artist         'Rammstein'
+exec tag check '*.flac' date           '2004-09-27'
+
+cd $WORK
+
+# Verify disc 2 tags
+cd 'albums/Reise, Reise/Disc 2'
+
+# Pregap track (track 0) on disc 2
+exec tag check '00*.flac' tracknumber  '0'
+exec tag check '00*.flac' discnumber   '2/2'
+exec tag check '00*.flac' title        '[ohne Titel #2]'
+
+# Regular tracks on disc 2 should RESTART numbering at 1 (per-disc numbering)
+exec tag check '01*.flac' tracknumber  '1'
+exec tag check '01*.flac' discnumber   '2/2'
+exec tag check '01*.flac' title        'Keine Lust'
+
+exec tag check '02*.flac' tracknumber  '2'
+exec tag check '02*.flac' discnumber   '2/2'
+exec tag check '02*.flac' title        'Los'
+
+exec tag check '03*.flac' tracknumber  '3'
+exec tag check '03*.flac' discnumber   '2/2'
+exec tag check '03*.flac' title        'Amerika'
+
+# Verify all disc 2 tracks have correct album metadata
+exec tag check '*.flac' album          'Reise, Reise'
+exec tag check '*.flac' albumartist    'Rammstein'
+exec tag check '*.flac' artist         'Rammstein'
+
+-- exp-layout --
+albums
+albums/Reise, Reise
+albums/Reise, Reise/Disc 1
+albums/Reise, Reise/Disc 1/00 [ohne Titel].flac
+albums/Reise, Reise/Disc 1/01 Reise, Reise.flac
+albums/Reise, Reise/Disc 1/02 Mein Teil.flac
+albums/Reise, Reise/Disc 1/03 Dalai Lama.flac
+albums/Reise, Reise/Disc 2
+albums/Reise, Reise/Disc 2/00 [ohne Titel #2].flac
+albums/Reise, Reise/Disc 2/01 Keine Lust.flac
+albums/Reise, Reise/Disc 2/02 Los.flac
+albums/Reise, Reise/Disc 2/03 Amerika.flac

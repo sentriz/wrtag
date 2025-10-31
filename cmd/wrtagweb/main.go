@@ -144,7 +144,13 @@ func main() {
 			ic = wrtag.Always
 		}
 
+		slog.InfoContext(ctx, "processing job", "job_id", job.ID, "operation", job.Operation, "path", job.SourcePath)
 		searchResult, processErr := wrtag.ProcessDir(ctx, cfg, op, job.SourcePath, ic, job.UseMBID)
+		if processErr != nil {
+			slog.ErrorContext(ctx, "job failed", "job_id", job.ID, "err", processErr)
+		} else {
+			slog.InfoContext(ctx, "job succeeded", "job_id", job.ID)
+		}
 
 		if searchResult != nil && searchResult.Query.Artist != "" {
 			researchLinks, err := researchLinkQuerier.Build(researchlink.Query{
@@ -160,11 +166,8 @@ func main() {
 			job.ResearchLinks = sqlb.NewJSON(researchLinks)
 		}
 
-		if searchResult != nil && searchResult.Release != nil {
-			job.DestPath, err = wrtag.DestDir(&cfg.PathFormat, searchResult.Release)
-			if err != nil {
-				return fmt.Errorf("gen dest dir: %w", err)
-			}
+		if searchResult != nil {
+			job.DestPath = searchResult.AlbumRootDir
 		}
 
 		job.SearchResult = sqlb.NewJSON(searchResult)

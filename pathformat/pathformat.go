@@ -83,6 +83,7 @@ func (pf *Format) Execute(release *musicbrainz.Release, index int, ext string) (
 		return "", fmt.Errorf("%w: all tracks have 0 position", ErrBadRelease)
 	}
 
+	// Count pregap tracks globally for sequential TrackNum calculation
 	var numPregap int
 	for _, t := range flatTracks[:index] {
 		if t.Position == 0 {
@@ -110,9 +111,14 @@ func (pf *Format) Execute(release *musicbrainz.Release, index int, ext string) (
 		d.ReleaseDisambiguation = strings.Join(parts, ", ")
 	}
 
-	// make sure these are not used
+	// Populate disc-specific fields for multi-disc support
+	d.DiscNum = d.Track.DiscNumber
+	d.DiscTitle = d.Track.DiscTitle
+	d.TotalDiscs = musicbrainz.CountNonFilteredDiscs(release.Media)
+
+	// Clear Number field (may contain string like "A1" for vinyl)
+	// but keep Position intact - it's the per-disc track number
 	d.Track.Number = ""
-	d.Track.Position = -1
 
 	var buff strings.Builder
 	if err := pf.tt.Execute(&buff, d); err != nil {
@@ -136,7 +142,10 @@ type Data struct {
 	Ext                   string
 	Track                 musicbrainz.Track
 	Tracks                []musicbrainz.Track
-	TrackNum              int
+	TrackNum              int  // Sequential track number (for backward compatibility)
+	DiscNum               int  // Disc number (1-based, from Track.DiscNumber)
+	DiscTitle             string // Disc title/subtitle (from Track.DiscTitle)
+	TotalDiscs            int  // Total number of discs in release
 	IsCompilation         bool
 }
 
