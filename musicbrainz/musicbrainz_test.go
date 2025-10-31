@@ -122,6 +122,169 @@ func TestFlatTracks(t *testing.T) {
 		assert.Equal(t, "pregap-track", tracks[0].ID)
 		assert.Equal(t, "regular-track", tracks[1].ID)
 	})
+
+	// Multi-disc tests
+	t.Run("preserves disc information", func(t *testing.T) {
+		t.Parallel()
+		media := []Media{
+			{Position: 1, Title: "Disc One", Format: "CD", Tracks: []Track{
+				{Position: 1, Title: "Track 1"},
+				{Position: 2, Title: "Track 2"},
+			}},
+			{Position: 2, Title: "Disc Two", Format: "CD", Tracks: []Track{
+				{Position: 1, Title: "Track 3"},
+				{Position: 2, Title: "Track 4"},
+			}},
+		}
+		tracks := FlatTracks(media)
+
+		assert.Len(t, tracks, 4)
+		// Disc 1 tracks
+		assert.Equal(t, 1, tracks[0].DiscNumber)
+		assert.Equal(t, "Disc One", tracks[0].DiscTitle)
+		assert.Equal(t, "CD", tracks[0].DiscFormat)
+		assert.Equal(t, 1, tracks[1].DiscNumber)
+		// Disc 2 tracks
+		assert.Equal(t, 2, tracks[2].DiscNumber)
+		assert.Equal(t, "Disc Two", tracks[2].DiscTitle)
+		assert.Equal(t, 2, tracks[3].DiscNumber)
+	})
+
+	t.Run("renumbers discs after filtering", func(t *testing.T) {
+		t.Parallel()
+		media := []Media{
+			{Position: 1, Format: "CD", Tracks: []Track{{Position: 1, Title: "Track 1"}}},
+			{Position: 2, Format: "DVD", Tracks: []Track{{Position: 1, Title: "Video 1"}}},
+			{Position: 3, Format: "CD", Tracks: []Track{{Position: 1, Title: "Track 2"}}},
+			{Position: 4, Format: "Blu-ray", Tracks: []Track{{Position: 1, Title: "Concert"}}},
+			{Position: 5, Format: "CD", Tracks: []Track{{Position: 1, Title: "Track 3"}}},
+		}
+		tracks := FlatTracks(media)
+
+		assert.Len(t, tracks, 3)
+		// Verify sequential disc numbering (1, 2, 3) not (1, 3, 5)
+		assert.Equal(t, 1, tracks[0].DiscNumber)
+		assert.Equal(t, 2, tracks[1].DiscNumber)
+		assert.Equal(t, 3, tracks[2].DiscNumber)
+	})
+
+	t.Run("range variable fix", func(t *testing.T) {
+		t.Parallel()
+		media := []Media{
+			{Position: 1, Title: "Disc 1", Format: "CD", Tracks: []Track{
+				{Position: 1, Title: "A"},
+				{Position: 2, Title: "B"},
+			}},
+			{Position: 2, Title: "Disc 2", Format: "CD", Tracks: []Track{
+				{Position: 1, Title: "C"},
+				{Position: 2, Title: "D"},
+			}},
+		}
+		tracks := FlatTracks(media)
+
+		// Verify each track has correct disc info (not all pointing to last disc)
+		assert.Equal(t, "Disc 1", tracks[0].DiscTitle)
+		assert.Equal(t, "Disc 1", tracks[1].DiscTitle)
+		assert.Equal(t, "Disc 2", tracks[2].DiscTitle)
+		assert.Equal(t, "Disc 2", tracks[3].DiscTitle)
+	})
+
+	t.Run("pregap tracks on multi-disc", func(t *testing.T) {
+		t.Parallel()
+		pregap := Track{Position: 0, Title: "[hidden]"}
+		media := []Media{
+			{Position: 1, Title: "Disc 1", Format: "CD", Pregap: &pregap, Tracks: []Track{
+				{Position: 1, Title: "Track 1"},
+			}},
+			{Position: 2, Title: "Disc 2", Format: "CD", Tracks: []Track{
+				{Position: 1, Title: "Track 2"},
+			}},
+		}
+		tracks := FlatTracks(media)
+
+		assert.Len(t, tracks, 3)
+		// Pregap should be on disc 1
+		assert.Equal(t, 0, tracks[0].Position)
+		assert.Equal(t, 1, tracks[0].DiscNumber)
+		assert.Equal(t, "Disc 1", tracks[0].DiscTitle)
+	})
+}
+
+func TestCountNonFilteredDiscs(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name  string
+		media []Media
+		want  int
+	}{
+		{
+			name: "all CDs",
+			media: []Media{
+				{Format: "CD"},
+				{Format: "CD"},
+				{Format: "CD"},
+			},
+			want: 3,
+		},
+		{
+			name: "with DVD",
+			media: []Media{
+				{Format: "CD"},
+				{Format: "DVD"},
+				{Format: "CD"},
+			},
+			want: 2,
+		},
+		{
+			name: "with Blu-ray",
+			media: []Media{
+				{Format: "CD"},
+				{Format: "Blu-ray"},
+				{Format: "CD"},
+			},
+			want: 2,
+		},
+		{
+			name: "mixed formats",
+			media: []Media{
+				{Format: "CD"},
+				{Format: "DVD"},
+				{Format: "CD"},
+				{Format: "Blu-ray"},
+				{Format: "CD"},
+			},
+			want: 3,
+		},
+		{
+			name: "only video",
+			media: []Media{
+				{Format: "DVD"},
+				{Format: "Blu-ray"},
+			},
+			want: 0,
+		},
+		{
+			name:  "empty",
+			media: []Media{},
+			want:  0,
+		},
+		{
+			name: "single CD",
+			media: []Media{
+				{Format: "CD"},
+			},
+			want: 1,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got := CountNonFilteredDiscs(tt.media)
+			assert.Equal(t, tt.want, got)
+		})
+	}
 }
 
 func TestArtistEnName(t *testing.T) {

@@ -40,8 +40,10 @@ const (
 	ArtistsCredit = "ARTISTS_CREDIT" //tag: alts "ARTISTSCREDIT"
 	Genre         = "GENRE"          //tag: alts "TCON" "©GEN" "TCO"
 	Genres        = "GENRES"
-	TrackNumber   = "TRACKNUMBER" //tag: alts "TRACK" "TRACKNUM" "TRCK" "TRKN" "TRK"
-	DiscNumber    = "DISCNUMBER"  //tag: alts "DISC" "TPOS" "DISK" "TPA"
+	TrackNumber   = "TRACKNUMBER"  //tag: alts "TRACK" "TRACKNUM" "TRCK" "TRKN" "TRK"
+	DiscNumber    = "DISCNUMBER"   //tag: alts "DISC" "TPOS" "DISK" "TPA"
+	DiscSubtitle  = "DISCSUBTITLE" //tag: alts "SETSUBTITLE" "TSST"
+	DiscTotal     = "DISCTOTAL"    //tag: alts "TOTALDISCS" "TOTALDISKS"
 
 	ISRC = "ISRC"
 
