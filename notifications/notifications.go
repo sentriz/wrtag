@@ -12,6 +12,8 @@ import (
 	"net/url"
 	"time"
 
+	"go.senan.xyz/wrtag"
+
 	"github.com/containrrr/shoutrrr"
 	shoutrrrtypes "github.com/containrrr/shoutrrr/pkg/types"
 )
@@ -91,7 +93,7 @@ func (n *Notifications) Send(ctx context.Context, event string, message string) 
 	}
 
 	params := &shoutrrrtypes.Params{}
-	params.SetTitle("wrtag")
+	params.SetTitle(wrtag.Name)
 
 	if err := errors.Join(sender.Send(message, params)...); err != nil {
 		slog.ErrorContext(ctx, "sending notifications", "err", err)
