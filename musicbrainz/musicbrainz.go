@@ -435,7 +435,12 @@ const enLocale = "en"
 
 func artistEnName(artist Artist) string {
 	for _, a := range artist.Aliases {
-		if a.Locale == enLocale {
+		if a.Locale == enLocale && a.Primary && !a.Ended {
+			return a.Name
+		}
+	}
+	for _, a := range artist.Aliases {
+		if a.Locale == enLocale && !a.Ended {
 			return a.Name
 		}
 	}

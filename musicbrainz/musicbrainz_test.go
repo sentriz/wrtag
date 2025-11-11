@@ -123,3 +123,76 @@ func TestFlatTracks(t *testing.T) {
 		assert.Equal(t, "regular-track", tracks[1].ID)
 	})
 }
+
+func TestArtistEnName(t *testing.T) {
+	t.Parallel()
+
+	t.Run("returns primary non-ended English alias", func(t *testing.T) {
+		t.Parallel()
+		artist := Artist{
+			Name: "跡部進一",
+			Aliases: []Alias{
+				{Name: "Shinichi Atobe", Locale: "en", Primary: true, Ended: false},
+				{Name: "Other English Name", Locale: "en", Primary: false, Ended: false},
+			},
+		}
+		assert.Equal(t, "Shinichi Atobe", artistEnName(artist))
+	})
+
+	t.Run("returns non-primary non-ended English alias when no primary exists", func(t *testing.T) {
+		t.Parallel()
+		artist := Artist{
+			Name: "Native Name",
+			Aliases: []Alias{
+				{Name: "English Name", Locale: "en", Primary: false, Ended: false},
+			},
+		}
+		assert.Equal(t, "English Name", artistEnName(artist))
+	})
+
+	t.Run("skips ended English aliases", func(t *testing.T) {
+		t.Parallel()
+		artist := Artist{
+			Name: "Taylor Swift",
+			Aliases: []Alias{
+				{Name: "Dr. Taylor Alison Swift", Locale: "en", Primary: false, Ended: true},
+				{Name: "Taylor Swift", Locale: "en", Primary: true, Ended: false},
+			},
+		}
+		assert.Equal(t, "Taylor Swift", artistEnName(artist))
+	})
+
+	t.Run("returns artist name when only ended English aliases exist", func(t *testing.T) {
+		t.Parallel()
+		artist := Artist{
+			Name: "Artist Name",
+			Aliases: []Alias{
+				{Name: "Old English Name", Locale: "en", Primary: true, Ended: true},
+			},
+		}
+		assert.Equal(t, "Artist Name", artistEnName(artist))
+	})
+
+	t.Run("returns artist name when no English aliases exist", func(t *testing.T) {
+		t.Parallel()
+		artist := Artist{
+			Name: "Artist Name",
+			Aliases: []Alias{
+				{Name: "日本語名", Locale: "ja", Primary: true, Ended: false},
+			},
+		}
+		assert.Equal(t, "Artist Name", artistEnName(artist))
+	})
+
+	t.Run("prioritizes primary over non-primary even if non-primary appears first", func(t *testing.T) {
+		t.Parallel()
+		artist := Artist{
+			Name: "Native Name",
+			Aliases: []Alias{
+				{Name: "Non-Primary English", Locale: "en", Primary: false, Ended: false},
+				{Name: "Primary English", Locale: "en", Primary: true, Ended: false},
+			},
+		}
+		assert.Equal(t, "Primary English", artistEnName(artist))
+	})
+}
