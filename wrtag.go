@@ -206,7 +206,7 @@ func ProcessDir(
 		}
 	}
 
-	release, err := cfg.MusicBrainzClient.SearchRelease(ctx, query)
+	release, err := searchRelease(ctx, &cfg.MusicBrainzClient, query)
 	if err != nil {
 		return nil, fmt.Errorf("search musicbrainz: %w", err)
 	}
@@ -329,6 +329,17 @@ func ProcessDir(
 	}
 
 	return &SearchResult{release, query, score, destDir, diff, originFile}, nil
+}
+
+func searchRelease(ctx context.Context, client *musicbrainz.MBClient, query musicbrainz.ReleaseQuery) (*musicbrainz.Release, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
+	defer cancel()
+
+	release, err := client.SearchRelease(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+	return release, nil
 }
 
 // PathTags associates a file path with its tags.
