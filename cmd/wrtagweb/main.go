@@ -134,7 +134,7 @@ func main() {
 
 		ctx := r.Context()
 
-		for id := range sse.receive(ctx, 0) {
+		for id := range sse.receive(ctx, 128) {
 			fmt.Fprintf(w, "data: %d\n\n", id)
 			rc.Flush()
 		}
