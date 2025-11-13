@@ -120,10 +120,11 @@ func main() {
 	}
 
 	var sse broadcast[uint64]
+	var jobQueue = make(chan uint64, 32_768)
 
-	processNextJob := func(ctx context.Context) error {
+	processJob := func(ctx context.Context, jobID uint64) error {
 		var job Job
-		err := sqlb.ScanRow(ctx, db, &job, "update jobs set status=? where id=(select id from jobs where status=? limit 1) returning *", StatusInProgress, StatusEnqueued)
+		err := sqlb.ScanRow(ctx, db, &job, "update jobs set status=? where id=? and status=? returning *", StatusInProgress, jobID, StatusEnqueued)
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil
 		}
@@ -329,6 +330,7 @@ func main() {
 		respTmpl(w, "job-import", struct{ Operation string }{Operation: operationStr})
 
 		sse.send(0)
+		jobQueue <- job.ID
 	})
 
 	mux.HandleFunc("GET /jobs/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -365,6 +367,7 @@ func main() {
 		respTmpl(w, "job", job)
 
 		sse.send(0)
+		jobQueue <- job.ID
 	})
 
 	mux.HandleFunc("DELETE /jobs/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -448,12 +451,14 @@ func main() {
 
 		ctx := r.Context()
 
-		if err := sqlb.Exec(ctx, db, "insert into jobs (source_path, operation, time) values (?, ?, ?)", path, operationStr, time.Now()); err != nil {
+		var job Job
+		if err := sqlb.ScanRow(ctx, db, &job, "insert into jobs (source_path, operation, time) values (?, ?, ?) returning *", path, operationStr, time.Now()); err != nil {
 			http.Error(w, fmt.Sprintf("error saving job: %v", err), http.StatusInternalServerError)
 			return
 		}
 
 		sse.send(0)
+		jobQueue <- job.ID
 	})
 
 	mux.HandleFunc("GET /debug/pprof/", pprof.Index)
@@ -497,24 +502,27 @@ func main() {
 	errgrp.Go(func() error {
 		defer logJob("process jobs")()
 
-		// restart old jobs just in case the process was killed abruptly last time
-		if err := sqlb.Exec(ctx, db, "update jobs set status=? where status=?", StatusEnqueued, StatusInProgress); err != nil {
-			return err
-		}
-
-		t := time.NewTicker(1 * time.Second)
-		defer t.Stop()
-
 		for {
 			select {
 			case <-ctx.Done():
 				return nil
-			case <-t.C:
-				if err := processNextJob(ctx); err != nil {
+			case jobID := <-jobQueue:
+				if err := processJob(ctx, jobID); err != nil {
 					return fmt.Errorf("next job: %w", err)
 				}
 			}
 		}
+	})
+
+	// restart old jobs just in case the process was killed abruptly last time
+	errgrp.Go(func() error {
+		for job, err := range sqlb.Iter[Job](ctx, db, "update jobs set status=? where status=? returning *", StatusEnqueued, StatusInProgress) {
+			if err != nil {
+				return fmt.Errorf("iter old jobs: %w", err)
+			}
+			jobQueue <- job.ID
+		}
+		return nil
 	})
 
 	if err := errgrp.Wait(); err != nil {
