@@ -151,9 +151,20 @@ origin file info
       });
 
       const sseSource = new EventSource("/sse", { withCredentials: true });
+      const sseUpdates = new Set();
+
+      let debounceTimer = null;
       sseSource.onmessage = (event) => {
         const id = parseInt(event.data);
-        htmx.trigger("body", "sse-job", { id });
+        sseUpdates.add(id);
+
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+          sseUpdates.forEach(id => {
+            htmx.trigger("body", "sse-job", { id });
+          });
+          sseUpdates.clear();
+        }, 100);
       };
     </script>
   </head>
