@@ -1,5 +1,5 @@
 {{ define "job-colour" }}
-  {{ if eq . "complete" }}bg-gray-100{{ else if or (eq . "error") (eq . "needs-input") }}bg-red-200{{ else }}bg-orange-200{{ end }}
+  {{ if eq . "complete" }}bg-gray-100{{ else if or (eq . "error") (eq . "needs-input") }}bg-red-200{{ else if eq . "in-progress" }}bg-orange-200{{ else }}bg-yellow-100{{ end }}
 {{ end }}
 
 {{ define "job" }}
@@ -9,7 +9,7 @@
   hx-target="#job-{{ .ID }}"
   hx-indicator="this"
   hx-swap="outerHTML"
-  class="w-max sm:w-auto shadow-sm {{ template "job-colour" .Status }} {{ if or (eq .Status "") (eq .Status "in-progress") }}in-progress{{ end }}"
+  class="w-max sm:w-auto shadow-sm {{ template "job-colour" .Status }} {{ if eq .Status "in-progress" }}in-progress{{ end }}"
 >
   <div class="p-3 cursor-pointer flex justify-between items-center">
     <span>{{ .Operation }} path <a class="italic break-all" href="{{ .SourcePath | file | url }}">{{ .SourcePath }}</a></span>
@@ -39,8 +39,10 @@
       <p>sucessfully moved to <a href="{{ .DestPath | file | url }}">{{ .DestPath }}</a>
       <p>use custom release <input type="text" name="mbid" class="px-2" placeholder="mbid/url" value="{{ .UseMBID }}"></p>
       <button>[reimport]</button>
-    {{ else }}
+    {{ else if eq .Status "in-progress" }}
       <p class="text-gray-600">in progress ...</p>
+    {{ else }}
+      <p class="text-gray-600">enqueued ...</p>
     {{ end }}
   </div>
 </form>
