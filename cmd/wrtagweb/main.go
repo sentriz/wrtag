@@ -21,6 +21,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 	"sync"
@@ -66,6 +67,7 @@ func main() {
 		listenAddr          = flag.String("web-listen-addr", ":7373", "Listen address for web interface (optional)")
 		dbPath              = flag.String("web-db-path", "", "Path to persistent database path for web interface (optional)")
 		publicURL           = flag.String("web-public-url", "", "Public URL for web interface (optional)")
+		numWorkers          = flag.Int("web-num-workers", max(runtime.NumCPU()/4, 1), "Number of directories to process concurrently")
 	)
 	wrtagflag.Parse()
 
@@ -352,20 +354,22 @@ func main() {
 		return nil
 	})
 
-	errgrp.Go(func() error {
-		defer logJob("process jobs")()
+	for w := range *numWorkers {
+		errgrp.Go(func() error {
+			defer logJob("process jobs", "worker", w)()
 
-		for {
-			select {
-			case <-ctx.Done():
-				return nil
-			case jobID := <-jobQueue:
-				if err := processJob(ctx, cfg, notifs, researchLinkQuerier, *publicURL, db, &sse, jobID); err != nil {
-					return fmt.Errorf("next job: %w", err)
+			for {
+				select {
+				case <-ctx.Done():
+					return nil
+				case jobID := <-jobQueue:
+					if err := processJob(ctx, cfg, notifs, researchLinkQuerier, *publicURL, db, &sse, jobID); err != nil {
+						return fmt.Errorf("next job: %w", err)
+					}
 				}
 			}
-		}
-	})
+		})
+	}
 
 	// restart old jobs just in case the process was killed abruptly last time
 	errgrp.Go(func() error {
