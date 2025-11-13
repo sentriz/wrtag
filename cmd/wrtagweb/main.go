@@ -35,7 +35,6 @@ import (
 
 	_ "github.com/ncruces/go-sqlite3/driver"
 	_ "github.com/ncruces/go-sqlite3/embed"
-	"github.com/rogpeppe/go-internal/txtar"
 	"go.senan.xyz/sqlb"
 	"golang.org/x/sync/errgroup"
 )
@@ -122,152 +121,6 @@ func main() {
 	var sse broadcast[uint64]
 	var jobQueue = make(chan uint64, 32_768)
 
-	processJob := func(ctx context.Context, jobID uint64) error {
-		var job Job
-		err := sqlb.ScanRow(ctx, db, &job, "update jobs set status=? where id=? and status=? returning *", StatusInProgress, jobID, StatusEnqueued)
-		if errors.Is(err, sql.ErrNoRows) {
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-
-		sse.send(job.ID)
-		defer sse.send(job.ID)
-
-		op, err := wrtagflag.OperationByName(job.Operation, false)
-		if err != nil {
-			return fmt.Errorf("find operation: %w", err)
-		}
-
-		var ic wrtag.ImportCondition
-		if job.Confirm {
-			ic = wrtag.Always
-		}
-
-		searchResult, processErr := wrtag.ProcessDir(ctx, cfg, op, job.SourcePath, ic, job.UseMBID)
-
-		if searchResult != nil && searchResult.Query.Artist != "" {
-			researchLinks, err := researchLinkQuerier.Build(researchlink.Query{
-				Artist:  searchResult.Query.Artist,
-				Album:   searchResult.Query.Release,
-				Barcode: searchResult.Query.Barcode,
-				Date:    searchResult.Query.Date,
-			})
-			if err != nil {
-				return fmt.Errorf("build links: %w", err)
-			}
-
-			job.ResearchLinks = sqlb.NewJSON(researchLinks)
-		}
-
-		if searchResult != nil && searchResult.Release != nil {
-			job.DestPath, err = wrtag.DestDir(&cfg.PathFormat, searchResult.Release)
-			if err != nil {
-				return fmt.Errorf("gen dest dir: %w", err)
-			}
-		}
-
-		job.SearchResult = sqlb.NewJSON(searchResult)
-		job.Confirm = false
-
-		if processErr != nil {
-			job.Status = StatusError
-			job.Error = processErr.Error()
-			if errors.Is(processErr, wrtag.ErrScoreTooLow) {
-				job.Status = StatusNeedsInput
-			}
-		} else {
-			job.Status = StatusComplete
-			job.Error = ""
-			job.UseMBID = ""
-			job.Operation = OperationMove // allow re-tag from dest
-			job.SourcePath = job.DestPath
-		}
-
-		if err := sqlb.ScanRow(ctx, db, &job, "update jobs set ? where id=? returning *", sqlb.UpdateSQL(job), job.ID); err != nil {
-			return err
-		}
-
-		{
-			ctx := context.WithoutCancel(ctx)
-
-			// If we have no action time in the ctx, use the job's updated at
-			if job.UpdatedTime.Valid && notifications.ActionTime(ctx).IsZero() {
-				ctx = notifications.RecordActionTime(ctx, job.UpdatedTime.Time)
-			}
-
-			switch job.Status {
-			case StatusComplete:
-				go notifs.Send(ctx, notifComplete, jobNotificationMessage(*publicURL, job))
-			case StatusNeedsInput:
-				go notifs.Send(ctx, notifNeedsInput, jobNotificationMessage(*publicURL, job))
-			}
-		}
-
-		return nil
-	}
-
-	var buffPool = sync.Pool{
-		New: func() any { return new(bytes.Buffer) },
-	}
-	respTmpl := func(w http.ResponseWriter, name string, data any) {
-		buff, _ := buffPool.Get().(*bytes.Buffer)
-		defer buffPool.Put(buff)
-		buff.Reset()
-
-		if err := uiTmpl.ExecuteTemplate(buff, name, data); err != nil {
-			http.Error(w, "error executing template", http.StatusInternalServerError)
-			slog.Error("error executing template", "err", err)
-			return
-		}
-		if _, err := io.Copy(w, buff); err != nil {
-			slog.Error("copy template data", "err", err)
-			return
-		}
-	}
-	respErrf := func(w http.ResponseWriter, code int, f string, a ...any) {
-		w.WriteHeader(code)
-		respTmpl(w, "error", fmt.Sprintf(f, a...))
-	}
-
-	type jobsListing struct {
-		Filter    JobStatus
-		Search    string
-		Page      int
-		PageCount int
-		Total     int
-		Jobs      []*Job
-	}
-
-	const pageSize = 20
-	listJobs := func(ctx context.Context, status JobStatus, search string, page int) (jobsListing, error) {
-		cond := sqlb.NewQuery("1")
-		if search != "" {
-			cond.Append("and source_path like ?", "%"+search+"%")
-		}
-		if status != "" {
-			cond.Append("and status=?", status)
-		}
-
-		var total int
-		if err := sqlb.ScanRow(ctx, db, sqlb.Values(&total), "select count(1) from jobs where ?", cond); err != nil {
-			return jobsListing{}, fmt.Errorf("count total: %w", err)
-		}
-
-		pageCount := max(1, int(math.Ceil(float64(total)/float64(pageSize))))
-		if page > pageCount-1 {
-			page = 0 // reset if gone too far
-		}
-
-		var jobs []*Job
-		if err := sqlb.ScanPtr(ctx, db, &jobs, "select * from jobs where ? order by time desc limit ? offset ?", cond, pageSize, pageSize*page); err != nil {
-			return jobsListing{}, fmt.Errorf("list jobs: %w", err)
-		}
-
-		return jobsListing{status, search, page, pageCount, total, jobs}, nil
-	}
-
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /sse", func(w http.ResponseWriter, r *http.Request) {
@@ -294,7 +147,7 @@ func main() {
 
 		ctx := r.Context()
 
-		jl, err := listJobs(ctx, filter, search, page)
+		jl, err := listJobs(ctx, db, filter, search, page, listJobsPageSize)
 		if err != nil {
 			respErrf(w, http.StatusInternalServerError, "error listing jobs: %v", err)
 			return
@@ -416,7 +269,7 @@ func main() {
 	mux.HandleFunc("/{$}", func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		jl, err := listJobs(ctx, "", "", 0)
+		jl, err := listJobs(ctx, db, "", "", 0, listJobsPageSize)
 		if err != nil {
 			respErrf(w, http.StatusInternalServerError, "error listing jobs: %v", err)
 			return
@@ -507,7 +360,7 @@ func main() {
 			case <-ctx.Done():
 				return nil
 			case jobID := <-jobQueue:
-				if err := processJob(ctx, jobID); err != nil {
+				if err := processJob(ctx, cfg, notifs, researchLinkQuerier, *publicURL, db, &sse, jobID); err != nil {
 					return fmt.Errorf("next job: %w", err)
 				}
 			}
@@ -531,59 +384,153 @@ func main() {
 	}
 }
 
-type JobStatus string
+func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.Notifications, researchLinkQuerier *researchlink.Builder, publicURL string, db *sql.DB, sse *broadcast[uint64], jobID uint64) error {
+	var job Job
+	err := sqlb.ScanRow(ctx, db, &job, "update jobs set status=? where id=? and status=? returning *", StatusInProgress, jobID, StatusEnqueued)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
 
-const (
-	StatusEnqueued   JobStatus = ""
-	StatusInProgress JobStatus = "in-progress"
-	StatusNeedsInput JobStatus = "needs-input"
-	StatusError      JobStatus = "error"
-	StatusComplete   JobStatus = "complete"
-)
+	sse.send(job.ID)
+	defer sse.send(job.ID)
 
-const (
-	OperationCopy = "copy"
-	OperationMove = "move"
-)
+	op, err := wrtagflag.OperationByName(job.Operation, false)
+	if err != nil {
+		return fmt.Errorf("find operation: %w", err)
+	}
 
-//go:generate go tool sqlbgen Job
-type Job struct {
-	ID            uint64
-	Status        JobStatus
-	Error         string
-	Operation     string
-	Time          time.Time
-	UpdatedTime   sql.NullTime
-	UseMBID       string
-	SourcePath    string
-	DestPath      string
-	SearchResult  sqlb.JSON[*wrtag.SearchResult]
-	ResearchLinks sqlb.JSON[[]researchlink.SearchResult]
-	Confirm       bool
+	var ic wrtag.ImportCondition
+	if job.Confirm {
+		ic = wrtag.Always
+	}
+
+	searchResult, processErr := wrtag.ProcessDir(ctx, cfg, op, job.SourcePath, ic, job.UseMBID)
+
+	if searchResult != nil && searchResult.Query.Artist != "" {
+		researchLinks, err := researchLinkQuerier.Build(researchlink.Query{
+			Artist:  searchResult.Query.Artist,
+			Album:   searchResult.Query.Release,
+			Barcode: searchResult.Query.Barcode,
+			Date:    searchResult.Query.Date,
+		})
+		if err != nil {
+			return fmt.Errorf("build links: %w", err)
+		}
+
+		job.ResearchLinks = sqlb.NewJSON(researchLinks)
+	}
+
+	if searchResult != nil && searchResult.Release != nil {
+		job.DestPath, err = wrtag.DestDir(&cfg.PathFormat, searchResult.Release)
+		if err != nil {
+			return fmt.Errorf("gen dest dir: %w", err)
+		}
+	}
+
+	job.SearchResult = sqlb.NewJSON(searchResult)
+	job.Confirm = false
+
+	if processErr != nil {
+		job.Status = StatusError
+		job.Error = processErr.Error()
+		if errors.Is(processErr, wrtag.ErrScoreTooLow) {
+			job.Status = StatusNeedsInput
+		}
+	} else {
+		job.Status = StatusComplete
+		job.Error = ""
+		job.UseMBID = ""
+		job.Operation = OperationMove // allow re-tag from dest
+		job.SourcePath = job.DestPath
+	}
+
+	if err := sqlb.ScanRow(ctx, db, &job, "update jobs set ? where id=? returning *", sqlb.UpdateSQL(job), job.ID); err != nil {
+		return err
+	}
+
+	{
+		ctx := context.WithoutCancel(ctx)
+
+		// If we have no action time in the ctx, use the job's updated at
+		if job.UpdatedTime.Valid && notifications.ActionTime(ctx).IsZero() {
+			ctx = notifications.RecordActionTime(ctx, job.UpdatedTime.Time)
+		}
+
+		switch job.Status {
+		case StatusComplete:
+			go notifs.Send(ctx, notifComplete, jobNotificationMessage(publicURL, job))
+		case StatusNeedsInput:
+			go notifs.Send(ctx, notifNeedsInput, jobNotificationMessage(publicURL, job))
+		}
+	}
+
+	return nil
 }
 
-//go:embed schema.sql
-var schema []byte
+var tmplBuffPool = sync.Pool{
+	New: func() any { return new(bytes.Buffer) },
+}
 
-func dbMigrate(ctx context.Context, db *sql.DB) error {
-	var nextVer int
-	if err := sqlb.ScanRow(ctx, db, sqlb.Values(&nextVer), "pragma user_version"); err != nil {
-		return fmt.Errorf("get schema version: %w", err)
+func respTmpl(w http.ResponseWriter, name string, data any) {
+	buff, _ := tmplBuffPool.Get().(*bytes.Buffer)
+	defer tmplBuffPool.Put(buff)
+	buff.Reset()
+
+	if err := uiTmpl.ExecuteTemplate(buff, name, data); err != nil {
+		http.Error(w, "error executing template", http.StatusInternalServerError)
+		slog.Error("error executing template", "err", err)
+		return
+	}
+	if _, err := io.Copy(w, buff); err != nil {
+		slog.Error("copy template data", "err", err)
+		return
+	}
+}
+
+func respErrf(w http.ResponseWriter, code int, f string, a ...any) {
+	w.WriteHeader(code)
+	respTmpl(w, "error", fmt.Sprintf(f, a...))
+}
+
+const listJobsPageSize = 20
+
+type jobsListing struct {
+	Filter    JobStatus
+	Search    string
+	Page      int
+	PageCount int
+	Total     int
+	Jobs      []*Job
+}
+
+func listJobs(ctx context.Context, db *sql.DB, status JobStatus, search string, page, pageSize int) (jobsListing, error) {
+	cond := sqlb.NewQuery("1")
+	if search != "" {
+		cond.Append("and source_path like ?", "%"+search+"%")
+	}
+	if status != "" {
+		cond.Append("and status=?", status)
 	}
 
-	migrations := txtar.Parse(schema)
-	for i := nextVer; i < len(migrations.Files); i++ {
-		migration := migrations.Files[i]
-		slog.InfoContext(ctx, "running migration", "name", migration.Name, "query", string(migration.Data))
-
-		if err := sqlb.Exec(ctx, db, string(migration.Data)); err != nil {
-			return fmt.Errorf("run migration %d: %w", i, err)
-		}
-		if err := sqlb.Exec(ctx, db, fmt.Sprintf("pragma user_version = %d", i+1)); err != nil {
-			return fmt.Errorf("run migration %d: %w", i, err)
-		}
+	var total int
+	if err := sqlb.ScanRow(ctx, db, sqlb.Values(&total), "select count(1) from jobs where ?", cond); err != nil {
+		return jobsListing{}, fmt.Errorf("count total: %w", err)
 	}
-	return nil
+
+	pageCount := max(1, int(math.Ceil(float64(total)/float64(pageSize))))
+	if page > pageCount-1 {
+		page = 0 // reset if gone too far
+	}
+
+	var jobs []*Job
+	if err := sqlb.ScanPtr(ctx, db, &jobs, "select * from jobs where ? order by time desc limit ? offset ?", cond, pageSize, pageSize*page); err != nil {
+		return jobsListing{}, fmt.Errorf("list jobs: %w", err)
+	}
+
+	return jobsListing{status, search, page, pageCount, total, jobs}, nil
 }
 
 func jobNotificationMessage(publicURL string, job Job) string {
