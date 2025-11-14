@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.20.0](https://github.com/sentriz/wrtag/compare/v0.19.0...v0.20.0) (2025-11-14)
+
+
+### Features
+
+* **ci:** bump golangci-lint ([522b1da](https://github.com/sentriz/wrtag/commit/522b1da46a47bfcff1ecb78739dc0b3e653b9b17))
+* **wrtag:** set 30s timeout for searching releases ([59792fa](https://github.com/sentriz/wrtag/commit/59792fa457b21644509a3b2cc12164a76b072769))
+* **wrtagweb:** add web-num-workers option ([1fb6caf](https://github.com/sentriz/wrtag/commit/1fb6caf0320a707cd97e9cd1e4902489d92918c5))
+* **wrtagweb:** reduce database polling ([8f9f434](https://github.com/sentriz/wrtag/commit/8f9f4343dd2b933ee33e999fc6094ba4fdecf55a)), closes [#169](https://github.com/sentriz/wrtag/issues/169)
+* **wrtagweb:** show `enqueued` jobs in a different colour ([6232aa5](https://github.com/sentriz/wrtag/commit/6232aa57d421a7badef2693bb90d619a7df5590f))
+
+
+### Bug Fixes
+
+* **musicbrainz:** artistEnName should pick primary alias first, and not pick ended aliases ([#179](https://github.com/sentriz/wrtag/issues/179)) ([77e707b](https://github.com/sentriz/wrtag/commit/77e707b264592d9ad897f0e3dabf3556d54a38d7))
+* **musicbrainz:** filter Blu-ray media in FlatTracks ([#174](https://github.com/sentriz/wrtag/issues/174)) ([0b89f40](https://github.com/sentriz/wrtag/commit/0b89f403c0e46bcf7b11b6bfef8f202835692e6a))
+* **wrtagweb:** debounce SSE events ([69532c4](https://github.com/sentriz/wrtag/commit/69532c4e2b40643789859b3ca71aa6b87de91f60))
+
 ## [0.19.0](https://github.com/sentriz/wrtag/compare/v0.18.0...v0.19.0) (2025-10-09)
 
 
