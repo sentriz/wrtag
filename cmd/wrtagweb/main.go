@@ -121,6 +121,9 @@ func main() {
 	}
 
 	var sse broadcast[uint64]
+	jobSSENew := func() { sse.send(0) }
+	jobSSEUpdate := func(id uint64) { sse.send(id) }
+
 	var jobQueue = make(chan uint64, 32_768)
 
 	mux := http.NewServeMux()
@@ -184,7 +187,7 @@ func main() {
 
 		respTmpl(w, "job-import", struct{ Operation string }{Operation: operationStr})
 
-		sse.send(0)
+		jobSSENew()
 		jobQueue <- job.ID
 	})
 
@@ -221,7 +224,7 @@ func main() {
 
 		respTmpl(w, "job", job)
 
-		sse.send(0)
+		jobSSENew()
 		jobQueue <- job.ID
 	})
 
@@ -234,7 +237,7 @@ func main() {
 			respErrf(w, http.StatusInternalServerError, "error getting job")
 			return
 		}
-		sse.send(0)
+		jobSSENew()
 	})
 
 	mux.HandleFunc("GET /dirs", func(w http.ResponseWriter, r *http.Request) {
@@ -312,7 +315,7 @@ func main() {
 			return
 		}
 
-		sse.send(0)
+		jobSSENew()
 		jobQueue <- job.ID
 	})
 
@@ -363,7 +366,7 @@ func main() {
 				case <-ctx.Done():
 					return nil
 				case jobID := <-jobQueue:
-					if err := processJob(ctx, cfg, notifs, researchLinkQuerier, *publicURL, db, &sse, jobID); err != nil {
+					if err := processJob(ctx, cfg, notifs, researchLinkQuerier, *publicURL, db, jobSSEUpdate, jobID); err != nil {
 						return fmt.Errorf("next job: %w", err)
 					}
 				}
@@ -388,7 +391,7 @@ func main() {
 	}
 }
 
-func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.Notifications, researchLinkQuerier *researchlink.Builder, publicURL string, db *sql.DB, sse *broadcast[uint64], jobID uint64) error {
+func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.Notifications, researchLinkQuerier *researchlink.Builder, publicURL string, db *sql.DB, jobSSEUpdate func(uint64), jobID uint64) error {
 	var job Job
 	err := sqlb.ScanRow(ctx, db, &job, "update jobs set status=? where id=? and status=? returning *", StatusInProgress, jobID, StatusEnqueued)
 	if errors.Is(err, sql.ErrNoRows) {
@@ -398,8 +401,8 @@ func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.No
 		return err
 	}
 
-	sse.send(job.ID)
-	defer sse.send(job.ID)
+	jobSSEUpdate(job.ID)
+	defer jobSSEUpdate(job.ID)
 
 	op, err := wrtagflag.OperationByName(job.Operation, false)
 	if err != nil {
