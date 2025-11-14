@@ -91,8 +91,21 @@ type SearchResult struct {
 	// Score indicates the confidence of the match (0-100)
 	Score float64
 
-	// DestDir is the destination directory path where files were or would be placed
-	DestDir string
+	// AlbumRootDir is the top-level directory containing all files for this release.
+	// It is calculated as the longest common directory prefix of all destination paths.
+	//
+	// For single-disc releases: the directory containing track files
+	//   Example: "/music/Artist/Album"
+	//
+	// For multi-disc releases: the parent directory of disc subdirectories
+	//   Example: "/music/Artist/Album" (tracks are in "/music/Artist/Album/Disc 1/", etc.)
+	//
+	// This field is suitable for:
+	// - Display to users ("successfully moved to...")
+	// - Locking the entire release directory tree
+	// - Placing cover art and metadata files
+	// - Identifying the "location" of the release
+	AlbumRootDir string
 
 	// Diff contains the differences between local tags and MusicBrainz tags
 	Diff []Diff
@@ -172,10 +185,11 @@ func ProcessDir(
 	if len(pathTags) == 0 {
 		return nil, ErrNoTracks
 	}
+	slog.InfoContext(ctx, "scanned directory", "path", srcDir, "tracks", len(pathTags))
 
 	searchTags := pathTags[0].Tags
 
-	var mbid = normtag.Get(searchTags, normtag.MusicBrainzReleaseID)
+	mbid := normtag.Get(searchTags, normtag.MusicBrainzReleaseID)
 	if useMBID != "" {
 		mbid = useMBID
 	}
@@ -206,10 +220,12 @@ func ProcessDir(
 		}
 	}
 
+	slog.InfoContext(ctx, "searching musicbrainz", "artist", query.Artist, "release", query.Release, "mbid", query.MBReleaseID)
 	release, err := searchRelease(ctx, &cfg.MusicBrainzClient, query)
 	if err != nil {
 		return nil, fmt.Errorf("search musicbrainz: %w", err)
 	}
+	slog.InfoContext(ctx, "found release", "title", release.Title, "mb_id", release.ID, "tracks", len(musicbrainz.FlatTracks(release.Media)))
 
 	releaseTracks := musicbrainz.FlatTracks(release.Media)
 
@@ -237,15 +253,6 @@ func ProcessDir(
 		return &SearchResult{release, query, score, "", diff, originFile}, ErrScoreTooLow
 	}
 
-	destDir, err := DestDir(&cfg.PathFormat, release)
-	if err != nil {
-		return nil, fmt.Errorf("gen dest dir: %w", err)
-	}
-
-	if dir, err := filepath.EvalSymlinks(destDir); err == nil {
-		destDir = dir
-	}
-
 	labelInfo := musicbrainz.AnyLabelInfo(release)
 	genres := musicbrainz.AnyGenres(release)
 
@@ -260,31 +267,65 @@ func ProcessDir(
 		destPaths = append(destPaths, destPath)
 	}
 
+	// Calculate the album root directory (common prefix of all destination paths)
+	albumRoot := CommonDirPrefix(destPaths)
+	if dir, err := filepath.EvalSymlinks(albumRoot); err == nil {
+		albumRoot = dir
+	}
+	slog.DebugContext(ctx, "calculated destination paths", "album_root", albumRoot)
+
+	metadata := ReleaseMetadata{
+		Release:   release,
+		Tracks:    releaseTracks,
+		LabelInfo: labelInfo,
+		Genres:    genres,
+	}
+	files := FileOperation{
+		Op:          op,
+		SourceFiles: pathTags,
+		DestPaths:   destPaths,
+		CoverArt:    cover,
+	}
+	dc, err := applyRelease(ctx, srcDir, albumRoot, metadata, files, cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	if srcDir != albumRoot {
+		if err := op.PostSource(ctx, dc, cfg.PathFormat.Root(), srcDir); err != nil {
+			return nil, fmt.Errorf("clean: %w", err)
+		}
+	}
+
+	slog.InfoContext(ctx, "processing complete", "dest", albumRoot, "score", score)
+	return &SearchResult{release, query, score, albumRoot, diff, originFile}, nil
+}
+
+func applyRelease(ctx context.Context, srcDir, albumRoot string, metadata ReleaseMetadata, files FileOperation, cfg *Config) (DirContext, error) {
 	// lock both source and destination directories
-	unlock := lockPaths(
-		srcDir,
-		destDir,
-	)
+	unlock := lockPaths(srcDir, albumRoot)
+	defer unlock()
 
 	dc := NewDirContext()
 
 	// move/copy and tag
-	for i := range pathTags {
-		pt, rt, destPath := pathTags[i], releaseTracks[i], destPaths[i]
+	slog.InfoContext(ctx, "processing files", "operation", files.Op.Name(), "count", len(files.SourceFiles))
+	for i := range files.SourceFiles {
+		pt, rt, destPath := files.SourceFiles[i], metadata.Tracks[i], files.DestPaths[i]
 
-		if err := op.ProcessPath(ctx, dc, pt.Path, destPath); err != nil {
-			return nil, fmt.Errorf("process path %q: %w", filepath.Base(pt.Path), err)
+		if err := files.Op.ProcessPath(ctx, dc, pt.Path, destPath); err != nil {
+			return DirContext{}, fmt.Errorf("process path %q: %w", filepath.Base(pt.Path), err)
 		}
 
-		var destTags = map[string][]string{}
-		WriteRelease(destTags, release, labelInfo, genres, i, &rt)
+		destTags := map[string][]string{}
+		WriteRelease(destTags, metadata.Release, metadata.LabelInfo, metadata.Genres, i, &rt)
 		ApplyTagConfig(destTags, pt.Tags, cfg.TagConfig)
 
 		if lvl, slog := slog.LevelDebug, slog.Default(); slog.Enabled(ctx, lvl) {
 			logTagChanges(ctx, pt.Path, lvl, pt.Tags, destTags)
 		}
 
-		if !op.CanModifyDest() {
+		if !files.Op.CanModifyDest() {
 			continue
 		}
 		if tags.Equal(pt.Tags, destTags) {
@@ -293,42 +334,34 @@ func ProcessDir(
 		}
 
 		if err := tags.WriteTags(destPath, destTags, tags.Clear); err != nil {
-			return nil, fmt.Errorf("write tag file: %w", err)
+			return DirContext{}, fmt.Errorf("write tag file: %w", err)
 		}
 	}
 
-	if err := processCover(ctx, cfg, op, dc, release, destDir, cover); err != nil {
-		return nil, fmt.Errorf("process cover: %w", err)
+	if err := processCover(ctx, cfg, files.Op, dc, metadata.Release, albumRoot, files.CoverArt); err != nil {
+		return DirContext{}, fmt.Errorf("process cover: %w", err)
 	}
 
 	// process addons with new files
-	if op.CanModifyDest() {
+	if files.Op.CanModifyDest() {
 		for _, addon := range cfg.Addons {
-			if err := addon.ProcessRelease(ctx, destPaths); err != nil {
-				return nil, fmt.Errorf("process addon: %w", err)
+			if err := addon.ProcessRelease(ctx, files.DestPaths); err != nil {
+				return DirContext{}, fmt.Errorf("process addon: %w", err)
 			}
 		}
 	}
 
 	for kf := range cfg.KeepFiles {
-		if err := op.ProcessPath(ctx, dc, filepath.Join(srcDir, kf), filepath.Join(destDir, kf)); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("process keep file %q: %w", kf, err)
+		if err := files.Op.ProcessPath(ctx, dc, filepath.Join(srcDir, kf), filepath.Join(albumRoot, kf)); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return DirContext{}, fmt.Errorf("process keep file %q: %w", kf, err)
 		}
 	}
 
-	if err := trimDestDir(ctx, dc, destDir, op.CanModifyDest()); err != nil {
-		return nil, fmt.Errorf("trim: %w", err)
+	if err := trimDestDir(ctx, dc, albumRoot, files.Op.CanModifyDest()); err != nil {
+		return DirContext{}, fmt.Errorf("trim: %w", err)
 	}
 
-	unlock()
-
-	if srcDir != destDir {
-		if err := op.PostSource(ctx, dc, cfg.PathFormat.Root(), srcDir); err != nil {
-			return nil, fmt.Errorf("clean: %w", err)
-		}
-	}
-
-	return &SearchResult{release, query, score, destDir, diff, originFile}, nil
+	return dc, nil
 }
 
 func searchRelease(ctx context.Context, client *musicbrainz.MBClient, query musicbrainz.ReleaseQuery) (*musicbrainz.Release, error) {
@@ -349,6 +382,29 @@ type PathTags struct {
 
 	// Tags contains the audio file's metadata tags
 	Tags map[string][]string
+}
+
+// ReleaseMetadata bundles MusicBrainz release data for processing.
+type ReleaseMetadata struct {
+	Release *musicbrainz.Release
+
+	// Tracks contains the flattened list of tracks from the release
+	Tracks []musicbrainz.Track
+
+	LabelInfo musicbrainz.LabelInfo
+	Genres    []musicbrainz.Genre
+}
+
+// FileOperation bundles file operation parameters for processing.
+type FileOperation struct {
+	// Op is the file system operation (Move, Copy, or Reflink)
+	Op FileSystemOperation
+
+	// SourceFiles contains the source paths with their existing tags
+	SourceFiles []PathTags
+
+	DestPaths []string
+	CoverArt  string
 }
 
 // ReadReleaseDir reads a directory containing music files and extracts tags from each file.
@@ -406,7 +462,7 @@ func ReadReleaseDir(dirPath string) (string, []PathTags, error) {
 	if len(pathTags) >= 2 {
 		// validate that we have track numbers, or track numbers in filenames to sort on. if we don't any
 		// then releases that consist only of untitled tracks may get mixed up
-		var haveNum, havePath = true, true
+		haveNum, havePath := true, true
 		for _, pt := range pathTags {
 			if haveNum && normtag.Get(pt.Tags, normtag.TrackNumber) == "" {
 				haveNum = false
@@ -432,14 +488,79 @@ func ReadReleaseDir(dirPath string) (string, []PathTags, error) {
 	return cover, pathTags, nil
 }
 
-// DestDir generates the destination directory path for a release based on the given path format.
-func DestDir(pathFormat *pathformat.Format, release *musicbrainz.Release) (string, error) {
-	path, err := pathFormat.Execute(release, 0, ".eg")
-	if err != nil {
-		return "", fmt.Errorf("create path: %w", err)
+// CommonDirPrefix calculates the longest common directory prefix from a list of file paths.
+// It finds the longest common string prefix, then rounds it to the nearest complete directory.
+//
+// This is useful for determining the "album root" directory for multi-disc releases
+// where tracks are organized into disc subdirectories.
+//
+// Example (multi-disc release):
+//
+//	Input:  ["/music/Album/Disc 01/track.flac", "/music/Album/Disc 02/track.flac"]
+//	Output: "/music/Album"
+//
+// The common string prefix "/music/Album/Disc 0" is rounded to "/music/Album"
+// because it ends mid-directory-name.
+//
+// Example (single-disc release):
+//
+//	Input:  ["/music/Album/01 Track.flac", "/music/Album/02 Track.flac"]
+//	Output: "/music/Album"
+//
+// Returns empty string if paths have no common directory.
+func CommonDirPrefix(paths []string) string {
+	if len(paths) == 0 {
+		return ""
 	}
-	dir := filepath.Dir(path)
-	return dir, nil
+	if len(paths) == 1 {
+		return filepath.Dir(paths[0])
+	}
+
+	prefix := paths[0]
+	for _, path := range paths[1:] {
+		prefix = commonPrefix(prefix, path)
+		if prefix == "" {
+			return ""
+		}
+	}
+
+	// If prefix ends mid-directory (e.g., "/music/Album/Disc 0"), go to parent
+	if prefix == "" {
+		return ""
+	}
+
+	// Check if the prefix is a complete directory by seeing if it ends at a separator
+	// or if adding a separator would match the start of all original paths
+	testPrefix := prefix
+	if !strings.HasSuffix(testPrefix, string(filepath.Separator)) {
+		testPrefix += string(filepath.Separator)
+	}
+
+	allMatch := true
+	for _, path := range paths {
+		if !strings.HasPrefix(path, testPrefix) && path != strings.TrimSuffix(testPrefix, string(filepath.Separator)) {
+			allMatch = false
+			break
+		}
+	}
+
+	if !allMatch {
+		return filepath.Dir(prefix)
+	}
+
+	return strings.TrimSuffix(prefix, string(filepath.Separator))
+}
+
+func commonPrefix(a, b string) string {
+	minLen := min(len(b), len(a))
+
+	for i := range minLen {
+		if a[i] != b[i] {
+			return a[:i]
+		}
+	}
+
+	return a[:minLen]
 }
 
 // WriteRelease populates a Tags structure with metadata from a MusicBrainz release and track.
@@ -517,8 +638,26 @@ func WriteRelease(
 	normtag.Set(t, normtag.ArtistsCredit, trimZero(musicbrainz.ArtistsCreditNames(trk.Artists)...)...)
 	normtag.Set(t, normtag.Genre, trimZero(cmp.Or(genreNames...))...)
 	normtag.Set(t, normtag.Genres, trimZero(genreNames...)...)
-	normtag.Set(t, normtag.TrackNumber, trimZero(strconv.Itoa(i+1))...)
-	normtag.Set(t, normtag.DiscNumber, trimZero(strconv.Itoa(1))...)
+
+	// Determine total number of discs (excluding DVD/Blu-ray)
+	totalDiscs := musicbrainz.CountNonFilteredDiscs(release.Media)
+
+	// Use per-disc numbering for multi-disc releases ("auto" mode)
+	if totalDiscs > 1 && trk.DiscNumber > 0 {
+		// Multi-disc release: use per-disc track numbering
+		normtag.Set(t, normtag.TrackNumber, trimZero(strconv.Itoa(trk.Position))...)
+		normtag.Set(t, normtag.DiscNumber, trimZero(strconv.Itoa(trk.DiscNumber))...)
+		normtag.Set(t, normtag.DiscTotal, trimZero(strconv.Itoa(totalDiscs))...)
+		// Add disc subtitle if present
+		if trk.DiscTitle != "" {
+			normtag.Set(t, normtag.DiscSubtitle, trimZero(trk.DiscTitle)...)
+		}
+	} else {
+		// Single-disc or fallback: use sequential numbering (backward compatible)
+		normtag.Set(t, normtag.TrackNumber, trimZero(strconv.Itoa(i+1))...)
+		normtag.Set(t, normtag.DiscNumber, trimZero(strconv.Itoa(1))...)
+		normtag.Set(t, normtag.DiscTotal, trimZero(strconv.Itoa(totalDiscs))...)
+	}
 
 	normtag.Set(t, normtag.ISRC, trimZero(trk.Recording.ISRCs...)...)
 
@@ -595,15 +734,27 @@ func DiffRelease(weights DiffWeights, release *musicbrainz.Release, tracks []mus
 			track := tracks[i]
 			b = strings.Join(trimZero(musicbrainz.ArtistsString(track.Artists), track.Title), " – ")
 		}
-		diffs = append(diffs, diff(weight("track"), fmt.Sprintf("track %d", i+1), a, b))
+
+		trackLabel := fmt.Sprintf("track %d", i+1)
+		if len(release.Media) > 1 {
+			discNum, trackNum := 1, i+1
+			for _, media := range release.Media {
+				if trackNum <= media.TrackCount {
+					trackLabel = fmt.Sprintf("disc %d track %d", discNum, trackNum)
+					break
+				}
+				trackNum -= media.TrackCount
+				discNum++
+			}
+		}
+
+		diffs = append(diffs, diff(weight("track"), trackLabel, a, b))
 	}
 
 	return score, diffs
 }
 
-var (
-	dm = dmp.New()
-)
+var dm = dmp.New()
 
 // Differ creates a difference function that compares two strings and updates a running score.
 // The returned function calculates text differences and accumulates weighted distances for scoring.
@@ -697,6 +848,9 @@ var defaultKeepConfig = []string{
 // FileSystemOperation defines operations that can be performed on files during the import/tagging process.
 // Implementations handle different ways to transfer files (move, copy, reflink) while maintaining consistent behaviours.
 type FileSystemOperation interface {
+	// Name returns the name of this operation (e.g., "move", "copy", "reflink").
+	Name() string
+
 	// CanModifyDest returns whether this operation can modify existing destination files.
 	// Note: If down the line some sort of "in place" tagging operation is needed, then a `CanModifySource` may be appropriate too.
 	CanModifyDest() bool
@@ -735,6 +889,8 @@ type Move struct {
 // If dryRun is true, no files will actually be moved.
 func NewMove(dryRun bool) Move { return Move{dryRun: dryRun} }
 
+func (m Move) Name() string { return "move" }
+
 // CanModifyDest returns whether this operation can modify destination files.
 // For Move operations, this is determined by the dryRun setting.
 func (m Move) CanModifyDest() bool {
@@ -756,6 +912,8 @@ func (m Move) ProcessPath(ctx context.Context, dc DirContext, src, dest string) 
 		return nil
 	}
 
+	slog.DebugContext(ctx, "move", "from", src, "to", dest)
+
 	if err := os.MkdirAll(filepath.Dir(dest), 0o750); err != nil {
 		return fmt.Errorf("create dest path: %w", err)
 	}
@@ -769,14 +927,11 @@ func (m Move) ProcessPath(ctx context.Context, dc DirContext, src, dest string) 
 			if err := os.Remove(src); err != nil {
 				return fmt.Errorf("remove from move: %w", err)
 			}
-
-			slog.DebugContext(ctx, "moved path", "from", src, "to", dest)
 			return nil
 		}
 		return fmt.Errorf("rename: %w", err)
 	}
 
-	slog.DebugContext(ctx, "moved path", "from", src, "to", dest)
 	return nil
 }
 
@@ -818,6 +973,8 @@ type Copy struct {
 // If dryRun is true, no files will actually be copied.
 func NewCopy(dryRun bool) Copy { return Copy{dryRun: dryRun} }
 
+func (c Copy) Name() string { return "copy" }
+
 // CanModifyDest returns whether this operation can modify destination files.
 // For Copy operations, this is determined by the dryRun setting.
 func (c Copy) CanModifyDest() bool {
@@ -839,6 +996,8 @@ func (c Copy) ProcessPath(ctx context.Context, dc DirContext, src, dest string) 
 		return nil
 	}
 
+	slog.DebugContext(ctx, "copy", "from", src, "to", dest)
+
 	if err := os.MkdirAll(filepath.Dir(dest), 0o750); err != nil {
 		return fmt.Errorf("create dest path: %w", err)
 	}
@@ -847,7 +1006,6 @@ func (c Copy) ProcessPath(ctx context.Context, dc DirContext, src, dest string) 
 		return err
 	}
 
-	slog.DebugContext(ctx, "copied path", "from", src, "to", dest)
 	return nil
 }
 
@@ -865,6 +1023,8 @@ type Reflink struct {
 // NewReflink creates a new Reflink operation with the specified dry-run mode.
 // If dryRun is true, no files will actually be reflinked.
 func NewReflink(dryRun bool) Reflink { return Reflink{dryRun: dryRun} }
+
+func (c Reflink) Name() string { return "reflink" }
 
 // CanModifyDest returns whether this operation can modify destination files.
 // For Reflink operations, this is determined by the dryRun setting.
@@ -887,6 +1047,8 @@ func (c Reflink) ProcessPath(ctx context.Context, dc DirContext, src, dest strin
 		return nil
 	}
 
+	slog.DebugContext(ctx, "reflink", "from", src, "to", dest)
+
 	if err := os.MkdirAll(filepath.Dir(dest), 0o750); err != nil {
 		return fmt.Errorf("create dest path: %w", err)
 	}
@@ -895,7 +1057,6 @@ func (c Reflink) ProcessPath(ctx context.Context, dc DirContext, src, dest strin
 		return fmt.Errorf("reflink file: %w", err)
 	}
 
-	slog.DebugContext(ctx, "reflinked path", "from", src, "to", dest)
 	return nil
 }
 
@@ -1136,7 +1297,7 @@ func safeRemoveAll(ctx context.Context, src string, dryRun bool) error {
 }
 
 func mapFunc[T, To any](elms []T, f func(int, T) To) []To {
-	var res = make([]To, 0, len(elms))
+	res := make([]To, 0, len(elms))
 	for i, v := range elms {
 		res = append(res, f(i, v))
 	}
@@ -1144,7 +1305,7 @@ func mapFunc[T, To any](elms []T, f func(int, T) To) []To {
 }
 
 func filterFunc[T any](elms []T, f func(T) bool) []T {
-	var res = make([]T, 0, len(elms))
+	res := make([]T, 0, len(elms))
 	for _, el := range elms {
 		if f(el) {
 			res = append(res, el)

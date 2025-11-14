@@ -468,11 +468,18 @@ The template has access to the following data:
 
 - `.Release` - The full MusicBrainz release object (see [`type Release struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
 - `.Track` - The current track being processed (see [`type Track struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
-- `.TrackNum` - The track number (integer, starting at 1)
+- `.TrackNum` - The track number (integer, starting at 1, sequential across all tracks)
 - `.Tracks` - The list of tracks in the release
 - `.ReleaseDisambiguation` - A string for release and release group disambiguation
 - `.IsCompilation` - Boolean indicating if this is a compilation album
 - `.Ext` - The file extension for the current track, including the dot (e.g., ".flac")
+
+**Multi-disc fields** (available for organizing multi-disc releases):
+
+- `.DiscNum` - The disc number for this track (integer, 1-indexed)
+- `.DiscTitle` - The disc subtitle/title (string, may be empty)
+- `.TotalDiscs` - Total number of discs in the release (integer)
+- `.Track.Position` - Per-disc track position (1-indexed within each disc)
 
 ## Helper functions
 
@@ -530,6 +537,35 @@ Including multi-album artist support, release group year, release group and rele
 
 ```
 /music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ pad0 2 .TrackNum }}.{{ len .Tracks | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}
+```
+
+### Multi-disc releases
+
+For multi-disc releases, you can organize tracks into disc-specific folders. This format conditionally creates disc subdirectories only when there are multiple discs:
+
+```
+/music/{{ artists .Release.Artists | sort | join "; " | safepath }}/{{ .Release.Title | safepath }}{{ if gt .TotalDiscs 1 }}/Disc {{ pad0 2 .DiscNum }}{{ end }}/{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}
+```
+
+Result for a 2-disc album:
+```
+/music/Artist/Album/Disc 01/01 Track Name.flac
+/music/Artist/Album/Disc 01/02 Another Track.flac
+/music/Artist/Album/Disc 02/01 First on Disc 2.flac
+```
+
+### Multi-disc with disc titles
+
+If discs have titles (e.g., "Studio" and "Live"), you can include them in the path:
+
+```
+/music/{{ artists .Release.Artists | sort | join "; " | safepath }}/{{ .Release.Title | safepath }}{{ if gt .TotalDiscs 1 }}{{ if .DiscTitle }}/{{ .DiscTitle | safepath }}{{ else }}/Disc {{ pad0 2 .DiscNum }}{{ end }}{{ end }}/{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}
+```
+
+Result:
+```
+/music/Artist/Album/Studio Sessions/01 Track.flac
+/music/Artist/Album/Live in London/01 Track.flac
 ```
 
 # Addons
@@ -628,7 +664,9 @@ Example track is [America Is Waiting](https://musicbrainz.org/release/3b28412d-8
 | `ARTISTS_CREDIT`             | Track artist credit names as multi-valued tag             | `Eno`, `Byrne`                                                                                                                                                                                                               |
 | `GENRE`                      | Primary genre                                             | `ambient`                                                                                                                                                                                                                    |
 | `GENRES`                     | Genre list as multi-valued tag                            | `ambient`, `art rock`, `electronic`, `experimental`                                                                                                                                                                          |
-| `TRACKNUMBER`                | Track number                                              | `1`                                                                                                                                                                                                                          |
+| `TRACKNUMBER`                | Track number (per-disc for multi-disc releases)          | `1` (single-disc) or `1` (multi-disc, track 1 of disc 1)                                                                                                                                                                     |
+| `DISCNUMBER`                 | Disc number in N/M format (multi-disc only)              | `1/2` (disc 1 of 2) or `1` (single-disc)                                                                                                                                                                                    |
+| `DISCSUBTITLE`               | Disc subtitle/title (if present on multi-disc)           | `Live Recordings` or `Bonus Material`                                                                                                                                                                                        |
 | `ISRC`                       | International Standard Recording Code                     | `GBAAA0500384`                                                                                                                                                                                                               |
 | `REMIXER`                    | Concatenated remixers on the recording                    | `Artist One, Artist Two`                                                                                                                                                                                                     |
 | `REMIXERS`                   | multi-valued remixers on the recording                    | `Artist One`, `Artist Two`                                                                                                                                                                                                   |
