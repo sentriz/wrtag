@@ -996,6 +996,8 @@ func copyFile(src, dest string) (err error) {
 	return nil
 }
 
+const maxCoverSizeBytes = 8 * 1024 * 1024 // 8 MiB
+
 func processCover(
 	ctx context.Context, cfg *Config,
 	op FileSystemOperation, dc DirContext, release *musicbrainz.Release, destDir string, cover string,
@@ -1006,8 +1008,9 @@ func processCover(
 
 	if op.CanModifyDest() && (cover == "" || cfg.UpgradeCover) {
 		skipFunc := func(resp *http.Response) bool {
-			if resp.ContentLength > 8388608 /* 8 MiB */ {
-				return true // too big to download
+			if resp.ContentLength > maxCoverSizeBytes {
+				slog.WarnContext(ctx, "skipping downloading cover which is larger than max size", "size_bytes", resp.ContentLength, "max_size_bytes", maxCoverSizeBytes)
+				return true
 			}
 			if cover == "" {
 				return false
