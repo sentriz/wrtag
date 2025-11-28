@@ -1065,6 +1065,10 @@ func tryDownloadMusicBrainzCover(ctx context.Context, caa *musicbrainz.CAAClient
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode/100 != 2 {
+		return "", fmt.Errorf("caa returned non 2xx when downloading cover: %d", resp.StatusCode)
+	}
+
 	// try to avoid downloading
 	if skipFunc(resp) {
 		return "", nil
