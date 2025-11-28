@@ -90,9 +90,9 @@ The `wrtag` tool is the main command line tool for music organisation. It has su
 For example:
 
 ```console
-$ wrtag move "Example"                 # tags and moves `Example` into the library defined by the path-format config option
-$ wrtag move -dry-run "Example"        # shows move and tag operations without applying them
-$ wrtag move -yes "Example"            # use anyway even if low match
+$ wrtag move "Example"                  # tags and moves `Example` into the library defined by the path-format config option
+$ wrtag move -dry-run "Example"         # shows move and tag operations without applying them
+$ wrtag move -yes "Example"             # use anyway even if low match
 $ wrtag move -mbid "abc" -yes "Example" # overwrite matched MusicBrainz release UUID
 ```
 
