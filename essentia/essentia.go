@@ -3,11 +3,13 @@
 package essentia
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"os/exec"
 )
@@ -44,7 +46,13 @@ func Read(ctx context.Context, path string) (info *Info, err error) {
 		return nil, fmt.Errorf("start cmd: %w", err)
 	}
 
-	if err := json.NewDecoder(stdout).Decode(&info); err != nil {
+	// streaming_extractor_music outputs progress messages and warnings to stdout before the JSON output
+	reader, err := skipToJSON(stdout)
+	if err != nil {
+		return nil, fmt.Errorf("skip to json: %w", err)
+	}
+
+	if err := json.NewDecoder(reader).Decode(&info); err != nil {
 		return nil, fmt.Errorf("decode json: %w", err)
 	}
 
@@ -59,4 +67,20 @@ type Info struct {
 		KeyKey   string `json:"key_key"`
 		KeyScale string `json:"key_scale"`
 	} `json:"tonal"`
+}
+
+func skipToJSON(r io.Reader) (io.Reader, error) {
+	for br := bufio.NewReader(r); ; {
+		line, err := br.ReadBytes('\n')
+		if err != nil && err != io.EOF {
+			return nil, err
+		}
+		// check for '{'
+		if trimmed := bytes.TrimLeft(line, " \t"); len(trimmed) > 0 && trimmed[0] == '{' {
+			return io.MultiReader(bytes.NewReader(line), br), nil
+		}
+		if err == io.EOF {
+			return nil, errors.New("no JSON found in output")
+		}
+	}
 }
