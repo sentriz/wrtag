@@ -15,6 +15,7 @@ import (
 	"io"
 	"log/slog"
 	"math"
+	"net"
 	"net/http"
 	"net/http/pprof"
 	"net/url"
@@ -109,13 +110,14 @@ func main() {
 	}
 	defer db.Close()
 
+	ctx := context.Background()
 	if lev := slog.LevelDebug; slog.Default().Enabled(context.Background(), lev) {
-		sqlb.SetLog(func(ctx context.Context, typ string, duration time.Duration, query string) {
+		ctx = sqlb.WithLogFunc(ctx, func(ctx context.Context, typ string, query string, duration time.Duration) {
 			slog.Log(ctx, lev, typ, "took", duration, "query", query)
 		})
 	}
 
-	if err := dbMigrate(context.Background(), db); err != nil {
+	if err := dbMigrate(ctx, db); err != nil {
 		slog.Error("migrate db", "err", err)
 		return
 	}
@@ -326,7 +328,7 @@ func main() {
 	mux.HandleFunc("GET /debug/pprof/symbol", pprof.Symbol)
 	mux.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
 
-	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	errgrp, ctx := errgroup.WithContext(ctx)
 
@@ -338,7 +340,12 @@ func main() {
 		h = authMiddleware(h, *apiKey)
 		h = logMiddleware(h)
 
-		server := &http.Server{Addr: *listenAddr, Handler: h, ReadHeaderTimeout: 2 * time.Second}
+		server := &http.Server{
+			Addr:              *listenAddr,
+			Handler:           h,
+			ReadHeaderTimeout: 2 * time.Second,
+			BaseContext:       func(l net.Listener) context.Context { return ctx },
+		}
 
 		errgrp.Go(func() error {
 			<-ctx.Done()
@@ -376,7 +383,7 @@ func main() {
 
 	// restart old jobs just in case the process was killed abruptly last time
 	errgrp.Go(func() error {
-		for job, err := range sqlb.Iter[Job](ctx, db, "update jobs set status=? where status=? returning *", StatusEnqueued, StatusInProgress) {
+		for job, err := range sqlb.IterRows[Job](ctx, db, "update jobs set status=? where status=? returning *", StatusEnqueued, StatusInProgress) {
 			if err != nil {
 				return fmt.Errorf("iter old jobs: %w", err)
 			}
@@ -533,7 +540,7 @@ func listJobs(ctx context.Context, db *sql.DB, status JobStatus, search string, 
 	}
 
 	var jobs []*Job
-	if err := sqlb.ScanPtr(ctx, db, &jobs, "select * from jobs where ? order by time desc limit ? offset ?", cond, pageSize, pageSize*page); err != nil {
+	if err := sqlb.ScanRows(ctx, db, sqlb.AppendPtr(&jobs), "select * from jobs where ? order by time desc limit ? offset ?", cond, pageSize, pageSize*page); err != nil {
 		return jobsListing{}, fmt.Errorf("list jobs: %w", err)
 	}
 
