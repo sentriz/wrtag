@@ -271,13 +271,13 @@ Configuration for `wrtagweb` works the same as [Global configuration](#global-co
 
 <!-- gen with ```go run ./cmd/wrtagweb -h 2>&1 | ./gen-docs | wl-copy``` -->
 
-| CLI argument     | Environment variable  | Config file key | Description                                              |
-| ---------------- | --------------------- | --------------- | -------------------------------------------------------- |
-| -web-api-key     | WRTAG_WEB_API_KEY     | web-api-key     | API key for web interface                                |
-| -web-db-path     | WRTAG_WEB_DB_PATH     | web-db-path     | Path to database path for web interface (optional)       |
-| -web-listen-addr | WRTAG_WEB_LISTEN_ADDR | web-listen-addr | Listen address for web interface                         |
-| -web-public-url  | WRTAG_WEB_PUBLIC_URL  | web-public-url  | Public URL for web interface (optional)                  |
-| -web-num-workers | WRTAG_WEB_NUM_WORKERS | web-num-workers | Number of directories to process concurrently (optional) |
+| CLI argument     | Environment variable  | Config file key | Description                                                   |
+| ---------------- | --------------------- | --------------- | ------------------------------------------------------------- |
+| -web-api-key     | WRTAG_WEB_API_KEY     | web-api-key     | API key for web interface                                     |
+| -web-db-path     | WRTAG_WEB_DB_PATH     | web-db-path     | Path to persistent database path for web interface (optional) |
+| -web-listen-addr | WRTAG_WEB_LISTEN_ADDR | web-listen-addr | Listen address for web interface (optional) (default ":7373") |
+| -web-num-workers | WRTAG_WEB_NUM_WORKERS | web-num-workers | Number of directories to process concurrently                 |
+| -web-public-url  | WRTAG_WEB_PUBLIC_URL  | web-public-url  | Public URL for web interface (optional)                       |
 
 ## Tool `metadata`
 
@@ -377,6 +377,7 @@ Global configuration is used by all tools. Any option can be provided with a CLI
 | -config           | WRTAG_CONFIG           | config           | Print the parsed config and exit                                                                     |
 | -config-path      | WRTAG_CONFIG_PATH      | config-path      | Path to config file (default "$XDG_CONFIG_HOME/wrtag/config")                                        |
 | -cover-upgrade    | WRTAG_COVER_UPGRADE    | cover-upgrade    | Fetch new cover art even if it exists locally                                                        |
+| -diff-weight      | WRTAG_DIFF_WEIGHT      | diff-weight      | Adjust distance weighting for a tag (0 to ignore) (stackable)                                        |
 | -keep-file        | WRTAG_KEEP_FILE        | keep-file        | Define an extra file path to keep when moving/copying to root dir (stackable)                        |
 | -log-level        | WRTAG_LOG_LEVEL        | log-level        | Set the logging level (default INFO)                                                                 |
 | -mb-base-url      | WRTAG_MB_BASE_URL      | mb-base-url      | MusicBrainz base URL (default "<https://musicbrainz.org/ws/2/>")                                     |
@@ -384,7 +385,6 @@ Global configuration is used by all tools. Any option can be provided with a CLI
 | -notification-uri | WRTAG_NOTIFICATION_URI | notification-uri | Add a shoutrrr notification URI for an event (see [Notifications](#notifications)) (stackable)       |
 | -path-format      | WRTAG_PATH_FORMAT      | path-format      | Path to root music directory including path format rules (see [Path format](#path-format))           |
 | -research-link    | WRTAG_RESEARCH_LINK    | research-link    | Define a helper URL to help find information about an unmatched release (stackable)                  |
-| -diff-weight      | WRTAG_DIFF_WEIGHT      | diff-weight      | Adjust distance weighting for a tag when diffing (0 to ignore) (stackable)                           |
 | -tag-config       | WRTAG_TAG_CONFIG       | tag-config       | Specify tag keep and drop rules when writing new tag revisions (see [Tagging](#tagging)) (stackable) |
 | -version          | WRTAG_VERSION          | version          | Print the version and exit                                                                           |
 
