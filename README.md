@@ -119,16 +119,6 @@ $ wrtag move "/my/music/Tame Impala/(2010) Innerspeaker"
 # now has updated tags, and moved again if needed
 ```
 
-### Available operations
-
-The full list of core `wrtag` operations. They can be used in other tools like `wrtagweb` too.
-
-| Name      | Description                                                                                                     |
-| --------- | --------------------------------------------------------------------------------------------------------------- |
-| `move`    | Moves files from the source to the destination directory.                                                       |
-| `copy`    | Copies files from the source to the destination directory.                                                      |
-| `reflink` | On supported filesystems, creates a reflink (copy-on-write) clone of a file from the source to the destination. |
-
 #### Re-tagging in bulk
 
 Bulk operations are done with the `sync` subcommand. Unlike the `copy` and `move` commands which operate on single releases, the `sync` command works on your already imported and tagged library.
@@ -147,6 +137,16 @@ $ wrtag sync "/my/music/Tame Impala"  # find all releases in "Tame Impala/" and 
 $ wrtag sync -age-older 24h           # find all releases older than 1 day and re-tag
 $ wrtag sync -num-workers 16          # process a maximum of 16 releases at a time
 ```
+
+### Available operations
+
+The full list of core `wrtag` operations. They can be used in other tools like `wrtagweb` too.
+
+| Name      | Description                                                                                                     |
+| --------- | --------------------------------------------------------------------------------------------------------------- |
+| `move`    | Moves files from the source to the destination directory.                                                       |
+| `copy`    | Copies files from the source to the destination directory.                                                      |
+| `reflink` | On supported filesystems, creates a reflink (copy-on-write) clone of a file from the source to the destination. |
 
 ## Tool `wrtagweb`
 
