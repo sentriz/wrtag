@@ -18,12 +18,12 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.10
 	go.senan.xyz/natcmp v0.1.2
-	go.senan.xyz/sqlb v0.3.5
+	go.senan.xyz/sqlb v0.3.9
 	go.senan.xyz/table v0.0.0-20251023151529-96acc7f0ad6c
 	go.senan.xyz/taglib v0.11.1
-	golang.org/x/net v0.47.0
-	golang.org/x/sync v0.18.0
-	golang.org/x/text v0.31.0
+	golang.org/x/net v0.48.0
+	golang.org/x/sync v0.19.0
+	golang.org/x/text v0.32.0
 	golang.org/x/time v0.14.0
 )
 
@@ -37,8 +37,8 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/tetratelabs/wazero v1.10.1 // indirect
-	golang.org/x/sys v0.38.0 // indirect
-	golang.org/x/tools v0.39.0 // indirect
+	golang.org/x/sys v0.39.0 // indirect
+	golang.org/x/tools v0.40.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 

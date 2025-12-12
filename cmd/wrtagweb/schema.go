@@ -29,7 +29,7 @@ const (
 	OperationMove = "move"
 )
 
-//go:generate go tool sqlbgen Job
+//go:generate go tool sqlbgen -to schema.gen.go -generated ID Job
 type Job struct {
 	ID            uint64
 	Status        JobStatus
