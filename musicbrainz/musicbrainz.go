@@ -235,9 +235,14 @@ type Track struct {
 		ISRCs            []string       `json:"isrcs"`
 	} `json:"recording"`
 	Number   string         `json:"number"`
-	Position int            `json:"position"`
+	Position int            `json:"position"` // Track position within disc (1-based from MusicBrainz)
 	Title    string         `json:"title"`
 	Artists  []ArtistCredit `json:"artist-credit"`
+
+	// Disc context fields (not from JSON, populated by FlatTracks)
+	DiscNumber int    `json:"-"` // Disc number (1-based, renumbered after filtering)
+	DiscTitle  string `json:"-"` // Disc title/subtitle from Media.Title
+	DiscFormat string `json:"-"` // Disc format from Media.Format
 }
 
 type Work struct {
@@ -463,27 +468,65 @@ func IsCompilation(rg ReleaseGroup) bool {
 	return false
 }
 
+func shouldIgnoreMedia(m Media) bool {
+	// not supported for now
+	return strings.Contains(m.Format, "DVD") || strings.Contains(m.Format, "Blu-ray")
+}
+
+// CountNonFilteredDiscs returns the number of discs after filtering out DVD/Blu-ray media.
+// This is used to determine the total disc count for multi-disc releases.
+func CountNonFilteredDiscs(media []Media) int {
+	var count int
+	for _, m := range media {
+		if shouldIgnoreMedia(m) {
+			continue
+		}
+		count++
+	}
+	return count
+}
+
+// FlatTracks flattens media into a single track list, filtering out DVD/Blu-ray discs
+// and video tracks. It enriches each track with disc context (DiscNumber, DiscTitle, DiscFormat).
+// Disc numbers are renumbered sequentially (1, 2, 3...) after filtering to avoid gaps.
 func FlatTracks(media []Media) []Track {
+	// Pre-allocate based on total track count
 	var numTracks int
-	for _, media := range media {
-		numTracks += len(media.Tracks)
+	for _, m := range media {
+		if shouldIgnoreMedia(m) {
+			continue
+		}
+		numTracks += len(m.Tracks)
 	}
 
 	tracks := make([]Track, 0, numTracks)
-	for _, media := range media {
-		if strings.Contains(media.Format, "DVD") || strings.Contains(media.Format, "Blu-ray") {
-			// not supported for now
+
+	// Sequential numbering after filtering (not Media.Position)
+	discNumber := 1
+	for _, m := range media {
+		if shouldIgnoreMedia(m) {
 			continue
 		}
-		if media.Pregap != nil {
-			tracks = append(tracks, *media.Pregap)
+
+		if m.Pregap != nil {
+			pregap := *m.Pregap
+			pregap.DiscNumber = discNumber
+			pregap.DiscTitle = m.Title
+			pregap.DiscFormat = m.Format
+			tracks = append(tracks, pregap)
 		}
-		for _, track := range media.Tracks {
+
+		for _, track := range m.Tracks {
 			if track.Recording.Video {
 				continue
 			}
+			track.DiscNumber = discNumber
+			track.DiscTitle = m.Title
+			track.DiscFormat = m.Format
 			tracks = append(tracks, track)
 		}
+
+		discNumber++
 	}
 	return tracks
 }
