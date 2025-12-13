@@ -18,7 +18,7 @@ out="$1"
 shift
 echo "got $# files" >"$out"
 for f in "$@"; do
-    echo "$(realpath --relative-to="$PWD" "$f")" >>"$out"
+    echo "${f#$PWD/}" >>"$out"
 done
 -- exp-out --
 got 3 files
