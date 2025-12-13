@@ -503,7 +503,7 @@ func WriteRelease(
 	normtag.Set(t, normtag.CatalogueNum, trimZero(labelInfo.CatalogNumber)...)
 	normtag.Set(t, normtag.Barcode, trimZero(release.Barcode)...)
 	normtag.Set(t, normtag.Compilation, trimZero(formatBool(musicbrainz.IsCompilation(release.ReleaseGroup)))...)
-	normtag.Set(t, normtag.ReleaseType, trimZero(strings.ToLower(string(release.ReleaseGroup.PrimaryType)))...)
+	normtag.Set(t, normtag.ReleaseType, trimZero(releaseTypes(release.ReleaseGroup)...)...)
 
 	normtag.Set(t, normtag.MusicBrainzReleaseID, trimZero(release.ID)...)
 	normtag.Set(t, normtag.MusicBrainzReleaseGroupID, trimZero(release.ReleaseGroup.ID)...)
@@ -1163,6 +1163,17 @@ func filterFunc[T any](elms []T, f func(T) bool) []T {
 func trimZero[T comparable](elms ...T) []T {
 	var zero T
 	return slices.DeleteFunc(elms, func(t T) bool { return t == zero })
+}
+
+func releaseTypes(rg musicbrainz.ReleaseGroup) []string {
+	var types []string
+	if rg.PrimaryType != "" {
+		types = append(types, strings.ToLower(string(rg.PrimaryType)))
+	}
+	for _, st := range rg.SecondaryTypes {
+		types = append(types, strings.ToLower(string(st)))
+	}
+	return types
 }
 
 func parseAnyTime(str string) time.Time {
