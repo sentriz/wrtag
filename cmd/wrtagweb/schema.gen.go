@@ -25,41 +25,36 @@ func (j Job) Values() []sql.NamedArg {
 	return []sql.NamedArg{sql.Named("id", j.ID), sql.Named("status", j.Status), sql.Named("error", j.Error), sql.Named("operation", j.Operation), sql.Named("time", j.Time), sql.Named("updated_time", j.UpdatedTime), sql.Named("use_mbid", j.UseMBID), sql.Named("source_path", j.SourcePath), sql.Named("dest_path", j.DestPath), sql.Named("search_result", j.SearchResult), sql.Named("research_links", j.ResearchLinks), sql.Named("confirm", j.Confirm)}
 }
 
-func (j *Job) ScanFrom(rows *sql.Rows) error {
-	columns, err := rows.Columns()
-	if err != nil {
-		return err
-	}
-	dests := make([]any, 0, len(columns))
+func (j *Job) ScanFrom(columns []string, rows *sql.Rows, buf []any) error {
 	for _, c := range columns {
 		switch c {
 		case "id":
-			dests = append(dests, &j.ID)
+			buf = append(buf, &j.ID)
 		case "status":
-			dests = append(dests, &j.Status)
+			buf = append(buf, &j.Status)
 		case "error":
-			dests = append(dests, &j.Error)
+			buf = append(buf, &j.Error)
 		case "operation":
-			dests = append(dests, &j.Operation)
+			buf = append(buf, &j.Operation)
 		case "time":
-			dests = append(dests, &j.Time)
+			buf = append(buf, &j.Time)
 		case "updated_time":
-			dests = append(dests, &j.UpdatedTime)
+			buf = append(buf, &j.UpdatedTime)
 		case "use_mbid":
-			dests = append(dests, &j.UseMBID)
+			buf = append(buf, &j.UseMBID)
 		case "source_path":
-			dests = append(dests, &j.SourcePath)
+			buf = append(buf, &j.SourcePath)
 		case "dest_path":
-			dests = append(dests, &j.DestPath)
+			buf = append(buf, &j.DestPath)
 		case "search_result":
-			dests = append(dests, &j.SearchResult)
+			buf = append(buf, &j.SearchResult)
 		case "research_links":
-			dests = append(dests, &j.ResearchLinks)
+			buf = append(buf, &j.ResearchLinks)
 		case "confirm":
-			dests = append(dests, &j.Confirm)
+			buf = append(buf, &j.Confirm)
 		default:
 			return fmt.Errorf("unknown column name %q", c)
 		}
 	}
-	return rows.Scan(dests...)
+	return rows.Scan(buf...)
 }
