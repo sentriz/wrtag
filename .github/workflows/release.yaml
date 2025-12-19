@@ -20,7 +20,7 @@ jobs:
           install-mode: goinstall
           version: v2.6.1
       - name: Test
-        run: go test ./...
+        run: go test -race ./...
   release-please:
     name: Run Release Please
     runs-on: ubuntu-latest
