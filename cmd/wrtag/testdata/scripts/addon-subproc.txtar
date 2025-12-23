@@ -1,9 +1,9 @@
 env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
 env WRTAG_LOG_LEVEL=debug
-env WRTAG_ADDON='subproc sh -c "true", subproc sh echo-script out <files>'
+env WRTAG_ADDON='subproc sh -c "true", subproc sh echo-script out <directory> -- <files>'
 
 exec wrtag -config
-stdout 'addon.*subproc \("sh" "-c" "true"\), subproc \("sh" "echo-script" "out" "<files>"\)'
+stdout 'addon.*subproc \("sh" "-c" "true"\), subproc \("sh" "echo-script" "out" "<directory>" "--" "<files>"\)'
 
 exec tag write 'kat_moda/1.flac'
 exec tag write 'kat_moda/2.flac'
@@ -21,7 +21,9 @@ for f in "$@"; do
     echo "${f#$PWD/}" >>"$out"
 done
 -- exp-out --
-got 3 files
+got 5 files
+albums/Kat Moda
+--
 albums/Kat Moda/1.flac
 albums/Kat Moda/2.flac
 albums/Kat Moda/3.flac

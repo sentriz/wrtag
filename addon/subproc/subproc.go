@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/google/shlex"
@@ -38,7 +39,8 @@ func NewSubprocAddon(conf string) (SubprocAddon, error) {
 }
 
 const (
-	markerFiles = "<files>"
+	markerFiles     = "<files>"
+	markerDirectory = "<directory>"
 )
 
 func (s SubprocAddon) Check() error {
@@ -49,11 +51,22 @@ func (s SubprocAddon) Check() error {
 }
 
 func (s SubprocAddon) ProcessRelease(ctx context.Context, paths []string) error {
+	var pathsDirectory string
+	for _, path := range paths {
+		pd := filepath.Dir(path)
+		if pathsDirectory != "" && pd != pathsDirectory {
+			return errors.New("addon called with paths from two different directories")
+		}
+		pathsDirectory = pd
+	}
+
 	var args []string
 	for _, arg := range s.args {
 		switch arg {
 		case markerFiles:
 			args = append(args, paths...)
+		case markerDirectory:
+			args = append(args, pathsDirectory)
 		default:
 			args = append(args, arg)
 		}
