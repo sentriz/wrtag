@@ -171,3 +171,83 @@ func TestReflinkCanModifyDest(t *testing.T) {
 	dryRunReflink := NewReflink(true)
 	assert.False(t, dryRunReflink.CanModifyDest())
 }
+
+func TestCommonDirPrefix(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		paths    []string
+		expected string
+	}{
+		{
+			name:     "empty list",
+			paths:    []string{},
+			expected: "",
+		},
+		{
+			name:     "single path",
+			paths:    []string{"/music/Artist/Album/track.flac"},
+			expected: "/music/Artist/Album",
+		},
+		{
+			name: "single disc - all files in same directory",
+			paths: []string{
+				"/music/Artist/Album/01 Track.flac",
+				"/music/Artist/Album/02 Track.flac",
+				"/music/Artist/Album/03 Track.flac",
+			},
+			expected: "/music/Artist/Album",
+		},
+		{
+			name: "multi-disc - partial directory name in common prefix",
+			paths: []string{
+				"/music/Artist/Album/Disc 01/01 Track.flac",
+				"/music/Artist/Album/Disc 01/02 Track.flac",
+				"/music/Artist/Album/Disc 02/01 Track.flac",
+				"/music/Artist/Album/Disc 02/02 Track.flac",
+			},
+			expected: "/music/Artist/Album",
+		},
+		{
+			name: "multi-disc - complete directory name in common prefix",
+			paths: []string{
+				"/music/Artist/Album/Disc 1/01 Track.flac",
+				"/music/Artist/Album/Disc 2/01 Track.flac",
+			},
+			expected: "/music/Artist/Album",
+		},
+		{
+			name: "multi-disc - numbered discs 1-10",
+			paths: []string{
+				"/music/Artist/Album/Disc 1/01 Track.flac",
+				"/music/Artist/Album/Disc 10/01 Track.flac",
+			},
+			expected: "/music/Artist/Album",
+		},
+		{
+			name: "different paths entirely",
+			paths: []string{
+				"/music/Artist1/Album1/track.flac",
+				"/music/Artist2/Album2/track.flac",
+			},
+			expected: "/music",
+		},
+		{
+			name: "paths with different roots",
+			paths: []string{
+				"/music/Album/track.flac",
+				"/other/Album/track.flac",
+			},
+			expected: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			result := CommonDirPrefix(tt.paths)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
