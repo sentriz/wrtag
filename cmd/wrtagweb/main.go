@@ -437,7 +437,7 @@ func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.No
 		job.ResearchLinks = sqlb.NewJSON(researchLinks)
 	}
 
-	if searchResult != nil && searchResult.Release != nil {
+	if searchResult != nil && searchResult.Release != nil && (processErr == nil || wrtag.IsNonFatalError(processErr)) {
 		job.DestPath, err = wrtag.DestDir(&cfg.PathFormat, searchResult.Release)
 		if err != nil {
 			return fmt.Errorf("gen dest dir: %w", err)
