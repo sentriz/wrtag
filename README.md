@@ -209,7 +209,7 @@ Edit the script to send a `copy` job with the newly finished torrent. Transmissi
 curl \
     --request POST \
     --data-urlencode "path=<path to downloads>/$TR_TORRENT_NAME" \
-    "http://:<wrtag api key>@<wrtag host>/op/copy"
+    "https://:<wrtag api key>@<wrtag host>/op/copy"
 ```
 
 </details>
@@ -217,7 +217,34 @@ curl \
 <details>
 <summary><b>Example with <i>qBittorrent</i></b></summary>
 
-> TODO
+Create a script named `done.sh` or anything you like, and make it executable:
+`chmod +x done.sh`
+
+Open qBittorrent: `Tools` > `Options` > `Downloads` > `Run external program` > `Run on torrent finished`
+
+Set the path to the above `done.sh` and arguments such as
+
+```
+/path/to/done.sh "%L" "%R"
+```
+
+Edit done.sh
+
+```bash
+#!/bin/sh
+
+echo "category: $1"
+echo "path: $2"
+
+[ "$1" != "music" ] && exit
+
+curl \
+    --request POST \
+    --data-urlencode "path=$2" \
+    "https://:<wrtag api key>@<wrtag host>/op/copy"
+```
+
+Now any files downloaded to the **music** category will be copied and imported by wrtag.
 
 </details>
 
