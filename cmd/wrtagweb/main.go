@@ -21,6 +21,7 @@ import (
 	"net/url"
 	"os"
 	"os/signal"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -213,7 +214,7 @@ func main() {
 
 		useMBID := r.FormValue("mbid")
 		if strings.Contains(useMBID, "/") {
-			useMBID = filepath.Base(useMBID) // accept release URL
+			useMBID = path.Base(useMBID) // accept release URL
 		}
 
 		ctx := r.Context()
@@ -298,25 +299,25 @@ func main() {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		path := r.FormValue("path")
-		if path == "" {
+		pth := r.FormValue("path")
+		if pth == "" {
 			http.Error(w, "no path provided", http.StatusBadRequest)
 			return
 		}
-		if !filepath.IsAbs(path) {
+		if !filepath.IsAbs(pth) {
 			http.Error(w, "filepath not abs", http.StatusBadRequest)
 			return
 		}
-		path = filepath.Clean(path)
+		pth = filepath.Clean(pth)
 		useMBID := r.FormValue("mbid")
 		if strings.Contains(useMBID, "/") {
-			useMBID = filepath.Base(useMBID) // accept release URL
+			useMBID = path.Base(useMBID) // accept release URL
 		}
 
 		ctx := r.Context()
 
 		var job Job
-		if err := sqlb.ScanRow(ctx, db, &job, "insert into jobs (source_path, operation, use_mbid, time) values (?, ?, ?, ?) returning *", path, operationStr, useMBID, time.Now()); err != nil {
+		if err := sqlb.ScanRow(ctx, db, &job, "insert into jobs (source_path, operation, use_mbid, time) values (?, ?, ?, ?) returning *", pth, operationStr, useMBID, time.Now()); err != nil {
 			http.Error(w, fmt.Sprintf("error saving job: %v", err), http.StatusInternalServerError)
 			return
 		}
