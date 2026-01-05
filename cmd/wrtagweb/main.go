@@ -308,11 +308,15 @@ func main() {
 			return
 		}
 		path = filepath.Clean(path)
+		useMBID := r.FormValue("mbid")
+		if strings.Contains(useMBID, "/") {
+			useMBID = filepath.Base(useMBID) // accept release URL
+		}
 
 		ctx := r.Context()
 
 		var job Job
-		if err := sqlb.ScanRow(ctx, db, &job, "insert into jobs (source_path, operation, time) values (?, ?, ?) returning *", path, operationStr, time.Now()); err != nil {
+		if err := sqlb.ScanRow(ctx, db, &job, "insert into jobs (source_path, operation, use_mbid, time) values (?, ?, ?, ?) returning *", path, operationStr, useMBID, time.Now()); err != nil {
 			http.Error(w, fmt.Sprintf("error saving job: %v", err), http.StatusInternalServerError)
 			return
 		}

@@ -167,7 +167,7 @@ flowchart LR
 
 ### API
 
-Jobs are added to the queue with an HTTP request like `POST <wrtag.host>/op/<copy|move>` with form value `path=<absolute path to directory>`. The form value can be an `application/x-www-form-urlencoded` form body, or URL query parameter.
+Jobs are added to the queue with an HTTP request like `POST <wrtag.host>/op/<copy|move|reflink>` with form value `path=<absolute path to directory>`. Optional form value `mbid=<musicbrainz release URL>` can be supplied if you know your release. Both of the form values can be `application/x-www-form-urlencoded` form bodies, or URL query parameters.
 
 Authentication is done via a HTTP Basic authentication password **without a username**. The password is configured with the `web-api-key` config option.
 
