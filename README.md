@@ -167,7 +167,7 @@ flowchart LR
 
 ### API
 
-Jobs are added to the queue with an HTTP request like `POST <wrtag.host>/op/<copy|move|reflink>` with form value `path=<absolute path to directory>`. Optional form value `mbid=<musicbrainz release URL>` can be supplied if you know your release. Both of the form values can be `application/x-www-form-urlencoded` form bodies, or URL query parameters.
+Jobs are added to the queue with an HTTP request like `POST <wrtag.host>/op/<copy|move|reflink>` with form value `path=<absolute path to directory>`. Optional form value `mbid=<musicbrainz release URL>` can be supplied if you know your release as well as `confirm` if you really know your release. All of the form values can be sent in the HTML form body along with the `Content-Type` set to `application/x-www-form-urlencoded`, or as URL query parameters.
 
 The external API requires HTTP Basic authentication with `-web-api-key` as the password (no username). The web UI authentication is controlled by `-web-auth`: either `disabled`, or `basic-auth-from-api-key` (the default) which uses the same API key.
 
@@ -175,12 +175,38 @@ The external API requires HTTP Basic authentication with `-web-api-key` as the p
 > HTTP Basic Authentication is only as secure as the transport layer it runs on. Make sure `wrtagweb` is secured using TLS behind your reverse proxy.
 
 <details>
-<summary><b>Example with <i>cURL</i></b></summary>
+<summary><b>Examples with <i>cURL</i></b></summary>
 
-```console
+```bash
+# Copy release from path, attempt to match and tag. 
+# Requires manual confirmation through the web UI if the match score is insufficient.
 curl \
     --request POST \
     --data-urlencode "path=/path/to/the/release" \
+    "https://:my-api-key@wrtag.hostname/op/copy"
+
+# Reflink release from path to the destination directory, find the best match, and tag it.
+# Bypasses the match score check.
+curl \
+    --request POST \
+    --data-urlencode "path=/path/to/the/release" \
+    --data-urlencode "confirm=true" \
+    "https://:my-api-key@wrtag.hostname/op/reflink"
+
+# Move release from path using a specific MBID. 
+# Requires manual confirmation if the file match score is insufficient.
+curl \
+    --request POST \
+    --data-urlencode "path=/path/to/the/release" \
+    --data-urlencode "mbid=https://musicbrainz.org/release/d800f372-9673-4edf-8046-8baf79134257" \
+    "https://:my-api-key@wrtag.hostname/op/move"
+
+# Copy release from path and force-tag with the supplied MBID.
+curl \
+    --request POST \
+    --data-urlencode "path=/path/to/the/release" \
+    --data-urlencode "mbid=https://musicbrainz.org/release/d800f372-9673-4edf-8046-8baf79134257" \
+    --data-urlencode "confirm=true" \
     "https://:my-api-key@wrtag.hostname/op/copy"
 ```
 
