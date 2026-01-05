@@ -330,11 +330,12 @@ func main() {
 		if strings.Contains(useMBID, "/") {
 			useMBID = path.Base(useMBID) // accept release URL
 		}
+		confirm, _ := strconv.ParseBool(r.FormValue("confirm"))
 
 		ctx := r.Context()
 
 		var job Job
-		if err := sqlb.ScanRow(ctx, db, &job, "insert into jobs (source_path, operation, use_mbid, time) values (?, ?, ?, ?) returning *", pth, operationStr, useMBID, time.Now()); err != nil {
+		if err := sqlb.ScanRow(ctx, db, &job, "insert into jobs (source_path, operation, use_mbid, confirm, time) values (?, ?, ?, ?, ?) returning *", pth, operationStr, useMBID, confirm, time.Now()); err != nil {
 			http.Error(w, fmt.Sprintf("error saving job: %v", err), http.StatusInternalServerError)
 			return
 		}
