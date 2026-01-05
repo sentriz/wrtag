@@ -71,8 +71,8 @@ github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD
 github.com/tetratelabs/wazero v1.11.0 h1:+gKemEuKCTevU4d7ZTzlsvgd1uaToIDtlQlmNbwqYhA=
 github.com/tetratelabs/wazero v1.11.0/go.mod h1:eV28rsN8Q+xwjogd7f4/Pp4xFxO7uOGbLcD/LzB1wiU=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
-go.senan.xyz/flagconf v0.1.10 h1:IGWaX9z4uh03xopYJSwpw1u0KrwRWs8vDmFjaULFH3U=
-go.senan.xyz/flagconf v0.1.10/go.mod h1:NqOFfSwJvNWXOTUabcRZ8mPK9+sJmhStJhqtEt74wNQ=
+go.senan.xyz/flagconf v0.1.11 h1:ApA9DpoSrfVQlLt8spKJC3fOT7oTEZ2/MmBGMnb9mt4=
+go.senan.xyz/flagconf v0.1.11/go.mod h1:NqOFfSwJvNWXOTUabcRZ8mPK9+sJmhStJhqtEt74wNQ=
 go.senan.xyz/natcmp v0.1.2 h1:ko7umA435ZyrNtNZeAvBOWzxct9RaXdie7XC1rWhD84=
 go.senan.xyz/natcmp v0.1.2/go.mod h1:OuIIjIsyj2PwVqCtfzqTeplsZhSXGjm4okZei78Bck4=
 go.senan.xyz/sqlb v0.3.11 h1:uSfFZmtiUUyPddAYf/1rJqcgZIMeONagIxBWlmYyO9w=

@@ -169,7 +169,7 @@ flowchart LR
 
 Jobs are added to the queue with an HTTP request like `POST <wrtag.host>/op/<copy|move|reflink>` with form value `path=<absolute path to directory>`. Optional form value `mbid=<musicbrainz release URL>` can be supplied if you know your release. Both of the form values can be `application/x-www-form-urlencoded` form bodies, or URL query parameters.
 
-Authentication is done via a HTTP Basic authentication password **without a username**. The password is configured with the `web-api-key` config option.
+The external API requires HTTP Basic authentication with `-web-api-key` as the password (no username). The web UI authentication is controlled by `-web-auth`: either `disabled`, or `basic-auth-from-api-key` (the default) which uses the same API key.
 
 > [!WARNING]
 > HTTP Basic Authentication is only as secure as the transport layer it runs on. Make sure `wrtagweb` is secured using TLS behind your reverse proxy.
@@ -271,13 +271,14 @@ Configuration for `wrtagweb` works the same as [Global configuration](#global-co
 
 <!-- gen with ```go run ./cmd/wrtagweb -h 2>&1 | ./gen-docs | wl-copy``` -->
 
-| CLI argument     | Environment variable  | Config file key | Description                                                   |
-| ---------------- | --------------------- | --------------- | ------------------------------------------------------------- |
-| -web-api-key     | WRTAG_WEB_API_KEY     | web-api-key     | API key for web interface                                     |
-| -web-db-path     | WRTAG_WEB_DB_PATH     | web-db-path     | Path to persistent database path for web interface (optional) |
-| -web-listen-addr | WRTAG_WEB_LISTEN_ADDR | web-listen-addr | Listen address for web interface (optional) (default ":7373") |
-| -web-num-workers | WRTAG_WEB_NUM_WORKERS | web-num-workers | Number of directories to process concurrently                 |
-| -web-public-url  | WRTAG_WEB_PUBLIC_URL  | web-public-url  | Public URL for web interface (optional)                       |
+| CLI argument     | Environment variable  | Config file key | Description                                                                                                      |
+| ---------------- | --------------------- | --------------- | ---------------------------------------------------------------------------------------------------------------- |
+| -web-api-key     | WRTAG_WEB_API_KEY     | web-api-key     | Key for external API endpoints                                                                                   |
+| -web-auth        | WRTAG_WEB_AUTH        | web-auth        | Authentication mode, one of "disabled", "basic-auth-from-api-key" (optional) (default "basic-auth-from-api-key") |
+| -web-db-path     | WRTAG_WEB_DB_PATH     | web-db-path     | Path to persistent database path for web interface (optional)                                                    |
+| -web-listen-addr | WRTAG_WEB_LISTEN_ADDR | web-listen-addr | Listen address for web interface (optional) (default ":7373")                                                    |
+| -web-num-workers | WRTAG_WEB_NUM_WORKERS | web-num-workers | Number of directories to process concurrently (default 4)                                                        |
+| -web-public-url  | WRTAG_WEB_PUBLIC_URL  | web-public-url  | Public URL for web interface (optional)                                                                          |
 
 ## Tool `metadata`
 

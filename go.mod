@@ -16,7 +16,7 @@ require (
 	github.com/rogpeppe/go-internal v1.14.1
 	github.com/sergi/go-diff v1.4.0
 	github.com/stretchr/testify v1.11.1
-	go.senan.xyz/flagconf v0.1.10
+	go.senan.xyz/flagconf v0.1.11
 	go.senan.xyz/natcmp v0.1.2
 	go.senan.xyz/sqlb v0.3.11
 	go.senan.xyz/table v0.0.0-20251023151529-96acc7f0ad6c

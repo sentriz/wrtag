@@ -65,7 +65,8 @@ func main() {
 		cfg                 = wrtagflag.Config()
 		notifs              = wrtagflag.Notifications()
 		researchLinkQuerier = wrtagflag.ResearchLinks()
-		apiKey              = flag.String("web-api-key", "", "API key for web interface")
+		apiKey              = flag.String("web-api-key", "", "Key for external API endpoints")
+		auth                = flag.String("web-auth", string(authBasicFromAPIKey), "Authentication mode, one of \"disabled\", \"basic-auth-from-api-key\" (optional)")
 		listenAddr          = flag.String("web-listen-addr", ":7373", "Listen address for web interface (optional)")
 		dbPath              = flag.String("web-db-path", "", "Path to persistent database path for web interface (optional)")
 		publicURL           = flag.String("web-public-url", "", "Public URL for web interface (optional)")
@@ -84,6 +85,13 @@ func main() {
 	}
 	if *listenAddr == "" {
 		slog.Error("need a listen addr")
+		return
+	}
+
+	switch ath := authMode(*auth); ath {
+	case authDisabled, authBasicFromAPIKey:
+	default:
+		slog.Error("unknown auth mode", "value", ath)
 		return
 	}
 
@@ -292,8 +300,17 @@ func main() {
 
 	mux.Handle("/", http.FileServer(http.FS(ui)))
 
+	mux.HandleFunc("GET /debug/pprof/", pprof.Index)
+	mux.HandleFunc("GET /debug/pprof/*", pprof.Index)
+	mux.HandleFunc("GET /debug/pprof/cmdline", pprof.Cmdline)
+	mux.HandleFunc("GET /debug/pprof/profile", pprof.Profile)
+	mux.HandleFunc("GET /debug/pprof/symbol", pprof.Symbol)
+	mux.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
+
 	// external API
-	mux.HandleFunc("POST /op/{operation}", func(w http.ResponseWriter, r *http.Request) {
+	muxExternal := http.NewServeMux()
+
+	muxExternal.HandleFunc("POST /op/{operation}", func(w http.ResponseWriter, r *http.Request) {
 		operationStr := r.PathValue("operation")
 		if _, err := wrtagflag.OperationByName(operationStr, false); err != nil {
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -326,13 +343,6 @@ func main() {
 		jobQueue <- job.ID
 	})
 
-	mux.HandleFunc("GET /debug/pprof/", pprof.Index)
-	mux.HandleFunc("GET /debug/pprof/*", pprof.Index)
-	mux.HandleFunc("GET /debug/pprof/cmdline", pprof.Cmdline)
-	mux.HandleFunc("GET /debug/pprof/profile", pprof.Profile)
-	mux.HandleFunc("GET /debug/pprof/symbol", pprof.Symbol)
-	mux.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
-
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	errgrp, ctx := errgroup.WithContext(ctx)
@@ -340,9 +350,12 @@ func main() {
 	errgrp.Go(func() error {
 		defer logJob("http", "addr", *listenAddr)()
 
+		m := http.NewServeMux()
+		m.Handle("/", authMiddleware(mux, authMode(*auth), *apiKey))
+		m.Handle("/op/", apiKeyMiddleware(muxExternal, *apiKey))
+
 		var h http.Handler
-		h = mux
-		h = authMiddleware(h, *apiKey)
+		h = m
 		h = logMiddleware(h)
 
 		server := &http.Server{
@@ -599,9 +612,24 @@ func logJob(jobName string, args ...any) func() {
 	return func() { slog.Info("stopping job", "job", jobName) }
 }
 
+type authMode string
+
+const (
+	authDisabled        authMode = "disabled"
+	authBasicFromAPIKey authMode = "basic-auth-from-api-key" //nolint:gosec
+)
+
 const cookieKey = "api-key"
 
-func authMiddleware(next http.Handler, apiKey string) http.Handler {
+func authMiddleware(next http.Handler, mode authMode, apiKey string) http.Handler {
+	switch mode {
+	case authDisabled:
+		return next
+	case authBasicFromAPIKey:
+	default:
+		panic("invalid mode")
+	}
+
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// exchange a valid basic auth request for a cookie that lasts 30 days
 		if cookie, _ := r.Cookie(cookieKey); cookie != nil && subtle.ConstantTimeCompare([]byte(cookie.Value), []byte(apiKey)) == 1 {
@@ -614,6 +642,16 @@ func authMiddleware(next http.Handler, apiKey string) http.Handler {
 			return
 		}
 		w.Header().Set("WWW-Authenticate", `Basic realm="restricted", charset="UTF-8"`)
+		http.Error(w, "unauthorised", http.StatusUnauthorized)
+	})
+}
+
+func apiKeyMiddleware(next http.Handler, apiKey string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, key, _ := r.BasicAuth(); subtle.ConstantTimeCompare([]byte(key), []byte(apiKey)) == 1 {
+			next.ServeHTTP(w, r)
+			return
+		}
 		http.Error(w, "unauthorised", http.StatusUnauthorized)
 	})
 }
