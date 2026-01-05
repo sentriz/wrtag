@@ -181,7 +181,6 @@ Authentication is done via a HTTP Basic authentication password **without a user
 curl \
     --request POST \
     --data-urlencode "path=/path/to/the/release" \
-    --data-urlencode "mbid=https://musicbrainz.org/release/d800f372-9673-4edf-8046-8baf79134257" \
     "https://:my-api-key@wrtag.hostname/op/copy"
 ```
 
