@@ -142,7 +142,7 @@ func TestArtistEnName(t *testing.T) {
 	t.Run("returns non-primary non-ended English alias when no primary exists", func(t *testing.T) {
 		t.Parallel()
 		artist := Artist{
-			Name: "Native Name",
+			Name: "ネイティブ名",
 			Aliases: []Alias{
 				{Name: "English Name", Locale: "en", Primary: false, Ended: false},
 			},
@@ -187,12 +187,23 @@ func TestArtistEnName(t *testing.T) {
 	t.Run("prioritizes primary over non-primary even if non-primary appears first", func(t *testing.T) {
 		t.Parallel()
 		artist := Artist{
-			Name: "Native Name",
+			Name: "ネイティブ名",
 			Aliases: []Alias{
 				{Name: "Non-Primary English", Locale: "en", Primary: false, Ended: false},
 				{Name: "Primary English", Locale: "en", Primary: true, Ended: false},
 			},
 		}
 		assert.Equal(t, "Primary English", artistEnName(artist))
+	})
+
+	t.Run("returns Latin name directly without checking aliases", func(t *testing.T) {
+		t.Parallel()
+		artist := Artist{
+			Name: "Chris Brown",
+			Aliases: []Alias{
+				{Name: "Christopher Maurice Brown", Locale: "en", Primary: true, Ended: false},
+			},
+		}
+		assert.Equal(t, "Chris Brown", artistEnName(artist))
 	})
 }

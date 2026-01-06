@@ -17,6 +17,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/araddon/dateparse"
 	"go.senan.xyz/wrtag/clientutil"
@@ -434,6 +435,15 @@ func ArtistsSortString(sorts []ArtistCredit) string {
 const enLocale = "en"
 
 func artistEnName(artist Artist) string {
+	// Sometimes there exists English locale aliases for artists whose name is already
+	// in English. eg. "James Brown" -> "James Joseph Brown". In those cases we'd prefer
+	// to use the orignal name.
+	// Since MusicBrainz can't tell us the locale of the artist name, we guess by looking at the
+	// alphabet used. If so, use the orignal name.
+	if isLatin(artist.Name) {
+		return artist.Name
+	}
+
 	for _, a := range artist.Aliases {
 		if a.Locale == enLocale && a.Primary && !a.Ended {
 			return a.Name
@@ -597,3 +607,15 @@ func joinPath(base string, p ...string) string {
 }
 
 var uuidExpr = regexp.MustCompile(`(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$`)
+
+func isLatin(s string) bool {
+	for _, r := range s {
+		if !unicode.IsLetter(r) {
+			continue
+		}
+		if !unicode.In(r, unicode.Latin) {
+			return false
+		}
+	}
+	return true
+}
