@@ -402,8 +402,8 @@ services:
       - WRTAG_WEB_PUBLIC_URL=https://wrtag.example.com
       - WRTAG_WEB_DB_PATH=/data/wrtag.db
       - WRTAG_LOG_LEVEL=debug
+      - WRTAG_PATH_FORMAT=/path/to/music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .TrackNum }}.{{ len .Tracks | pad0 2 }} {{ if .IsCompilation }}{{ artistsString .Track.Artists | safepath }} - {{ end }}{{ .Track.Title | safepath }}{{ .Ext }}
       # add more config options, like mentioned in "Global configuration" docs
-      # - WRTAG_PATH_FORMAT=...
       # - WRTAG_ADDON=...,...
       # - WRTAG_RESEARCH_LINK=...,...
       # or, use the config file if you use wrtag outside the container. make sure to add it to `volumes:` too
