@@ -178,7 +178,7 @@ The external API requires HTTP Basic authentication with `-web-api-key` as the p
 <summary><b>Examples with <i>cURL</i></b></summary>
 
 ```bash
-# Copy release from path, attempt to match and tag. 
+# Copy release from path, attempt to match and tag.
 # Requires manual confirmation through the web UI if the match score is insufficient.
 curl \
     --request POST \
@@ -193,7 +193,7 @@ curl \
     --data-urlencode "confirm=true" \
     "https://:my-api-key@wrtag.hostname/op/reflink"
 
-# Move release from path using a specific MBID. 
+# Move release from path using a specific MBID.
 # Requires manual confirmation if the file match score is insufficient.
 curl \
     --request POST \
@@ -397,13 +397,13 @@ services:
     environment:
       # - PUID=1000 # optional user id for wrtag process
       # - PGID=1000 # optional group id for wrtag process
-      - WRTAG_WEB_API_KEY= # change this
-      - WRTAG_WEB_LISTEN_ADDR=:80
+      - WRTAG_PATH_FORMAT= # required, see "Path format" docs section
+      - WRTAG_WEB_API_KEY= # required
+      - WRTAG_WEB_LISTEN_ADDR=:80 # required
       - WRTAG_WEB_PUBLIC_URL=https://wrtag.example.com
       - WRTAG_WEB_DB_PATH=/data/wrtag.db
       - WRTAG_LOG_LEVEL=debug
-      # add more config options, like mentioned in "Global configuration" docs
-      # - WRTAG_PATH_FORMAT=...
+      # add more config options, like mentioned in "Global configuration" docs section
       # - WRTAG_ADDON=...,...
       # - WRTAG_RESEARCH_LINK=...,...
       # or, use the config file if you use wrtag outside the container. make sure to add it to `volumes:` too
