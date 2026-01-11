@@ -297,14 +297,15 @@ func ProcessDir(
 		}
 	}
 
-	if err := processCover(ctx, cfg, op, dc, release, destDir, cover); err != nil {
+	destCover, err := processCover(ctx, cfg, op, dc, release, destDir, cover)
+	if err != nil {
 		return nil, fmt.Errorf("process cover: %w", err)
 	}
 
 	// process addons with new files
 	if op.CanModifyDest() {
 		for _, addon := range cfg.Addons {
-			if err := addon.ProcessRelease(ctx, destPaths); err != nil {
+			if err := addon.ProcessRelease(ctx, destCover, destPaths); err != nil {
 				return nil, fmt.Errorf("process addon: %w", err)
 			}
 		}
@@ -1001,7 +1002,7 @@ const maxCoverSizeBytes = 8 * 1024 * 1024 // 8 MiB
 func processCover(
 	ctx context.Context, cfg *Config,
 	op FileSystemOperation, dc DirContext, release *musicbrainz.Release, destDir string, cover string,
-) error {
+) (string, error) {
 	coverPath := func(p string) string {
 		return filepath.Join(destDir, "cover"+filepath.Ext(p))
 	}
@@ -1024,23 +1025,26 @@ func processCover(
 
 		coverTmp, err := tryDownloadMusicBrainzCover(ctx, &cfg.CoverArtArchiveClient, release, skipFunc)
 		if err != nil {
-			return fmt.Errorf("maybe fetch better cover: %w", err)
+			return "", fmt.Errorf("maybe fetch better cover: %w", err)
 		}
 		if coverTmp != "" {
-			if err := (Move{}).ProcessPath(ctx, dc, coverTmp, coverPath(coverTmp)); err != nil {
-				return fmt.Errorf("move new cover to dest: %w", err)
+			destCover := coverPath(coverTmp)
+			if err := (Move{}).ProcessPath(ctx, dc, coverTmp, destCover); err != nil {
+				return "", fmt.Errorf("move new cover to dest: %w", err)
 			}
-			return nil
+			return destCover, nil
 		}
 	}
 
 	// process any existing cover if we didn't fetch (or find) any from musicbrainz
 	if cover != "" {
-		if err := op.ProcessPath(ctx, dc, cover, coverPath(cover)); err != nil {
-			return fmt.Errorf("move file to dest: %w", err)
+		destCover := coverPath(cover)
+		if err := op.ProcessPath(ctx, dc, cover, destCover); err != nil {
+			return "", fmt.Errorf("move file to dest: %w", err)
 		}
+		return destCover, nil
 	}
-	return nil
+	return "", nil
 }
 
 func tryDownloadMusicBrainzCover(ctx context.Context, caa *musicbrainz.CAAClient, release *musicbrainz.Release, skipFunc func(*http.Response) bool) (string, error) {

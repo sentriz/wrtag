@@ -46,7 +46,7 @@ func (a MusicDescAddon) Check() error {
 	return nil
 }
 
-func (a MusicDescAddon) ProcessRelease(ctx context.Context, paths []string) error {
+func (a MusicDescAddon) ProcessRelease(ctx context.Context, cover string, paths []string) error {
 	if len(paths) == 0 {
 		return nil
 	}

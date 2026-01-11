@@ -44,7 +44,7 @@ func (l LyricsAddon) Check() error {
 	return nil
 }
 
-func (l LyricsAddon) ProcessRelease(ctx context.Context, paths []string) error {
+func (l LyricsAddon) ProcessRelease(ctx context.Context, cover string, paths []string) error {
 	var wg sync.WaitGroup
 
 	var pathErrs = make([]error, len(paths))

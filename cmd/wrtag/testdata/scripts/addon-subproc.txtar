@@ -1,9 +1,9 @@
 env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
 env WRTAG_LOG_LEVEL=debug
-env WRTAG_ADDON='subproc sh -c "true", subproc sh echo-script out <directory> -- <files>'
+env WRTAG_ADDON='subproc sh -c "true", subproc sh echo-script out <directory> <cover> <files>'
 
 exec wrtag -config
-stdout 'addon.*subproc \("sh" "-c" "true"\), subproc \("sh" "echo-script" "out" "<directory>" "--" "<files>"\)'
+stdout 'addon.*subproc \("sh" "-c" "true"\), subproc \("sh" "echo-script" "out" "<directory>" "<cover>" "<files>"\)'
 
 exec tag write 'kat_moda/1.flac'
 exec tag write 'kat_moda/2.flac'
@@ -16,14 +16,19 @@ cmp out exp-out
 -- echo-script --
 out="$1"
 shift
-echo "got $# files" >"$out"
+echo "dir ${1#$PWD/}" >>"$out"
+shift
+echo "cover ${1#$PWD/}" >>"$out"
+shift
+echo "file count $#" >>"$out"
 for f in "$@"; do
-    echo "${f#$PWD/}" >>"$out"
+    echo "file ${f#$PWD/}" >>"$out"
 done
+
 -- exp-out --
-got 5 files
-albums/Kat Moda
---
-albums/Kat Moda/1.flac
-albums/Kat Moda/2.flac
-albums/Kat Moda/3.flac
+dir albums/Kat Moda
+cover albums/Kat Moda/cover.jpg
+file count 3
+file albums/Kat Moda/1.flac
+file albums/Kat Moda/2.flac
+file albums/Kat Moda/3.flac

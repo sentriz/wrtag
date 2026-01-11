@@ -39,6 +39,7 @@ func NewSubprocAddon(conf string) (SubprocAddon, error) {
 }
 
 const (
+	markerCover     = "<cover>"
 	markerFiles     = "<files>"
 	markerDirectory = "<directory>"
 )
@@ -50,7 +51,7 @@ func (s SubprocAddon) Check() error {
 	return nil
 }
 
-func (s SubprocAddon) ProcessRelease(ctx context.Context, paths []string) error {
+func (s SubprocAddon) ProcessRelease(ctx context.Context, cover string, paths []string) error {
 	var pathsDirectory string
 	for _, path := range paths {
 		pd := filepath.Dir(path)
@@ -63,6 +64,8 @@ func (s SubprocAddon) ProcessRelease(ctx context.Context, paths []string) error 
 	var args []string
 	for _, arg := range s.args {
 		switch arg {
+		case markerCover:
+			args = append(args, cover)
 		case markerFiles:
 			args = append(args, paths...)
 		case markerDirectory:
