@@ -1,0 +1,30 @@
+exec tag write kat_moda/01.flac title 'Alarms'
+exec tag write kat_moda/02.flac title 'The Bells'
+exec tag write kat_moda/03.flac title 'The Bells (Festival mix)'
+
+exec tag write kat_moda/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+exec tag write kat_moda/*.flac album               'Kat Moda'
+exec tag write kat_moda/*.flac albumartist         'Jeff Mills'
+exec tag write kat_moda/*.flac label               'Purpose Maker'
+exec tag write kat_moda/*.flac catalognumber       'PMD002'
+exec tag write kat_moda/*.flac media               'Digital Media'
+
+exec touch kat_moda/folder.PNG
+
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+
+exec wrtag move -yes kat_moda/
+
+exec find albums/
+cmp stdout exp-layout
+
+! exists 'albums/Kat Moda/cover.PNG'
+exists 'albums/Kat Moda/cover.png'
+
+-- exp-layout --
+albums
+albums/Kat Moda
+albums/Kat Moda/1.flac
+albums/Kat Moda/2.flac
+albums/Kat Moda/3.flac
+albums/Kat Moda/cover.png

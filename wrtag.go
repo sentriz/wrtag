@@ -1004,7 +1004,8 @@ func processCover(
 	op FileSystemOperation, dc DirContext, release *musicbrainz.Release, destDir string, cover string,
 ) (string, error) {
 	coverPath := func(p string) string {
-		return filepath.Join(destDir, "cover"+filepath.Ext(p))
+		ext := strings.ToLower(filepath.Ext(p))
+		return filepath.Join(destDir, "cover"+ext)
 	}
 
 	if op.CanModifyDest() && (cover == "" || cfg.UpgradeCover) {
@@ -1078,7 +1079,7 @@ func tryDownloadMusicBrainzCover(ctx context.Context, caa *musicbrainz.CAAClient
 		return "", nil
 	}
 
-	ext := path.Ext(coverURL)
+	ext := strings.ToLower(path.Ext(coverURL))
 	tmpf, err := os.CreateTemp("", ".wrtag-cover-tmp-*"+ext)
 	if err != nil {
 		return "", fmt.Errorf("mktmp: %w", err)
