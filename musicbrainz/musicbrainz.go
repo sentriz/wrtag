@@ -432,8 +432,6 @@ func ArtistsSortString(sorts []ArtistCredit) string {
 	return sb.String()
 }
 
-const enLocale = "en"
-
 func artistEnName(artist Artist) string {
 	// Sometimes there exists English locale aliases for artists whose name is already
 	// in English. eg. "James Brown" -> "James Joseph Brown". In those cases we'd prefer
@@ -445,16 +443,22 @@ func artistEnName(artist Artist) string {
 	}
 
 	for _, a := range artist.Aliases {
-		if a.Locale == enLocale && a.Primary && !a.Ended {
+		if isEnLocale(a.Locale) && a.Primary && !a.Ended {
 			return a.Name
 		}
 	}
 	for _, a := range artist.Aliases {
-		if a.Locale == enLocale && !a.Ended {
+		if isEnLocale(a.Locale) && !a.Ended {
 			return a.Name
 		}
 	}
 	return artist.Name
+}
+
+const enLocale = "en"
+
+func isEnLocale(locale string) bool {
+	return locale == enLocale || strings.HasPrefix(locale, enLocale+"_")
 }
 
 // https://musicbrainz.org/artist/89ad4ac3-39f7-470e-963a-56509c5463
