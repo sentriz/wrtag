@@ -1,5 +1,38 @@
 # Changelog
 
+## [0.20.0](https://github.com/sentriz/wrtag/compare/v0.19.0...v0.20.0) (2026-01-12)
+
+
+### Features
+
+* **addon:** add `<cover>` marker for subproc ([7500d2f](https://github.com/sentriz/wrtag/commit/7500d2ff8edefb33283a46d1821a3bcb74ebc290)), closes [#190](https://github.com/sentriz/wrtag/issues/190)
+* **addon:** add `<directory>` marker for subproc ([422f373](https://github.com/sentriz/wrtag/commit/422f37341b5fdc405c4950d670b3879fd0821d13)), closes [#185](https://github.com/sentriz/wrtag/issues/185)
+* **ci:** bump golangci-lint ([522b1da](https://github.com/sentriz/wrtag/commit/522b1da46a47bfcff1ecb78739dc0b3e653b9b17))
+* **ci:** test with race detector ([2ffca78](https://github.com/sentriz/wrtag/commit/2ffca78ab64e8c02b710c59300fafc6e29f4bcf3))
+* **musicbrainz:** support country specific english locales ([6c1349d](https://github.com/sentriz/wrtag/commit/6c1349df406bb4816a292db00c13339305ad8bd2))
+* **wrtag:** output covers with lowercase extension ([40c2029](https://github.com/sentriz/wrtag/commit/40c20297715d27b340b4bfa76be4575510f6d323)), closes [#198](https://github.com/sentriz/wrtag/issues/198)
+* **wrtag:** set 30s timeout for searching releases ([59792fa](https://github.com/sentriz/wrtag/commit/59792fa457b21644509a3b2cc12164a76b072769))
+* **wrtagweb:** add web-auth flag to control interface authentication ([a987111](https://github.com/sentriz/wrtag/commit/a98711115d671bfb090908558a9edca5bd3048e4)), closes [#172](https://github.com/sentriz/wrtag/issues/172) [#170](https://github.com/sentriz/wrtag/issues/170)
+* **wrtagweb:** add web-num-workers option ([1fb6caf](https://github.com/sentriz/wrtag/commit/1fb6caf0320a707cd97e9cd1e4902489d92918c5))
+* **wrtagweb:** log when cover download will be skipped ([9d94da1](https://github.com/sentriz/wrtag/commit/9d94da11f10044ea42d9ce9dfa661ad56381d085))
+* **wrtagweb:** reduce database polling ([8f9f434](https://github.com/sentriz/wrtag/commit/8f9f4343dd2b933ee33e999fc6094ba4fdecf55a)), closes [#169](https://github.com/sentriz/wrtag/issues/169)
+* **wrtagweb:** show `enqueued` jobs in a different colour ([6232aa5](https://github.com/sentriz/wrtag/commit/6232aa57d421a7badef2693bb90d619a7df5590f))
+* **wrtagweb:** support optional parameter confirm in /op/{operation} ([#192](https://github.com/sentriz/wrtag/issues/192)) ([7db028e](https://github.com/sentriz/wrtag/commit/7db028eb05f4d96b28318808497e652938a9fa32))
+* **wrtagweb:** support optional parameter mbid in /op/{operation} ([#191](https://github.com/sentriz/wrtag/issues/191)) ([2bb0b60](https://github.com/sentriz/wrtag/commit/2bb0b60fe9ecca72baf0791e06acdac213ef210b))
+* **wrtag:** write multi valued RELEASETYPE, write COMPILATION only if VA ([c67655b](https://github.com/sentriz/wrtag/commit/c67655b0d4e42de7ba3210e25ecf624f4fc36051)), closes [#183](https://github.com/sentriz/wrtag/issues/183)
+
+
+### Bug Fixes
+
+* **essentia:** ignore warnings in stdout ([50a302b](https://github.com/sentriz/wrtag/commit/50a302b58ae8f63beb017f7e9ef93b7c454fa85a)), closes [#180](https://github.com/sentriz/wrtag/issues/180)
+* **musicbrainz:** artistEnName should pick primary alias first, and not pick ended aliases ([#179](https://github.com/sentriz/wrtag/issues/179)) ([77e707b](https://github.com/sentriz/wrtag/commit/77e707b264592d9ad897f0e3dabf3556d54a38d7))
+* **musicbrainz:** check non 2xx when downloading cover ([753a634](https://github.com/sentriz/wrtag/commit/753a634368ea0c44a10adb75d4c117765126cfe9))
+* **musicbrainz:** filter Blu-ray media in FlatTracks ([#174](https://github.com/sentriz/wrtag/issues/174)) ([0b89f40](https://github.com/sentriz/wrtag/commit/0b89f403c0e46bcf7b11b6bfef8f202835692e6a))
+* **test:** use portable realpath ([17c8b9a](https://github.com/sentriz/wrtag/commit/17c8b9a448cce59913e6bd2bcd2fe34addb0a1ee))
+* **wrtag:** use original artist name in artistEnName if original uses latin script ([4c385b4](https://github.com/sentriz/wrtag/commit/4c385b4f8ef4058b56c9bc121634a481a359c525)), closes [#179](https://github.com/sentriz/wrtag/issues/179)
+* **wrtagweb:** debounce SSE events ([69532c4](https://github.com/sentriz/wrtag/commit/69532c4e2b40643789859b3ca71aa6b87de91f60))
+* **wrtagweb:** only try DestDir when job error is non fatal ([ae2741e](https://github.com/sentriz/wrtag/commit/ae2741ee1076d620a3ef6df84b755e336af818d7)), closes [#188](https://github.com/sentriz/wrtag/issues/188)
+
 ## [0.19.0](https://github.com/sentriz/wrtag/compare/v0.18.0...v0.19.0) (2025-10-09)
 
 
