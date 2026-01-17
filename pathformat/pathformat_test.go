@@ -24,7 +24,7 @@ func TestValidation(t *testing.T) {
 
 	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}`), pathformat.ErrAmbiguousFormat)
 	require.ErrorIs(t, pf.Parse(`/albums/test/{{ .Track.Title }}`), pathformat.ErrAmbiguousFormat)
-	require.ErrorIs(t, pf.Parse(`/albums/test/{{ .TrackNum }}`), pathformat.ErrAmbiguousFormat)
+	require.ErrorIs(t, pf.Parse(`/albums/test/{{ .Track.Position }}`), pathformat.ErrAmbiguousFormat)
 
 	// bad data
 	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.ID }}/`), pathformat.ErrBadData)                   // test case is missing ID
@@ -33,7 +33,7 @@ func TestValidation(t *testing.T) {
 	require.ErrorIs(t, pf.Parse(`/albums/test/{{ .Track.ID }}/`), pathformat.ErrBadData)                                                               //
 
 	// good
-	require.NoError(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}/{{ .TrackNum }}`))
+	require.NoError(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}/{{ .Track.Position }}`))
 	assert.Equal(t, "/albums/test", pf.Root())
 }
 
@@ -61,11 +61,12 @@ func TestPathFormat(t *testing.T) {
 			Tracks: []musicbrainz.Track{
 				track,
 			},
+			TrackCount: 1,
 		}},
 	}
 
 	var pf pathformat.Format
-	require.NoError(t, pf.Parse(`/music/albums/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .TrackNum }}.{{ len .Tracks | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}`))
+	require.NoError(t, pf.Parse(`/music/albums/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}`))
 
 	path, err := pf.Execute(release, 0, ".flac")
 	require.NoError(t, err)
@@ -77,7 +78,7 @@ func TestPathFormat(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, `/music/albums/Luke Vibert/(2018) Valvable (Deluxe Edition)/01.01 Sharon's Tone.flac`, path)
 
-	require.NoError(t, pf.Parse(`/music/albums/{{ artists .Release.Artists | the | sort | join "; " | safepath }}/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}`))
+	require.NoError(t, pf.Parse(`/music/albums/{{ artists .Release.Artists | the | sort | join "; " | safepath }}/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}`))
 
 	release.Artists[0].Artist.Name = "A House"
 

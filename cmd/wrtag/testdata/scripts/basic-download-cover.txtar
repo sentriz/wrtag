@@ -10,7 +10,7 @@ exec tag write kat_moda/*.flac label               'purpose maker'
 exec tag write kat_moda/*.flac catalognumber       'PMD002'
 exec tag write kat_moda/*.flac media               'digital media'
 
-env WRTAG_PATH_FORMAT='albums/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ pad0 2 .TrackNum }}.{{ len .Tracks | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}'
 
 # we exit if score too low
 ! exec wrtag move kat_moda/

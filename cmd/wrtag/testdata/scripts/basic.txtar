@@ -14,7 +14,7 @@ exec touch kat_moda/Folder!!.png
 exec touch kat_moda/c!!!ccCoveraaaaa.png
 exec touch kat_moda/artist.png
 
-env WRTAG_PATH_FORMAT='albums/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ pad0 2 .TrackNum }}.{{ len .Tracks | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}'
 
 # we exit if score too low
 ! exec wrtag move kat_moda/

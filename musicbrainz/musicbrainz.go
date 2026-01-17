@@ -471,29 +471,41 @@ func IsCompilation(rg ReleaseGroup) bool {
 	})
 }
 
-func FlatTracks(media []Media) []Track {
+// TODO: move out of here, this is not really MusicBrainz specific
+func FlatTracks(media []Media) []TrackWithMedia {
 	var numTracks int
 	for _, media := range media {
 		numTracks += len(media.Tracks)
 	}
 
-	tracks := make([]Track, 0, numTracks)
+	tracks := make([]TrackWithMedia, 0, numTracks)
 	for _, media := range media {
 		if strings.Contains(media.Format, "DVD") || strings.Contains(media.Format, "Blu-ray") {
 			// not supported for now
 			continue
 		}
 		if media.Pregap != nil {
-			tracks = append(tracks, *media.Pregap)
+			tracks = append(tracks, TrackWithMedia{
+				Track: *media.Pregap,
+				Media: media,
+			})
 		}
 		for _, track := range media.Tracks {
 			if track.Recording.Video {
 				continue
 			}
-			tracks = append(tracks, track)
+			tracks = append(tracks, TrackWithMedia{
+				Track: track,
+				Media: media,
+			})
 		}
 	}
 	return tracks
+}
+
+type TrackWithMedia struct {
+	Track Track
+	Media Media
 }
 
 type GenreInfo struct {
@@ -510,7 +522,7 @@ func AnyGenres(release *Release) (genres []Genre) {
 	genres = append(genres, release.Genres...)
 	genres = append(genres, release.ReleaseGroup.Genres...)
 	for _, t := range FlatTracks(release.Media) {
-		genres = append(genres, t.Recording.Genres...)
+		genres = append(genres, t.Track.Recording.Genres...)
 	}
 
 	// add some artist genres too

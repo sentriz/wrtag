@@ -1,5 +1,5 @@
 env WRTAG_LOG_LEVEL=debug
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 
 exec tag write 'albums/Kat Moda/1.flac'
 exec tag write 'albums/Kat Moda/2.flac'

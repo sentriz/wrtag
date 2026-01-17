@@ -72,33 +72,10 @@ func (pf *Format) Execute(release *musicbrainz.Release, index int, ext string) (
 		return "", errors.New("release has no tracks")
 	}
 
-	var anyPos bool
-	for _, t := range flatTracks {
-		if t.Position > 0 {
-			anyPos = true
-			break
-		}
-	}
-	if !anyPos {
-		return "", fmt.Errorf("%w: all tracks have 0 position", ErrBadRelease)
-	}
-
-	var numPregap int
-	for _, t := range flatTracks[:index] {
-		if t.Position == 0 {
-			numPregap++
-		}
-	}
+	track := flatTracks[index]
 
 	var d Data
 	d.Release = *release
-	d.Ext = ext
-	d.Track = flatTracks[index]
-	d.Tracks = flatTracks
-	if d.Track.Position > 0 {
-		d.TrackNum = index + 1 - numPregap // non pregap track, give it a 1-indexed num
-	}
-	d.IsCompilation = musicbrainz.IsCompilation(release.ReleaseGroup)
 	{
 		var parts []string
 		if release.ReleaseGroup.Disambiguation != "" {
@@ -109,10 +86,15 @@ func (pf *Format) Execute(release *musicbrainz.Release, index int, ext string) (
 		}
 		d.ReleaseDisambiguation = strings.Join(parts, ", ")
 	}
+	d.IsCompilation = musicbrainz.IsCompilation(release.ReleaseGroup)
 
-	// make sure these are not used
-	d.Track.Number = ""
-	d.Track.Position = -1
+	d.Media = track.Media
+
+	d.Track = flatTracks[index].Track
+	d.Ext = ext
+
+	d.TrackIndex = index
+	d.TrackCount = len(flatTracks)
 
 	var buff strings.Builder
 	if err := pf.tt.Execute(&buff, d); err != nil {
@@ -133,11 +115,16 @@ func (pf *Format) Execute(release *musicbrainz.Release, index int, ext string) (
 type Data struct {
 	Release               musicbrainz.Release
 	ReleaseDisambiguation string
-	Ext                   string
-	Track                 musicbrainz.Track
-	Tracks                []musicbrainz.Track
-	TrackNum              int
 	IsCompilation         bool
+
+	Media musicbrainz.Media
+
+	Track musicbrainz.Track
+	Ext   string
+
+	// flat counts, without mediums
+	TrackIndex int
+	TrackCount int
 }
 
 func validate(f Format) error {
