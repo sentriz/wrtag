@@ -6,7 +6,7 @@ exec tag write 'reise/d2 - 2.flac' , title 'd2 t2'
 exec tag write 'reise/d2 - 3.flac' , title 'd2 t3'
 exec tag write 'reise/*.flac' musicbrainz_albumid 'bdc01183-d1c9-378f-a209-a6145fa596c9'
 
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }} {{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Media.Position }}.{{ pad0 2 .Track.Position }} {{ .Track.Title }}{{ .Ext }}'
 
 ! exec wrtag move reise
 stderr 'track count mismatch: 8 remote / 6 local'
@@ -26,11 +26,11 @@ cmp stdout 'exp layout'
 -- exp layout --
 albums
 albums/Reise, Reise
-albums/Reise, Reise/0 [ohne Titel #2].flac
-albums/Reise, Reise/0 [ohne Titel].flac
-albums/Reise, Reise/1 Reise, Reise.flac
-albums/Reise, Reise/2 Mein Teil.flac
-albums/Reise, Reise/3 Dalai Lama.flac
-albums/Reise, Reise/4 Keine Lust.flac
-albums/Reise, Reise/5 Los.flac
-albums/Reise, Reise/6 Amerika.flac
+albums/Reise, Reise/1.00 [ohne Titel].flac
+albums/Reise, Reise/1.01 Reise, Reise.flac
+albums/Reise, Reise/1.02 Mein Teil.flac
+albums/Reise, Reise/1.03 Dalai Lama.flac
+albums/Reise, Reise/2.00 [ohne Titel #2].flac
+albums/Reise, Reise/2.01 Keine Lust.flac
+albums/Reise, Reise/2.02 Los.flac
+albums/Reise, Reise/2.03 Amerika.flac

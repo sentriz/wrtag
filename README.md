@@ -521,11 +521,10 @@ path-format C:\User\John\Music\{{ <some artist format> }}\({{ <some release form
 The template has access to the following data:
 
 - `.Release` - The full MusicBrainz release object (see [`type Release struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
-- `.Track` - The current track being processed (see [`type Track struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
-- `.TrackNum` - The track number (integer, starting at 1)
-- `.Tracks` - The list of tracks in the release
 - `.ReleaseDisambiguation` - A string for release and release group disambiguation
 - `.IsCompilation` - Boolean indicating if this is a compilation album
+- `.Media` - The current media being processed (see [`type Media struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
+- `.Track` - The current track being processed (see [`type Track struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
 - `.Ext` - The file extension for the current track, including the dot (e.g., ".flac")
 
 ## Helper functions
@@ -535,7 +534,7 @@ In addition to what's provided by Go [text/template](https://pkg.go.dev/text/tem
 | Function              | Description                                                        | Example                                                      |
 | --------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------ |
 | `join`                | Joins strings with a delimiter                                     | `{{ artists .Release.Artists \| join "; " }}`                |
-| `pad0`                | Zero-pads a number to specified width                              | `{{ pad0 2 .TrackNum }}` → "01"                              |
+| `pad0`                | Zero-pads a number to specified width                              | `{{ pad0 2 .Track.Position }}` → "01"                        |
 | `sort`                | Sorts a string array                                               | `{{ artists .Release.Artists \| sort }}`                     |
 | `the`                 | Moves `A` and `The` to the end of each string in the input         | `{{ artists .Release.Artists \| sort \| the \| join "; " }}` |
 | `safepath`            | Makes a string safe for filesystem use                             | `{{ .Track.Title \| safepath }}`                             |
@@ -559,31 +558,31 @@ In addition to what's provided by Go [text/template](https://pkg.go.dev/text/tem
 Including multi-album artist support, release group year, release group and release disambiguations, track numbers, total track numbers, artist names if the release is a compilation album:
 
 ```
-/music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .TrackNum }}.{{ len .Tracks | pad0 2 }} {{ if .IsCompilation }}{{ artistsString .Track.Artists | safepath }} - {{ end }}{{ .Track.Title | safepath }}{{ .Ext }}
+/music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ if .IsCompilation }}{{ artistsString .Track.Artists | safepath }} - {{ end }}{{ .Track.Title | safepath }}{{ .Ext }}
 ```
 
 ### A basic format
 
 ```
-/music/{{ artists .Release.Artists | join "; " | safepath }}/{{ .Release.Title | safepath }}/{{ pad0 2 .TrackNum }} {{ .Track.Title | safepath }}{{ .Ext }}
+/music/{{ artists .Release.Artists | join "; " | safepath }}/{{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}
 ```
 
 ### With year and disambiguation
 
 ```
-/music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .TrackNum }} {{ .Track.Title | safepath }}{{ .Ext }}
+/music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}
 ```
 
 ### With compilation handling
 
 ```
-/music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ pad0 2 .TrackNum }} {{ if .IsCompilation }}{{ artistsString .Track.Artists | safepath }} - {{ end }}{{ .Track.Title | safepath }}{{ .Ext }}
+/music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }} {{ if .IsCompilation }}{{ artistsString .Track.Artists | safepath }} - {{ end }}{{ .Track.Title | safepath }}{{ .Ext }}
 ```
 
 ### With disc and track numbers
 
 ```
-/music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ pad0 2 .TrackNum }}.{{ len .Tracks | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}
+/music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}
 ```
 
 # Addons

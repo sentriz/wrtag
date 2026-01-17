@@ -1,4 +1,4 @@
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 
 exec tag write 'ride_this/1.flac' title 'Critical Breakdown'
 exec tag write 'ride_this/2.flac' title 'FRK'

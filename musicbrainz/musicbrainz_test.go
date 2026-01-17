@@ -50,7 +50,7 @@ func TestFlatTracks(t *testing.T) {
 		}
 		tracks := FlatTracks(media)
 		assert.Len(t, tracks, 1)
-		assert.Equal(t, "cd-track", tracks[0].ID)
+		assert.Equal(t, "cd-track", tracks[0].Track.ID)
 	})
 
 	t.Run("filters Blu-ray media", func(t *testing.T) {
@@ -61,7 +61,7 @@ func TestFlatTracks(t *testing.T) {
 		}
 		tracks := FlatTracks(media)
 		assert.Len(t, tracks, 1)
-		assert.Equal(t, "cd-track", tracks[0].ID)
+		assert.Equal(t, "cd-track", tracks[0].Track.ID)
 	})
 
 	t.Run("includes CD media", func(t *testing.T) {
@@ -72,8 +72,8 @@ func TestFlatTracks(t *testing.T) {
 		}
 		tracks := FlatTracks(media)
 		assert.Len(t, tracks, 2)
-		assert.Equal(t, "cd-track-1", tracks[0].ID)
-		assert.Equal(t, "cd-track-2", tracks[1].ID)
+		assert.Equal(t, "cd-track-1", tracks[0].Track.ID)
+		assert.Equal(t, "cd-track-2", tracks[1].Track.ID)
 	})
 
 	t.Run("filters video tracks", func(t *testing.T) {
@@ -108,7 +108,7 @@ func TestFlatTracks(t *testing.T) {
 		}
 		tracks := FlatTracks(media)
 		assert.Len(t, tracks, 1)
-		assert.Equal(t, "audio-track", tracks[0].ID)
+		assert.Equal(t, "audio-track", tracks[0].Track.ID)
 	})
 
 	t.Run("includes pregap track", func(t *testing.T) {
@@ -119,8 +119,8 @@ func TestFlatTracks(t *testing.T) {
 		}
 		tracks := FlatTracks(media)
 		assert.Len(t, tracks, 2)
-		assert.Equal(t, "pregap-track", tracks[0].ID)
-		assert.Equal(t, "regular-track", tracks[1].ID)
+		assert.Equal(t, "pregap-track", tracks[0].Track.ID)
+		assert.Equal(t, "regular-track", tracks[1].Track.ID)
 	})
 }
 

@@ -11,7 +11,7 @@ exec tag write kat_moda/*.flac media               'Digital Media'
 
 exec touch kat_moda/folder.PNG
 
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 
 exec wrtag move -yes kat_moda/
 

@@ -16,7 +16,7 @@ stderr 'no path-format configured'
 ! exec wrtag copy no-exist
 stderr 'no path-format configured'
 
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 
 ! exec wrtag
 stderr 'no command provided'

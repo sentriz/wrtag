@@ -216,8 +216,11 @@ func ProcessDir(
 	tagFiles := mapFunc(pathTags, func(_ int, pt PathTags) map[string][]string {
 		return pt.Tags
 	})
+	releaseTracksOnly := mapFunc(releaseTracks, func(_ int, tm musicbrainz.TrackWithMedia) musicbrainz.Track {
+		return tm.Track
+	})
 
-	score, diff := DiffRelease(cfg.DiffWeights, release, releaseTracks, tagFiles)
+	score, diff := DiffRelease(cfg.DiffWeights, release, releaseTracksOnly, tagFiles)
 
 	if len(pathTags) != len(releaseTracks) {
 		return &SearchResult{release, query, 0, "", diff, originFile}, fmt.Errorf("%w: %d remote / %d local", ErrTrackCountMismatch, len(releaseTracks), len(pathTags))
@@ -277,7 +280,7 @@ func ProcessDir(
 		}
 
 		var destTags = map[string][]string{}
-		WriteRelease(destTags, release, labelInfo, genres, i, &rt)
+		WriteRelease(destTags, release, labelInfo, genres, i, &rt.Track)
 		ApplyTagConfig(destTags, pt.Tags, cfg.TagConfig)
 
 		if lvl, slog := slog.LevelDebug, slog.Default(); slog.Enabled(ctx, lvl) {

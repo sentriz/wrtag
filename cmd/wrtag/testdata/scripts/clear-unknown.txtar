@@ -1,5 +1,5 @@
 env WRTAG_LOG_LEVEL=debug
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 env WRTAG_TAG_CONFIG='keep is_a_tag,drop genre,drop genres'
 
 exec tag write 'kat_moda/1.flac' 'not_a_tag' aaa , 'is_a_tag' 'bbb' , 'lyrics' 'laa laaa laaaa'

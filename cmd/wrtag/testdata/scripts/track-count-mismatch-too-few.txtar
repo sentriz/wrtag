@@ -1,4 +1,4 @@
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .TrackNum }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 
 exec tag write 'kat_moda/1.flac' title 'A'
 exec tag write 'kat_moda/2.flac' title 'B'
