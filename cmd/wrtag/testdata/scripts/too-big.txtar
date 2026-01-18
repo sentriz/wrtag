@@ -7,7 +7,7 @@ exec tag write 'kat_moda/*.flac' musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc
 # add a big file, creater than file cleanup
 exec rand kat_moda/big-file 21000000
 
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 
 # test clean source
 ! exec wrtag move -yes kat_moda/

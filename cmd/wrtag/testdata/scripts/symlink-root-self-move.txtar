@@ -24,7 +24,7 @@ exec tag write music_link/source/*.flac media 'digital media'
 exec touch music_link/source/cover.png
 
 # set path format to use the symlinked root - this is the key scenario from the issue
-env WRTAG_PATH_FORMAT='music_link/albums/{{ artistsString .Release.Artists | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Title | safepath }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='music_link/albums/{{ artistsString .Release.Artists | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
 
 # move from source (which is inside symlinked root) to destination (also via symlinked root)
 # this should work correctly and not delete files
@@ -38,20 +38,20 @@ cmp stdout exp-layout
 ! exists music_link/source
 
 # verify files are accessible via both the real path and symlink
-exists 'real_music/albums/Jeff Mills/Kat Moda/Alarms.flac'
-exists 'music_link/albums/Jeff Mills/Kat Moda/Alarms.flac'
+exists 'real_music/albums/Jeff Mills/Kat Moda/1 Alarms.flac'
+exists 'music_link/albums/Jeff Mills/Kat Moda/1 Alarms.flac'
 
 # check that tags were written correctly
 cd 'real_music/albums/Jeff Mills/Kat Moda/'
-exec tag check 'The Bells.flac' title 'The Bells'
-exec tag check 'The Bells.flac' albumartist 'Jeff Mills'
+exec tag check '2 The Bells.flac' title 'The Bells'
+exec tag check '2 The Bells.flac' albumartist 'Jeff Mills'
 
 -- exp-layout --
 real_music
 real_music/albums
 real_music/albums/Jeff Mills
 real_music/albums/Jeff Mills/Kat Moda
-real_music/albums/Jeff Mills/Kat Moda/Alarms.flac
-real_music/albums/Jeff Mills/Kat Moda/The Bells (Festival mix).flac
-real_music/albums/Jeff Mills/Kat Moda/The Bells.flac
+real_music/albums/Jeff Mills/Kat Moda/1 Alarms.flac
+real_music/albums/Jeff Mills/Kat Moda/2 The Bells.flac
+real_music/albums/Jeff Mills/Kat Moda/3 The Bells (Festival mix).flac
 real_music/albums/Jeff Mills/Kat Moda/cover.png

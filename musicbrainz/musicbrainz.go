@@ -471,7 +471,6 @@ func IsCompilation(rg ReleaseGroup) bool {
 	})
 }
 
-// TODO: move out of here, this is not really MusicBrainz specific
 func FlatTracks(media []Media) []TrackWithMedia {
 	var numTracks int
 	for _, media := range media {

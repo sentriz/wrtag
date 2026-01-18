@@ -17,7 +17,7 @@ exec tag write 'a la sala/*/*.flac' albumartist         'Khruangbin'
 exec tag write 'a la sala/*/*.flac' artist              'Khruangbin'
 
 env WRTAG_DIFF_WEIGHT='label 0, catalogue num 0, media format 0'
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 
 exec wrtag move 'a la sala'
 stderr 'score=100.00%'

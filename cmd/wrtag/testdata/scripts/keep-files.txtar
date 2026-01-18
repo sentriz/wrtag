@@ -4,7 +4,7 @@ exec tag write kat_moda/03.flac title 'trk 3'
 
 exec tag write kat_moda/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
 
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 env WRTAG_KEEP_FILE=
 
 # move with no keep-file setting, no files kept

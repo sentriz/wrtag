@@ -3,7 +3,7 @@ exec tag write kat_moda/02.flac title 'trk 2'
 exec tag write kat_moda/03.flac title 'trk 3'
 
 env WRTAG_LOG_LEVEL=debug
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 
 exec wrtag move -yes kat_moda/
 stderr 'using origin file.*Jeff Mills - Kat Moda EP \(2009\) \[Purpose Maker #PMD-002\]'

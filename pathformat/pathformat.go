@@ -93,9 +93,6 @@ func (pf *Format) Execute(release *musicbrainz.Release, index int, ext string) (
 	d.Track = flatTracks[index].Track
 	d.Ext = ext
 
-	d.TrackIndex = index
-	d.TrackCount = len(flatTracks)
-
 	var buff strings.Builder
 	if err := pf.tt.Execute(&buff, d); err != nil {
 		return "", fmt.Errorf("create path: %w", err)
@@ -121,14 +118,10 @@ type Data struct {
 
 	Track musicbrainz.Track
 	Ext   string
-
-	// flat counts, without mediums
-	TrackIndex int
-	TrackCount int
 }
 
 func validate(f Format) error {
-	release := func(artist, name string, tracks ...string) *musicbrainz.Release { //nolint:unparam
+	newRelease := func(artist, name string, tracks ...string) *musicbrainz.Release {
 		var release musicbrainz.Release
 		release.Title = name
 		release.Artists = append(release.Artists, musicbrainz.ArtistCredit{Name: artist, Artist: musicbrainz.Artist{Name: artist}})
@@ -156,27 +149,67 @@ func validate(f Format) error {
 		return path1 == path2, nil
 	}
 
-	eq, err := compare(
-		release("ar", "release-same", "track 1", "track 1"), 0,
-		release("ar", "release-same", "track 2", "track 2"), 1,
-	)
-	if err != nil {
-		return err
-	}
-	if eq {
-		return fmt.Errorf("%w: two different tracks have the same path", ErrAmbiguousFormat)
+	{
+		eq, err := compare(
+			newRelease("ar", "release-same", "track 1", "track 1"), 0,
+			newRelease("ar", "release-same", "track 2", "track 2"), 1,
+		)
+		if err != nil {
+			return err
+		}
+		if eq {
+			return fmt.Errorf("%w: two different tracks have the same path", ErrAmbiguousFormat)
+		}
 	}
 
-	eq, err = compare(
-		release("ar", "release 1", "track same"), 0,
-		release("ar", "release 2", "track same"), 0,
-	)
-	if err != nil {
-		return err
+	{
+		eq, err := compare(
+			newRelease("ar", "release 1", "track same"), 0,
+			newRelease("ar", "release 2", "track same"), 0,
+		)
+		if err != nil {
+			return err
+		}
+		if eq {
+			return fmt.Errorf("%w: two releases with the same track info results in the same path", ErrAmbiguousFormat)
+		}
 	}
-	if eq {
-		return fmt.Errorf("%w: two releases with the same track info results in the same path", ErrAmbiguousFormat)
+
+	{
+		r := newRelease("ar", "rel", "same title", "same title")
+		eq, err := compare(r, 0, r, 1)
+		if err != nil {
+			return err
+		}
+		if eq {
+			return fmt.Errorf("%w: tracks with identical titles result in the same path (missing track number?)", ErrAmbiguousFormat)
+		}
 	}
+
+	{
+		release := newRelease("ar", "release-name")
+		release.Media = make([]musicbrainz.Media, 2)
+		release.Media[0] = newRelease("", "", "track", "track").Media[0]
+		release.Media[0].Title = "a"
+		release.Media[0].Position = 1
+		release.Media[1] = newRelease("", "", "track", "track").Media[0]
+		release.Media[1].Title = "b"
+		release.Media[1].Position = 2
+
+		var dir string
+		for i := range musicbrainz.FlatTracks(release.Media) {
+			path, err := f.Execute(release, i, "")
+			if err != nil {
+				return fmt.Errorf("execute data: %w", err)
+			}
+			d := filepath.Dir(path)
+			if dir != "" && d != dir {
+				return fmt.Errorf("%w: multiple directories created for the same release", ErrAmbiguousFormat)
+			}
+			dir = d
+		}
+	}
+
 	return nil
 }
 

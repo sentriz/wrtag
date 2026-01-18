@@ -1,5 +1,5 @@
 env ROOT=$WORK
-env WRTAG_PATH_FORMAT=$ROOT/'albums/{{ artistsString .Release.Artists }}/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT=$ROOT/'albums/{{ artistsString .Release.Artists }}/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 
 exec tag write 'albums/Jeff Mills/Kat Moda/01.flac'
 exec tag write 'albums/Jeff Mills/Kat Moda/02.flac'

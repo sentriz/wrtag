@@ -1,0 +1,18 @@
+exec tag write 'reise/d1 - 0.flac' , title 'd1 t0'
+exec tag write 'reise/d1 - 1.flac' , title 'd1 t1'
+exec tag write 'reise/d1 - 2.flac' , title 'd1 t2'
+exec tag write 'reise/d1 - 3.flac' , title 'd1 t3'
+exec tag write 'reise/d2 - 0.flac' , title 'd2 t0'
+exec tag write 'reise/d2 - 1.flac' , title 'd2 t1'
+exec tag write 'reise/d2 - 2.flac' , title 'd2 t2'
+exec tag write 'reise/d2 - 3.flac' , title 'd2 t3'
+exec tag write 'reise/*.flac' musicbrainz_albumid 'bdc01183-d1c9-378f-a209-a6145fa596c9'
+
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/disc {{ pad0 2 .Media.Position }}/{{ pad0 2 .Track.Position }} {{ .Track.Position }}{{ .Ext }}'
+
+! exec wrtag move -yes reise
+stderr 'validate: ambiguous format: multiple directories created for the same release'
+
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+! exec wrtag move -yes reise
+stderr 'validate: ambiguous format: tracks with identical titles result in the same path'

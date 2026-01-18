@@ -6,7 +6,7 @@ cp kat_moda/01.flac 01-backup
 cp kat_moda/02.flac 02-backup
 cp kat_moda/03.flac 03-backup
 
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 
 # copy, don't move. source files should be the same and untouched
 exec wrtag copy -yes -mbid e47d04a4-7460-427d-a731-cc82386d85f1 kat_moda/

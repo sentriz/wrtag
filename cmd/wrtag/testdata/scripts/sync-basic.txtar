@@ -1,4 +1,4 @@
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 
 ! exec wrtag sync
 stderr 'albums: no such file or directory'
@@ -7,30 +7,30 @@ stderr 'albums: no such file or directory'
 stderr 'x: no such file or directory'
 
 env WRTAG_LOG_LEVEL=debug
-env WRTAG_PATH_FORMAT='albums/{{ artistsString .Release.Artists }}/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ artistsString .Release.Artists }}/{{ .Release.Title }}/{{ pad0 2 .Track.Position }} {{ .Track.Title }}{{ .Ext }}'
 
 # set up files, already in correct place
-exec tag write 'albums/Khruangbin/A LA SALA/Fifteen Fifty‐Three.flac'    tracknumber  1 , title 'Fifteen Fifty‐Three'
-exec tag write 'albums/Khruangbin/A LA SALA/May Ninth.flac'              tracknumber  2 , title 'May Ninth'
-exec tag write 'albums/Khruangbin/A LA SALA/Ada Jean.flac'               tracknumber  3 , title 'Ada Jean'
-exec tag write 'albums/Khruangbin/A LA SALA/Farolim de Felgueiras.flac'  tracknumber  4 , title 'Farolim de Felgueiras'
-exec tag write 'albums/Khruangbin/A LA SALA/Pon Pón.flac'                tracknumber  5 , title 'Pon Pón'
-exec tag write 'albums/Khruangbin/A LA SALA/Todavía Viva.flac'           tracknumber  6 , title 'Todavía Viva'
-exec tag write 'albums/Khruangbin/A LA SALA/Juegos Y Nubes.flac'         tracknumber  7 , title 'Juegos Y Nubes'
-exec tag write 'albums/Khruangbin/A LA SALA/Hold Me Up (Thank You).flac' tracknumber  8 , title 'Hold Me Up (Thank You)'
-exec tag write 'albums/Khruangbin/A LA SALA/Caja de La Sala.flac'        tracknumber  9 , title 'Caja de La Sala'
-exec tag write 'albums/Khruangbin/A LA SALA/Three From Two.flac'         tracknumber 10 , title 'Three From Two'
-exec tag write 'albums/Khruangbin/A LA SALA/A Love International.flac'   tracknumber 11 , title 'A Love International'
-exec tag write 'albums/Khruangbin/A LA SALA/Les Petits Gris.flac'        tracknumber 12 , title 'Les Petits Gris'
+exec tag write 'albums/Khruangbin/A LA SALA/01 Fifteen Fifty‐Three.flac'    tracknumber  1 , title 'Fifteen Fifty‐Three'
+exec tag write 'albums/Khruangbin/A LA SALA/02 May Ninth.flac'              tracknumber  2 , title 'May Ninth'
+exec tag write 'albums/Khruangbin/A LA SALA/03 Ada Jean.flac'               tracknumber  3 , title 'Ada Jean'
+exec tag write 'albums/Khruangbin/A LA SALA/04 Farolim de Felgueiras.flac'  tracknumber  4 , title 'Farolim de Felgueiras'
+exec tag write 'albums/Khruangbin/A LA SALA/05 Pon Pón.flac'                tracknumber  5 , title 'Pon Pón'
+exec tag write 'albums/Khruangbin/A LA SALA/06 Todavía Viva.flac'           tracknumber  6 , title 'Todavía Viva'
+exec tag write 'albums/Khruangbin/A LA SALA/07 Juegos Y Nubes.flac'         tracknumber  7 , title 'Juegos Y Nubes'
+exec tag write 'albums/Khruangbin/A LA SALA/08 Hold Me Up (Thank You).flac' tracknumber  8 , title 'Hold Me Up (Thank You)'
+exec tag write 'albums/Khruangbin/A LA SALA/09 Caja de La Sala.flac'        tracknumber  9 , title 'Caja de La Sala'
+exec tag write 'albums/Khruangbin/A LA SALA/10 Three From Two.flac'         tracknumber 10 , title 'Three From Two'
+exec tag write 'albums/Khruangbin/A LA SALA/11 A Love International.flac'   tracknumber 11 , title 'A Love International'
+exec tag write 'albums/Khruangbin/A LA SALA/12 Les Petits Gris.flac'        tracknumber 12 , title 'Les Petits Gris'
 
 exec tag write 'albums/Khruangbin/A LA SALA/*.flac' musicbrainz_albumid 'ef72b5f2-1bd6-4e0a-afd1-e97886fb47e7'
 exec tag write 'albums/Khruangbin/A LA SALA/*.flac' album               'A LA SALA'
 exec tag write 'albums/Khruangbin/A LA SALA/*.flac' albumartist         'Khruangbin'
 exec tag write 'albums/Khruangbin/A LA SALA/*.flac' artist              'Khruangbin'
 
-exec tag write 'albums/Jeff Mills/Kat Moda/Alarms.flac'                    tracknumber  1 , title 'Alarms'
-exec tag write 'albums/Jeff Mills/Kat Moda/The Bells.flac'                 tracknumber  2 , title 'The Bells'
-exec tag write 'albums/Jeff Mills/Kat Moda/The Bells (Festival mix).flac'  tracknumber  3 , title 'The Bells (Festival mix)'
+exec tag write 'albums/Jeff Mills/Kat Moda/01 Alarms.flac'                    tracknumber  1 , title 'Alarms'
+exec tag write 'albums/Jeff Mills/Kat Moda/02 The Bells.flac'                 tracknumber  2 , title 'The Bells'
+exec tag write 'albums/Jeff Mills/Kat Moda/03 The Bells (Festival mix).flac'  tracknumber  3 , title 'The Bells (Festival mix)'
 
 exec tag write 'albums/Jeff Mills/Kat Moda/*.flac' musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
 exec tag write 'albums/Jeff Mills/Kat Moda/*.flac' album               'Kat Moda'
