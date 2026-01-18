@@ -20,7 +20,7 @@ exec ln -s source source_link
 exec ln -s real_dest dest_link
 
 # set path format to use the destination symlink as root
-env WRTAG_PATH_FORMAT='dest_link/albums/{{ artistsString .Release.Artists | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Title | safepath }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='dest_link/albums/{{ artistsString .Release.Artists | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
 
 # copy from symlinked source to symlinked destination
 exec wrtag copy -yes source_link/
@@ -43,15 +43,15 @@ exists source_link/cover.png
 
 # check that tags were written correctly in destination
 cd 'real_dest/albums/Jeff Mills/Kat Moda/'
-exec tag check 'The Bells.flac' title 'The Bells'
-exec tag check 'The Bells.flac' albumartist 'Jeff Mills'
+exec tag check '2 The Bells.flac' title 'The Bells'
+exec tag check '2 The Bells.flac' albumartist 'Jeff Mills'
 
 -- exp-layout --
 real_dest
 real_dest/albums
 real_dest/albums/Jeff Mills
 real_dest/albums/Jeff Mills/Kat Moda
-real_dest/albums/Jeff Mills/Kat Moda/Alarms.flac
-real_dest/albums/Jeff Mills/Kat Moda/The Bells (Festival mix).flac
-real_dest/albums/Jeff Mills/Kat Moda/The Bells.flac
+real_dest/albums/Jeff Mills/Kat Moda/1 Alarms.flac
+real_dest/albums/Jeff Mills/Kat Moda/2 The Bells.flac
+real_dest/albums/Jeff Mills/Kat Moda/3 The Bells (Festival mix).flac
 real_dest/albums/Jeff Mills/Kat Moda/cover.png

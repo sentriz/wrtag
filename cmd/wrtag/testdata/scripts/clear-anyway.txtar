@@ -17,7 +17,7 @@ exec tag write deuce_avenue/*.flac musicbrainz_albumid '71d6f1d1-1190-4924-b2de-
 exec tag write 'deuce_avenue/*.flac' genre 'wrong' , genres 'wrong 1' 'wrong 2'
 exec tag check 'deuce_avenue/*.flac' genre 'wrong' , genres 'wrong 1' 'wrong 2' 
 
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 
 exec wrtag move -yes deuce_avenue/
 

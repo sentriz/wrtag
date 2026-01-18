@@ -1,4 +1,4 @@
-env WRTAG_PATH_FORMAT='albums/{{ artistsEnString .Release.Artists }}/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ artistsEnString .Release.Artists }}/{{ .Release.Title }}/{{ .Track.Position }} {{ .Track.Title }}{{ .Ext }}'
 
 exec tag write ship_scope/1.flac
 exec tag write ship_scope/2.flac
@@ -18,7 +18,7 @@ cmp stdout exp-out
 albums
 albums/Shinichi Atobe
 albums/Shinichi Atobe/Ship-Scope
-albums/Shinichi Atobe/Ship-Scope/Plug and Delay.flac
-albums/Shinichi Atobe/Ship-Scope/Rainstick.flac
-albums/Shinichi Atobe/Ship-Scope/Ship-Scope.flac
-albums/Shinichi Atobe/Ship-Scope/The Red Line.flac
+albums/Shinichi Atobe/Ship-Scope/1 Ship-Scope.flac
+albums/Shinichi Atobe/Ship-Scope/2 Plug and Delay.flac
+albums/Shinichi Atobe/Ship-Scope/3 Rainstick.flac
+albums/Shinichi Atobe/Ship-Scope/4 The Red Line.flac

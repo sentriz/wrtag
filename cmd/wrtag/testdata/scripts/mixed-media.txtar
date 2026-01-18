@@ -1,4 +1,4 @@
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
 
 exec tag write tghnp/01.flac title 'Till the Living Flesh Is Burned'
 exec tag write tghnp/02.flac title 'All Alone in Her Nirvana'

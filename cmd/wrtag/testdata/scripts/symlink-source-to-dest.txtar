@@ -23,7 +23,7 @@ exec touch 'real_dest/albums/Jeff Mills/Kat Moda/cover.png'
 exec ln -s 'real_dest/albums/Jeff Mills/Kat Moda' source_link
 
 # set path format to write to the real destination
-env WRTAG_PATH_FORMAT='real_dest/albums/{{ artistsString .Release.Artists | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Title | safepath }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='real_dest/albums/{{ artistsString .Release.Artists | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
 
 # this is the problematic case: moving from a symlink that points to where the dest should be
 # the move should be a no-op since source and dest resolve to the same location
@@ -33,16 +33,16 @@ exec wrtag move -yes source_link/
 exec find real_dest/
 
 # files should still exist (not deleted) - but they might be renamed
-exists 'real_dest/albums/Jeff Mills/Kat Moda/Alarms.flac'
-exists 'real_dest/albums/Jeff Mills/Kat Moda/The Bells.flac'
-exists 'real_dest/albums/Jeff Mills/Kat Moda/The Bells (Festival mix).flac'
+exists 'real_dest/albums/Jeff Mills/Kat Moda/1 Alarms.flac'
+exists 'real_dest/albums/Jeff Mills/Kat Moda/2 The Bells.flac'
+exists 'real_dest/albums/Jeff Mills/Kat Moda/3 The Bells (Festival mix).flac'
 exists 'real_dest/albums/Jeff Mills/Kat Moda/cover.png'
 
 # the symlink should still exist and point to the renamed files
-exists source_link/Alarms.flac
-exists 'source_link/The Bells.flac'
+exists 'source_link/1 Alarms.flac'
+exists 'source_link/2 The Bells.flac'
 
 # check that tags are correct
 cd 'real_dest/albums/Jeff Mills/Kat Moda/'
-exec tag check 'The Bells.flac' title 'The Bells'
-exec tag check 'The Bells.flac' albumartist 'Jeff Mills'
+exec tag check '2 The Bells.flac' title 'The Bells'
+exec tag check '2 The Bells.flac' albumartist 'Jeff Mills'
