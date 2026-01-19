@@ -471,42 +471,6 @@ func IsCompilation(rg ReleaseGroup) bool {
 	})
 }
 
-func FlatTracks(media []Media) []TrackWithMedia {
-	var numTracks int
-	for _, media := range media {
-		numTracks += len(media.Tracks)
-	}
-
-	tracks := make([]TrackWithMedia, 0, numTracks)
-	for _, media := range media {
-		if strings.Contains(media.Format, "DVD") || strings.Contains(media.Format, "Blu-ray") {
-			// not supported for now
-			continue
-		}
-		if media.Pregap != nil {
-			tracks = append(tracks, TrackWithMedia{
-				Track: *media.Pregap,
-				Media: media,
-			})
-		}
-		for _, track := range media.Tracks {
-			if track.Recording.Video {
-				continue
-			}
-			tracks = append(tracks, TrackWithMedia{
-				Track: track,
-				Media: media,
-			})
-		}
-	}
-	return tracks
-}
-
-type TrackWithMedia struct {
-	Track Track
-	Media Media
-}
-
 type GenreInfo struct {
 	Name  string
 	Count uint
@@ -520,8 +484,10 @@ func AnyGenres(release *Release) (genres []Genre) {
 	// try release and artist first
 	genres = append(genres, release.Genres...)
 	genres = append(genres, release.ReleaseGroup.Genres...)
-	for _, t := range FlatTracks(release.Media) {
-		genres = append(genres, t.Track.Recording.Genres...)
+	for _, media := range release.Media {
+		for _, t := range media.Tracks {
+			genres = append(genres, t.Recording.Genres...)
+		}
 	}
 
 	// add some artist genres too
