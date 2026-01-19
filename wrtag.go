@@ -518,8 +518,26 @@ func WriteRelease(
 	normtag.Set(t, normtag.ArtistsCredit, trimZero(musicbrainz.ArtistsCreditNames(trk.Artists)...)...)
 	normtag.Set(t, normtag.Genre, trimZero(cmp.Or(genreNames...))...)
 	normtag.Set(t, normtag.Genres, trimZero(genreNames...)...)
-	normtag.Set(t, normtag.TrackNumber, trimZero(strconv.Itoa(i+1))...)
-	normtag.Set(t, normtag.DiscNumber, trimZero(strconv.Itoa(1))...)
+
+	// Determine total number of discs (excluding DVD/Blu-ray)
+	totalDiscs := musicbrainz.CountNonFilteredDiscs(release.Media)
+
+	// Use per-disc numbering for multi-disc releases ("auto" mode)
+	if totalDiscs > 1 && trk.DiscNumber > 0 {
+		// Multi-disc release: use per-disc track numbering
+		normtag.Set(t, normtag.TrackNumber, trimZero(strconv.Itoa(trk.Position))...)
+		normtag.Set(t, normtag.DiscNumber, trimZero(strconv.Itoa(trk.DiscNumber))...)
+		normtag.Set(t, normtag.DiscTotal, trimZero(strconv.Itoa(totalDiscs))...)
+		// Add disc subtitle if present
+		if trk.DiscTitle != "" {
+			normtag.Set(t, normtag.DiscSubtitle, trimZero(trk.DiscTitle)...)
+		}
+	} else {
+		// Single-disc or fallback: use sequential numbering (backward compatible)
+		normtag.Set(t, normtag.TrackNumber, trimZero(strconv.Itoa(i+1))...)
+		normtag.Set(t, normtag.DiscNumber, trimZero(strconv.Itoa(1))...)
+		normtag.Set(t, normtag.DiscTotal, trimZero(strconv.Itoa(totalDiscs))...)
+	}
 
 	normtag.Set(t, normtag.ISRC, trimZero(trk.Recording.ISRCs...)...)
 
@@ -596,15 +614,27 @@ func DiffRelease(weights DiffWeights, release *musicbrainz.Release, tracks []mus
 			track := tracks[i]
 			b = strings.Join(trimZero(musicbrainz.ArtistsString(track.Artists), track.Title), " – ")
 		}
-		diffs = append(diffs, diff(weight("track"), fmt.Sprintf("track %d", i+1), a, b))
+
+		trackLabel := fmt.Sprintf("track %d", i+1)
+		if len(release.Media) > 1 {
+			discNum, trackNum := 1, i+1
+			for _, media := range release.Media {
+				if trackNum <= media.TrackCount {
+					trackLabel = fmt.Sprintf("disc %d track %d", discNum, trackNum)
+					break
+				}
+				trackNum -= media.TrackCount
+				discNum++
+			}
+		}
+
+		diffs = append(diffs, diff(weight("track"), trackLabel, a, b))
 	}
 
 	return score, diffs
 }
 
-var (
-	dm = dmp.New()
-)
+var dm = dmp.New()
 
 // Differ creates a difference function that compares two strings and updates a running score.
 // The returned function calculates text differences and accumulates weighted distances for scoring.
