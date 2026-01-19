@@ -211,13 +211,13 @@ func ProcessDir(
 		return nil, fmt.Errorf("search musicbrainz: %w", err)
 	}
 
-	releaseTracks := musicbrainz.FlatTracks(release.Media)
+	releaseTracks := releaseTracks(release.Media)
 
 	tagFiles := mapFunc(pathTags, func(_ int, pt PathTags) map[string][]string {
 		return pt.Tags
 	})
-	releaseTracksOnly := mapFunc(releaseTracks, func(_ int, tm musicbrainz.TrackWithMedia) musicbrainz.Track {
-		return tm.Track
+	releaseTracksOnly := mapFunc(releaseTracks, func(_ int, tm trackWithMedia) musicbrainz.Track {
+		return tm.track
 	})
 
 	score, diff := DiffRelease(cfg.DiffWeights, release, releaseTracksOnly, tagFiles)
@@ -255,7 +255,8 @@ func ProcessDir(
 	// calculate new paths
 	destPaths := make([]string, 0, len(pathTags))
 	for i, pt := range pathTags {
-		destPath, err := cfg.PathFormat.Execute(release, i, strings.ToLower(filepath.Ext(pt.Path)))
+		trackMedia := releaseTracks[i]
+		destPath, err := cfg.PathFormat.Execute(*release, trackMedia.media, trackMedia.track, strings.ToLower(filepath.Ext(pt.Path)))
 		if err != nil {
 			return nil, fmt.Errorf("create path: %w", err)
 		}
@@ -280,7 +281,7 @@ func ProcessDir(
 		}
 
 		var destTags = map[string][]string{}
-		WriteRelease(destTags, release, labelInfo, genres, i, &rt.Track)
+		WriteRelease(destTags, release, labelInfo, genres, i, &rt.track)
 		ApplyTagConfig(destTags, pt.Tags, cfg.TagConfig)
 
 		if lvl, slog := slog.LevelDebug, slog.Default(); slog.Enabled(ctx, lvl) {
@@ -344,6 +345,42 @@ func searchRelease(ctx context.Context, client *musicbrainz.MBClient, query musi
 		return nil, err
 	}
 	return release, nil
+}
+
+type trackWithMedia struct {
+	track musicbrainz.Track
+	media musicbrainz.Media
+}
+
+func releaseTracks(media []musicbrainz.Media) []trackWithMedia {
+	var numTracks int
+	for _, media := range media {
+		numTracks += len(media.Tracks)
+	}
+
+	tracks := make([]trackWithMedia, 0, numTracks)
+	for _, media := range media {
+		if strings.Contains(media.Format, "DVD") || strings.Contains(media.Format, "Blu-ray") {
+			// not supported for now
+			continue
+		}
+		if media.Pregap != nil {
+			tracks = append(tracks, trackWithMedia{
+				track: *media.Pregap,
+				media: media,
+			})
+		}
+		for _, track := range media.Tracks {
+			if track.Recording.Video {
+				continue
+			}
+			tracks = append(tracks, trackWithMedia{
+				track: track,
+				media: media,
+			})
+		}
+	}
+	return tracks
 }
 
 // PathTags associates a file path with its tags.
@@ -438,7 +475,10 @@ func ReadReleaseDir(dirPath string) (string, []PathTags, error) {
 
 // DestDir generates the destination directory path for a release based on the given path format.
 func DestDir(pathFormat *pathformat.Format, release *musicbrainz.Release) (string, error) {
-	path, err := pathFormat.Execute(release, 0, ".eg")
+	if len(release.Media) == 0 || len(release.Media[0].Tracks) == 0 {
+		return "", errors.New("empty release passed")
+	}
+	path, err := pathFormat.Execute(*release, release.Media[0], release.Media[0].Tracks[0], ".ext")
 	if err != nil {
 		return "", fmt.Errorf("create path: %w", err)
 	}

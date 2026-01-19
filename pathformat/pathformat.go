@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	texttemplate "text/template"
 
@@ -62,20 +63,13 @@ func (pf *Format) Root() string {
 	return pf.root
 }
 
-func (pf *Format) Execute(release *musicbrainz.Release, index int, ext string) (string, error) {
+func (pf *Format) Execute(release musicbrainz.Release, media musicbrainz.Media, track musicbrainz.Track, ext string) (string, error) {
 	if len(pf.tt.Templates()) == 0 {
 		return "", errors.New("not initialised yet")
 	}
 
-	flatTracks := musicbrainz.FlatTracks(release.Media)
-	if len(flatTracks) == 0 {
-		return "", errors.New("release has no tracks")
-	}
-
-	track := flatTracks[index]
-
 	var d Data
-	d.Release = *release
+	d.Release = release
 	{
 		var parts []string
 		if release.ReleaseGroup.Disambiguation != "" {
@@ -88,9 +82,9 @@ func (pf *Format) Execute(release *musicbrainz.Release, index int, ext string) (
 	}
 	d.IsCompilation = musicbrainz.IsCompilation(release.ReleaseGroup)
 
-	d.Media = track.Media
+	d.Media = media
 
-	d.Track = flatTracks[index].Track
+	d.Track = track
 	d.Ext = ext
 
 	var buff strings.Builder
@@ -121,28 +115,37 @@ type Data struct {
 }
 
 func validate(f Format) error {
-	newRelease := func(artist, name string, tracks ...string) *musicbrainz.Release {
+	newRelease := func(artist, name string, medias ...musicbrainz.Media) musicbrainz.Release { //nolint: unparam
 		var release musicbrainz.Release
 		release.Title = name
 		release.Artists = append(release.Artists, musicbrainz.ArtistCredit{Name: artist, Artist: musicbrainz.Artist{Name: artist}})
+		for i, m := range medias {
+			m.Title = strconv.Itoa(i + 1)
+			m.Position = i + 1
+			release.Media = append(release.Media, m)
+		}
+		return release
+	}
 
+	newMedia := func(tracks ...string) musicbrainz.Media {
 		var media musicbrainz.Media
 		for i, t := range tracks {
 			media.Tracks = append(media.Tracks, musicbrainz.Track{
 				Title:    t,
 				Position: i + 1,
+				Number:   strconv.Itoa(i + 1),
 			})
 			media.TrackCount++
 		}
-		release.Media = append(release.Media, media)
-		return &release
+		return media
 	}
-	compare := func(r1 *musicbrainz.Release, i1 int, r2 *musicbrainz.Release, i2 int) (bool, error) {
-		path1, err := f.Execute(r1, i1, "")
+
+	compare := func(r1 musicbrainz.Release, m1 musicbrainz.Media, t1 musicbrainz.Track, r2 musicbrainz.Release, m2 musicbrainz.Media, t2 musicbrainz.Track) (bool, error) {
+		path1, err := f.Execute(r1, m1, t1, "")
 		if err != nil {
 			return false, fmt.Errorf("execute data 1: %w", err)
 		}
-		path2, err := f.Execute(r2, i2, "")
+		path2, err := f.Execute(r2, m2, t2, "")
 		if err != nil {
 			return false, fmt.Errorf("execute data 2: %w", err)
 		}
@@ -150,9 +153,11 @@ func validate(f Format) error {
 	}
 
 	{
+		r1 := newRelease("ar", "release-same", newMedia("track 1", "track 1"))
+		r2 := newRelease("ar", "release-same", newMedia("track 2", "track 2"))
 		eq, err := compare(
-			newRelease("ar", "release-same", "track 1", "track 1"), 0,
-			newRelease("ar", "release-same", "track 2", "track 2"), 1,
+			r1, r1.Media[0], r1.Media[0].Tracks[0],
+			r2, r2.Media[0], r2.Media[0].Tracks[1],
 		)
 		if err != nil {
 			return err
@@ -163,9 +168,11 @@ func validate(f Format) error {
 	}
 
 	{
+		r1 := newRelease("ar", "release 1", newMedia("track same"))
+		r2 := newRelease("ar", "release 2", newMedia("track same"))
 		eq, err := compare(
-			newRelease("ar", "release 1", "track same"), 0,
-			newRelease("ar", "release 2", "track same"), 0,
+			r1, r1.Media[0], r1.Media[0].Tracks[0],
+			r2, r2.Media[0], r2.Media[0].Tracks[0],
 		)
 		if err != nil {
 			return err
@@ -176,8 +183,11 @@ func validate(f Format) error {
 	}
 
 	{
-		r := newRelease("ar", "rel", "same title", "same title")
-		eq, err := compare(r, 0, r, 1)
+		r := newRelease("ar", "rel", newMedia("same title", "same title"))
+		eq, err := compare(
+			r, r.Media[0], r.Media[0].Tracks[0],
+			r, r.Media[0], r.Media[0].Tracks[1],
+		)
 		if err != nil {
 			return err
 		}
@@ -187,26 +197,24 @@ func validate(f Format) error {
 	}
 
 	{
-		release := newRelease("ar", "release-name")
-		release.Media = make([]musicbrainz.Media, 2)
-		release.Media[0] = newRelease("", "", "track", "track").Media[0]
-		release.Media[0].Title = "a"
-		release.Media[0].Position = 1
-		release.Media[1] = newRelease("", "", "track", "track").Media[0]
-		release.Media[1].Title = "b"
-		release.Media[1].Position = 2
+		release := newRelease("ar", "release-name",
+			newMedia("track", "track"),
+			newMedia("track", "track"),
+		)
 
 		var dir string
-		for i := range musicbrainz.FlatTracks(release.Media) {
-			path, err := f.Execute(release, i, "")
-			if err != nil {
-				return fmt.Errorf("execute data: %w", err)
+		for _, media := range release.Media {
+			for _, track := range media.Tracks {
+				path, err := f.Execute(release, media, track, "")
+				if err != nil {
+					return fmt.Errorf("execute data: %w", err)
+				}
+				d := filepath.Dir(path)
+				if dir != "" && d != dir {
+					return fmt.Errorf("%w: multiple directories created for the same release", ErrAmbiguousFormat)
+				}
+				dir = d
 			}
-			d := filepath.Dir(path)
-			if dir != "" && d != dir {
-				return fmt.Errorf("%w: multiple directories created for the same release", ErrAmbiguousFormat)
-			}
-			dir = d
 		}
 	}
 
@@ -214,12 +222,11 @@ func validate(f Format) error {
 }
 
 var funcMap = texttemplate.FuncMap{
-	"join":            func(delim string, items []string) string { return strings.Join(items, delim) },
-	"pad0":            func(amount, n int) string { return fmt.Sprintf("%0*d", amount, n) },
-	"sort":            func(strs []string) []string { sort.Strings(strs); return strs },
-	"safepath":        func(p string) string { return fileutil.SafePath(p) },
-	"safepathUnicode": func(p string) string { return fileutil.SafePathUnicode(p) },
-
+	"join":                func(delim string, items []string) string { return strings.Join(items, delim) },
+	"pad0":                func(amount, n int) string { return fmt.Sprintf("%0*d", amount, n) },
+	"sort":                func(strs []string) []string { sort.Strings(strs); return strs },
+	"safepath":            func(p string) string { return fileutil.SafePath(p) },
+	"safepathUnicode":     func(p string) string { return fileutil.SafePathUnicode(p) },
 	"artists":             musicbrainz.ArtistsNames,
 	"artistsString":       musicbrainz.ArtistsString,
 	"artistsEn":           musicbrainz.ArtistsEnNames,

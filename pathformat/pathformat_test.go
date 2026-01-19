@@ -14,7 +14,7 @@ func TestValidation(t *testing.T) {
 	t.Parallel()
 
 	var pf pathformat.Format
-	_, err := pf.Execute(nil, 0, "")
+	_, err := pf.Execute(musicbrainz.Release{}, musicbrainz.Media{}, musicbrainz.Track{}, "")
 	require.Error(t, err) // we didn't initialise with Parse() yet
 
 	// bad/ambiguous format
@@ -44,7 +44,7 @@ func TestPathFormat(t *testing.T) {
 		Title:    "Sharon's Tone",
 		Position: 1,
 	}
-	release := &musicbrainz.Release{
+	release := musicbrainz.Release{
 		Title: "Valvable",
 		ReleaseGroup: musicbrainz.ReleaseGroup{
 			FirstReleaseDate: musicbrainz.AnyTime{Time: time.Date(2019, time.January, 0, 0, 0, 0, 0, time.UTC)},
@@ -68,13 +68,13 @@ func TestPathFormat(t *testing.T) {
 	var pf pathformat.Format
 	require.NoError(t, pf.Parse(`/music/albums/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}`))
 
-	path, err := pf.Execute(release, 0, ".flac")
+	path, err := pf.Execute(release, release.Media[0], release.Media[0].Tracks[0], ".flac")
 	require.NoError(t, err)
 	assert.Equal(t, `/music/albums/Luke Vibert/(2018) Valvable/01.01 Sharon's Tone.flac`, path)
 
 	release.ReleaseGroup.Disambiguation = "Deluxe Edition"
 
-	path, err = pf.Execute(release, 0, ".flac")
+	path, err = pf.Execute(release, release.Media[0], release.Media[0].Tracks[0], ".flac")
 	require.NoError(t, err)
 	assert.Equal(t, `/music/albums/Luke Vibert/(2018) Valvable (Deluxe Edition)/01.01 Sharon's Tone.flac`, path)
 
@@ -82,13 +82,13 @@ func TestPathFormat(t *testing.T) {
 
 	release.Artists[0].Artist.Name = "A House"
 
-	path, err = pf.Execute(release, 0, ".flac")
+	path, err = pf.Execute(release, release.Media[0], release.Media[0].Tracks[0], ".flac")
 	require.NoError(t, err)
 	assert.Equal(t, `/music/albums/House, A/Valvable/1.flac`, path)
 
 	release.Artists[0].Artist.Name = "The House"
 
-	path, err = pf.Execute(release, 0, ".flac")
+	path, err = pf.Execute(release, release.Media[0], release.Media[0].Tracks[0], ".flac")
 	require.NoError(t, err)
 	assert.Equal(t, `/music/albums/House, The/Valvable/1.flac`, path)
 }
