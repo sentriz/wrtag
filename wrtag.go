@@ -281,7 +281,7 @@ func ProcessDir(
 		}
 
 		var destTags = map[string][]string{}
-		WriteRelease(destTags, release, labelInfo, genres, i, &rt.track)
+		WriteRelease(destTags, release, labelInfo, genres, &rt.media, &rt.track)
 		ApplyTagConfig(destTags, pt.Tags, cfg.TagConfig)
 
 		if lvl, slog := slog.LevelDebug, slog.Default(); slog.Enabled(ctx, lvl) {
@@ -492,7 +492,7 @@ func DestDir(pathFormat *pathformat.Format, release *musicbrainz.Release) (strin
 func WriteRelease(
 	t map[string][]string,
 	release *musicbrainz.Release, labelInfo musicbrainz.LabelInfo, genres []musicbrainz.Genre,
-	i int, trk *musicbrainz.Track,
+	media *musicbrainz.Media, trk *musicbrainz.Track,
 ) {
 	formatDate := func(d time.Time) string {
 		if d.IsZero() {
@@ -561,8 +561,9 @@ func WriteRelease(
 	normtag.Set(t, normtag.ArtistsCredit, trimZero(musicbrainz.ArtistsCreditNames(trk.Artists)...)...)
 	normtag.Set(t, normtag.Genre, trimZero(cmp.Or(genreNames...))...)
 	normtag.Set(t, normtag.Genres, trimZero(genreNames...)...)
-	normtag.Set(t, normtag.TrackNumber, trimZero(strconv.Itoa(i+1))...)
-	normtag.Set(t, normtag.DiscNumber, trimZero(strconv.Itoa(1))...)
+	normtag.Set(t, normtag.TrackNumber, trimZero(strconv.Itoa(trk.Position))...)
+	normtag.Set(t, normtag.DiscNumber, trimZero(strconv.Itoa(media.Position))...)
+	normtag.Set(t, normtag.DiscSubtitle, trimZero(media.Title)...)
 
 	normtag.Set(t, normtag.ISRC, trimZero(trk.Recording.ISRCs...)...)
 
