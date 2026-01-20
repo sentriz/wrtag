@@ -1,0 +1,37 @@
+exec tag write wipeout/02.flac
+exec tag write wipeout/03.flac
+exec tag write wipeout/04.flac
+exec tag write wipeout/05.flac
+exec tag write wipeout/06.flac
+exec tag write wipeout/07.flac
+exec tag write wipeout/08.flac
+exec tag write wipeout/09.flac
+exec tag write wipeout/10.flac
+exec tag write wipeout/11.flac
+exec tag write wipeout/12.flac
+
+exec tag write wipeout/*.flac musicbrainz_albumid '70130d47-2145-4e61-972e-49d3d21a087e'
+exec tag write wipeout/*.flac album               'wipEout'
+exec tag write wipeout/*.flac albumartist         'CoLD SToRAGE'
+
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ pad0 2 .Track.Position }}{{ .Ext }}'
+
+exec wrtag move -yes wipeout
+
+exec find albums/
+cmp stdout exp-layout
+
+-- exp-layout --
+albums
+albums/wipEout
+albums/wipEout/02.flac
+albums/wipEout/03.flac
+albums/wipEout/04.flac
+albums/wipEout/05.flac
+albums/wipEout/06.flac
+albums/wipEout/07.flac
+albums/wipEout/08.flac
+albums/wipEout/09.flac
+albums/wipEout/10.flac
+albums/wipEout/11.flac
+albums/wipEout/12.flac

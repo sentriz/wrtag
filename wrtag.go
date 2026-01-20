@@ -371,6 +371,9 @@ func releaseTracks(media []musicbrainz.Media) []trackWithMedia {
 			if track.Recording.Video {
 				continue
 			}
+			if track.Title == "[data track]" {
+				continue
+			}
 			tracks = append(tracks, trackWithMedia{
 				track: track,
 				media: media,
