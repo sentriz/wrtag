@@ -78,6 +78,7 @@ func (c *CAAClient) request(ctx context.Context, r *http.Request, dest any) erro
 		c.HTTPClient = clientutil.Wrap(c.HTTPClient, clientutil.Chain(
 			clientutil.WithCache(),
 			clientutil.WithRateLimit(c.RateLimit),
+			clientutil.WithTimeout(30*time.Second),
 		))
 	})
 

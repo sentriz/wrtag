@@ -3,6 +3,7 @@
 package clientutil
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -32,6 +33,19 @@ func WithCache() Middleware {
 		transport := httpcache.NewTransport(cache)
 		transport.Transport = next
 		return transport
+	}
+}
+
+func WithTimeout(timeout time.Duration) Middleware {
+	if timeout == 0 {
+		return Passthrough
+	}
+	return func(next http.RoundTripper) http.RoundTripper {
+		return RoundTripFunc(func(r *http.Request) (*http.Response, error) {
+			ctx, cancel := context.WithTimeout(r.Context(), timeout)
+			defer cancel()
+			return next.RoundTrip(r.WithContext(ctx))
+		})
 	}
 }
 
