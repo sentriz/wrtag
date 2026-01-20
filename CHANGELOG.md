@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.0.0](https://github.com/sentriz/wrtag/compare/v0.20.0...v1.0.0) (2026-01-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **wrtag:** revise path-format template data for media-aware tracks
+
+### Features
+
+* **pathformat:** add validations for multi disc releases ([301dc6f](https://github.com/sentriz/wrtag/commit/301dc6fae35c281c7036553cc49593cf573df5b8))
+* **wrtag:** filter out data tracks ([483a401](https://github.com/sentriz/wrtag/commit/483a4019b5e6b706f2933b81a2b80980a9c0d250)), closes [#202](https://github.com/sentriz/wrtag/issues/202)
+* **wrtag:** revise path-format template data for media-aware tracks ([daef832](https://github.com/sentriz/wrtag/commit/daef832c8395ef86eda3372d17fd920b46c1bc32))
+* **wrtag:** write disc information ([feffe23](https://github.com/sentriz/wrtag/commit/feffe237bed762ebe3f9ef5d982da41e2ccd5f4c))
+
+
+### Bug Fixes
+
+* **wrtag:** run HTTP timeouts after rate limiter ([f945d9e](https://github.com/sentriz/wrtag/commit/f945d9e7a44b26c49fe365b0c211550393a09776)), closes [#201](https://github.com/sentriz/wrtag/issues/201)
+
 ## [0.20.0](https://github.com/sentriz/wrtag/compare/v0.19.0...v0.20.0) (2026-01-12)
 
 
