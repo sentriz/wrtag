@@ -6,10 +6,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
 	"golang.org/x/net/html"
+	"golang.org/x/time/rate"
 )
 
 type Source interface {
@@ -19,11 +21,11 @@ type Source interface {
 func NewSource(name string) (Source, error) {
 	switch name {
 	case "genius":
-		return &Genius{RateLimit: 500 * time.Millisecond}, nil
+		return &Genius{&http.Client{}, rate.NewLimiter(rate.Every(500*time.Millisecond), 1)}, nil
 	case "musixmatch":
-		return &Musixmatch{RateLimit: 500 * time.Millisecond}, nil
+		return &Musixmatch{&http.Client{}, rate.NewLimiter(rate.Every(500*time.Millisecond), 1)}, nil
 	case "lrclib":
-		return &LRCLib{RateLimit: 100 * time.Millisecond}, nil
+		return &LRCLib{&http.Client{}, rate.NewLimiter(rate.Every(100*time.Millisecond), 1)}, nil
 	default:
 		return nil, errors.New("unknown source")
 	}

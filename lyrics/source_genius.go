@@ -6,12 +6,11 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/andybalholm/cascadia"
-	"go.senan.xyz/wrtag/clientutil"
 	"golang.org/x/net/html"
+	"golang.org/x/time/rate"
 )
 
 var geniusBaseURL = `https://genius.com`
@@ -32,18 +31,14 @@ var geniusEsc = strings.NewReplacer(
 )
 
 type Genius struct {
-	RateLimit time.Duration
-
-	initOnce   sync.Once
 	HTTPClient *http.Client
+	Limiter    *rate.Limiter
 }
 
 func (g *Genius) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
-	g.initOnce.Do(func() {
-		g.HTTPClient = clientutil.Wrap(g.HTTPClient, clientutil.Chain(
-			clientutil.WithRateLimit(g.RateLimit),
-		))
-	})
+	if err := g.Limiter.Wait(ctx); err != nil {
+		return "", err
+	}
 
 	// use genius case rules to miminise redirects
 	page := fmt.Sprintf("%s-%s-lyrics", artist, song)

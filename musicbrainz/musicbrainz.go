@@ -15,22 +15,19 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 	"unicode"
 
 	"github.com/araddon/dateparse"
-	"go.senan.xyz/wrtag/clientutil"
+	"golang.org/x/time/rate"
 )
 
 var ErrNoResults = errors.New("no results")
 
 type MBClient struct {
-	BaseURL   string
-	RateLimit time.Duration
-
-	initOnce   sync.Once
+	BaseURL    string
 	HTTPClient *http.Client
+	Limiter    *rate.Limiter
 }
 
 func (c *MBClient) GetRelease(ctx context.Context, mbid string) (*Release, error) {
@@ -146,12 +143,9 @@ func (c *MBClient) SearchRelease(ctx context.Context, q ReleaseQuery) (*Release,
 }
 
 func (c *MBClient) request(ctx context.Context, r *http.Request, dest any) error {
-	c.initOnce.Do(func() {
-		c.HTTPClient = clientutil.Wrap(c.HTTPClient, clientutil.Chain(
-			clientutil.WithRateLimit(c.RateLimit),
-			clientutil.WithTimeout(30*time.Second),
-		))
-	})
+	if err := c.Limiter.Wait(ctx); err != nil {
+		return err
+	}
 
 	r = r.WithContext(ctx)
 	resp, err := c.HTTPClient.Do(r)

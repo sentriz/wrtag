@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.senan.xyz/wrtag/lyrics"
+	"golang.org/x/time/rate"
 )
 
 //go:embed testdata
@@ -19,6 +20,7 @@ func TestMusixmatch(t *testing.T) {
 
 	var src lyrics.Musixmatch
 	src.HTTPClient = fsClient(responses, "testdata/musixmatch")
+	src.Limiter = rate.NewLimiter(rate.Inf, 0)
 
 	resp, err := src.Search(t.Context(), "The Fall", "Wings", 0)
 	require.NoError(t, err)
@@ -41,6 +43,7 @@ func TestGenius(t *testing.T) {
 
 	var src lyrics.Genius
 	src.HTTPClient = fsClient(responses, "testdata/genius")
+	src.Limiter = rate.NewLimiter(rate.Inf, 0)
 
 	resp, err := src.Search(t.Context(), "the fall", "totally wired", 0)
 	require.NoError(t, err)
@@ -64,6 +67,7 @@ func TestGeniusLineBreak(t *testing.T) {
 
 	var src lyrics.Genius
 	src.HTTPClient = fsClient(responses, "testdata/genius")
+	src.Limiter = rate.NewLimiter(rate.Inf, 0)
 
 	resp, err := src.Search(t.Context(), "pink floyd", "breathe in the air", 0)
 	require.NoError(t, err)

@@ -6,12 +6,11 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/andybalholm/cascadia"
-	"go.senan.xyz/wrtag/clientutil"
 	"golang.org/x/net/html"
+	"golang.org/x/time/rate"
 )
 
 var musixmatchBaseURL = `https://www.musixmatch.com/lyrics`
@@ -33,18 +32,14 @@ var musixmatchEsc = strings.NewReplacer(
 )
 
 type Musixmatch struct {
-	RateLimit time.Duration
-
-	initOnce   sync.Once
 	HTTPClient *http.Client
+	Limiter    *rate.Limiter
 }
 
 func (mm *Musixmatch) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
-	mm.initOnce.Do(func() {
-		mm.HTTPClient = clientutil.Wrap(mm.HTTPClient, clientutil.Chain(
-			clientutil.WithRateLimit(mm.RateLimit),
-		))
-	})
+	if err := mm.Limiter.Wait(ctx); err != nil {
+		return "", err
+	}
 
 	url, _ := url.Parse(musixmatchBaseURL)
 	url = url.JoinPath(musixmatchEsc.Replace(artist))

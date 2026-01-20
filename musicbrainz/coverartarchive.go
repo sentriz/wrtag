@@ -6,18 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"sync"
-	"time"
 
-	"go.senan.xyz/wrtag/clientutil"
+	"golang.org/x/time/rate"
 )
 
 type CAAClient struct {
-	BaseURL   string
-	RateLimit time.Duration
-
-	initOnce   sync.Once
+	BaseURL    string
 	HTTPClient *http.Client
+	Limiter    *rate.Limiter
 }
 
 func (c *CAAClient) GetCoverURL(ctx context.Context, release *Release) (string, error) {
@@ -74,13 +70,9 @@ type caaResponse struct {
 }
 
 func (c *CAAClient) request(ctx context.Context, r *http.Request, dest any) error {
-	c.initOnce.Do(func() {
-		c.HTTPClient = clientutil.Wrap(c.HTTPClient, clientutil.Chain(
-			clientutil.WithCache(),
-			clientutil.WithRateLimit(c.RateLimit),
-			clientutil.WithTimeout(30*time.Second),
-		))
-	})
+	if err := c.Limiter.Wait(ctx); err != nil {
+		return err
+	}
 
 	r = r.WithContext(ctx)
 	resp, err := c.HTTPClient.Do(r)

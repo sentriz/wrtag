@@ -22,6 +22,7 @@ import (
 	"go.senan.xyz/wrtag/notifications"
 	"go.senan.xyz/wrtag/pathformat"
 	"go.senan.xyz/wrtag/researchlink"
+	"golang.org/x/time/rate"
 
 	_ "go.senan.xyz/wrtag/addon/lyrics"
 	_ "go.senan.xyz/wrtag/addon/musicdesc"
@@ -83,10 +84,20 @@ func Config() *wrtag.Config {
 	flag.Var(&tagConfigParser{&cfg.TagConfig}, "tag-config", "Specify tag keep and drop rules when writing new tag revisions (see [Tagging](#tagging)) (stackable)")
 
 	flag.StringVar(&cfg.MusicBrainzClient.BaseURL, "mb-base-url", `https://musicbrainz.org/ws/2/`, "MusicBrainz base URL")
-	flag.DurationVar(&cfg.MusicBrainzClient.RateLimit, "mb-rate-limit", 1*time.Second, "MusicBrainz rate limit duration")
+
+	cfg.MusicBrainzClient.Limiter = rate.NewLimiter(rate.Every(1*time.Second), 1)
+	flag.Var(&rateLimitParser{cfg.MusicBrainzClient.Limiter}, "mb-rate-limit", "MusicBrainz rate limit duration")
+
+	cfg.MusicBrainzClient.HTTPClient = &http.Client{Timeout: 30 * time.Second}
 
 	flag.StringVar(&cfg.CoverArtArchiveClient.BaseURL, "caa-base-url", `https://coverartarchive.org/`, "CoverArtArchive base URL")
-	flag.DurationVar(&cfg.CoverArtArchiveClient.RateLimit, "caa-rate-limit", 0, "CoverArtArchive rate limit duration")
+
+	cfg.CoverArtArchiveClient.Limiter = rate.NewLimiter(rate.Inf, 0)
+	flag.Var(&rateLimitParser{cfg.CoverArtArchiveClient.Limiter}, "caa-rate-limit", "CoverArtArchive rate limit duration")
+
+	cfg.CoverArtArchiveClient.HTTPClient = clientutil.Wrap(&http.Client{Timeout: 30 * time.Second},
+		clientutil.WithCache(),
+	)
 
 	flag.BoolVar(&cfg.UpgradeCover, "cover-upgrade", false, "Fetch new cover art even if it exists locally")
 
@@ -310,4 +321,27 @@ func (a addonsParser) String() string {
 		parts = append(parts, fmt.Sprint(a))
 	}
 	return strings.Join(parts, ", ")
+}
+
+type rateLimitParser struct {
+	l *rate.Limiter
+}
+
+func (rl rateLimitParser) Set(value string) error {
+	dur, err := time.ParseDuration(value)
+	if err != nil {
+		return err
+	}
+	*rl.l = *rate.NewLimiter(rate.Every(dur), 1)
+	return nil
+}
+func (rl *rateLimitParser) String() string {
+	if rl.l == nil {
+		return ""
+	}
+	dur := time.Duration((1.0 / float64(rl.l.Limit())) * float64(time.Second))
+	if dur == 0 {
+		return ""
+	}
+	return dur.String()
 }

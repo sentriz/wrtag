@@ -3,14 +3,12 @@
 package clientutil
 
 import (
-	"context"
 	"log/slog"
 	"net/http"
 	"sync"
 	"time"
 
 	"github.com/gregjones/httpcache"
-	"golang.org/x/time/rate"
 )
 
 type Middleware func(http.RoundTripper) http.RoundTripper
@@ -33,34 +31,6 @@ func WithCache() Middleware {
 		transport := httpcache.NewTransport(cache)
 		transport.Transport = next
 		return transport
-	}
-}
-
-func WithTimeout(timeout time.Duration) Middleware {
-	if timeout == 0 {
-		return Passthrough
-	}
-	return func(next http.RoundTripper) http.RoundTripper {
-		return RoundTripFunc(func(r *http.Request) (*http.Response, error) {
-			ctx, cancel := context.WithTimeout(r.Context(), timeout)
-			defer cancel()
-			return next.RoundTrip(r.WithContext(ctx))
-		})
-	}
-}
-
-func WithRateLimit(interval time.Duration) Middleware {
-	if interval == 0 {
-		return Passthrough
-	}
-	return func(next http.RoundTripper) http.RoundTripper {
-		limiter := rate.NewLimiter(rate.Every(interval), 1)
-		return RoundTripFunc(func(r *http.Request) (*http.Response, error) {
-			if err := limiter.Wait(r.Context()); err != nil {
-				return nil, err
-			}
-			return next.RoundTrip(r)
-		})
 	}
 }
 

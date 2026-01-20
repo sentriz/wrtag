@@ -6,27 +6,22 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"sync"
 	"time"
 
-	"go.senan.xyz/wrtag/clientutil"
+	"golang.org/x/time/rate"
 )
 
 var lrclibBaseURL = `https://lrclib.net/api/get`
 
 type LRCLib struct {
-	RateLimit time.Duration
-
-	initOnce   sync.Once
 	HTTPClient *http.Client
+	Limiter    *rate.Limiter
 }
 
 func (l *LRCLib) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
-	l.initOnce.Do(func() {
-		l.HTTPClient = clientutil.Wrap(l.HTTPClient, clientutil.Chain(
-			clientutil.WithRateLimit(l.RateLimit),
-		))
-	})
+	if err := l.Limiter.Wait(ctx); err != nil {
+		return "", err
+	}
 
 	u, _ := url.Parse(lrclibBaseURL)
 	q := u.Query()
