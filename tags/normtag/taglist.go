@@ -56,6 +56,7 @@ var knownTags = map[string]struct{}{
 	"REPLAYGAIN_TRACK_RANGE": {},
 	"TITLE": {},
 	"TRACKNUMBER": {},
+	"TRACKTOTAL": {},
 }
 var alternatives = map[string]string{
 	"ACOUSTID FINGERPRINT": "ACOUSTID_FINGERPRINT",
@@ -117,6 +118,8 @@ var alternatives = map[string]string{
 	"TSST": "DISCSUBTITLE",
 	"TOTALDISCS": "DISCTOTAL",
 	"TOTALDISKS": "DISCTOTAL",
+	"TOTALDISC": "DISCTOTAL",
+	"TOTALDISK": "DISCTOTAL",
 	"TENC": "ENCODEDBY",
 	"ENCODED_BY": "ENCODEDBY",
 	"ENCODED BY": "ENCODEDBY",
@@ -165,4 +168,6 @@ var alternatives = map[string]string{
 	"TRCK": "TRACKNUMBER",
 	"TRKN": "TRACKNUMBER",
 	"TRK": "TRACKNUMBER",
+	"TOTALTRACKS": "TRACKTOTAL",
+	"TOTALTRACK": "TRACKTOTAL",
 }

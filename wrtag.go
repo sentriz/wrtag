@@ -562,7 +562,9 @@ func WriteRelease(
 	normtag.Set(t, normtag.Genre, trimZero(cmp.Or(genreNames...))...)
 	normtag.Set(t, normtag.Genres, trimZero(genreNames...)...)
 	normtag.Set(t, normtag.TrackNumber, trimZero(strconv.Itoa(trk.Position))...)
+	normtag.Set(t, normtag.TrackTotal, trimZero(strconv.Itoa(media.TrackCount))...)
 	normtag.Set(t, normtag.DiscNumber, trimZero(strconv.Itoa(media.Position))...)
+	normtag.Set(t, normtag.DiscTotal, trimZero(strconv.Itoa(len(release.Media)))...)
 	normtag.Set(t, normtag.DiscSubtitle, trimZero(media.Title)...)
 
 	normtag.Set(t, normtag.ISRC, trimZero(trk.Recording.ISRCs...)...)

@@ -41,9 +41,10 @@ const (
 	Genre         = "GENRE"          //tag: alts "TCON" "©GEN" "TCO"
 	Genres        = "GENRES"
 	TrackNumber   = "TRACKNUMBER"  //tag: alts "TRACK" "TRACKNUM" "TRCK" "TRKN" "TRK"
+	TrackTotal    = "TRACKTOTAL"   //tag: alts "TOTALTRACKS" "TOTALTRACK"
 	DiscNumber    = "DISCNUMBER"   //tag: alts "DISC" "TPOS" "DISK" "TPA"
+	DiscTotal     = "DISCTOTAL"    //tag: alts "TOTALDISCS" "TOTALDISKS" "TOTALDISC" "TOTALDISK"
 	DiscSubtitle  = "DISCSUBTITLE" //tag: alts "SETSUBTITLE" "TSST"
-	DiscTotal     = "DISCTOTAL"    //tag: alts "TOTALDISCS" "TOTALDISKS"
 
 	ISRC = "ISRC"
 
