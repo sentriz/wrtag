@@ -132,13 +132,23 @@ func (pf *pathFormatParser) Set(value string) error {
 	if err != nil {
 		return fmt.Errorf("make abs: %w", err)
 	}
-	return pf.Parse(value)
+	if err := pf.Parse(value); err != nil {
+		return v30MigrationHint(err)
+	}
+	return nil
 }
 func (pf pathFormatParser) String() string {
 	if pf.Format == nil || pf.Root() == "" {
 		return ""
 	}
 	return pf.Root() + "/..."
+}
+
+// TODO: delete after June 2026.
+//
+//nolint:godox
+func v30MigrationHint(err error) error {
+	return fmt.Errorf("%w (NOTE: wrtag v0.30.0 changed the data available to path-format. if your config is from v0.2x, you need to migrate. please see https://github.com/sentriz/wrtag/releases/tag/v0.30.0)", err)
 }
 
 type researchLinkParser struct{ *researchlink.Builder }
