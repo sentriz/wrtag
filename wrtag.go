@@ -211,11 +211,11 @@ func ProcessDir(
 		return nil, fmt.Errorf("search musicbrainz: %w", err)
 	}
 
-	releaseTracks := releaseTracks(release.Media)
-
 	tagFiles := mapFunc(pathTags, func(_ int, pt PathTags) map[string][]string {
 		return pt.Tags
 	})
+
+	releaseTracks := releaseTracks(release.Media)
 	releaseTracksOnly := mapFunc(releaseTracks, func(_ int, tm trackWithMedia) musicbrainz.Track {
 		return tm.track
 	})
