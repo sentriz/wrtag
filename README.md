@@ -66,6 +66,7 @@ To describe the general workflow:
 - **Cover fetching** or upgrades from the [Cover Art Archive](https://coverartarchive.org/).
 - Care taken to ensure **no orphan** folders are left in the library when moves or copies occur.
 - Validation to ensure your library is **always consistent** with no duplicates or unrecognised paths.
+- Proper **multi-disc** release handling with correct disc numbers and subtitles.
 - Safe **concurrent** processing with tree-style filesystem locking.
 - Addons for fetching lyrics, calculating [ReplayGain](https://wiki.hydrogenaud.io/index.php?title=ReplayGain_2.0_specification), or any user-defined subprocess.
 - Rescanning the library and processing it for new changes in MusicBrainz (`wrtag sync`).
@@ -516,6 +517,9 @@ On Windows, you can use drive letters and backslashes:
 path-format C:\User\John\Music\{{ <some artist format> }}\({{ <some release format> }}\{{ <track format> }}
 ```
 
+> [!NOTE]
+> Path formats are validated to ensure that all tracks from a release (including multi-disc releases) are placed in the same directory. If your format uses `.Media` fields in the directory portion (not just the filename), validation will fail.
+
 ## Available template data
 
 The template has access to the following data:
@@ -523,8 +527,16 @@ The template has access to the following data:
 - `.Release` - The full MusicBrainz release object (see [`type Release struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
 - `.ReleaseDisambiguation` - A string for release and release group disambiguation
 - `.IsCompilation` - Boolean indicating if this is a compilation album
-- `.Media` - The current media being processed (see [`type Media struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
+- `.Media` - The current media/disc being processed (see [`type Media struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
+  - `.Media.Position` - Disc number (1, 2, 3...)
+  - `.Media.TrackCount` - Total tracks on this disc
+  - `.Media.Title` - Disc subtitle (if any)
+  - `.Media.Format` - Media format (e.g., "CD", "Vinyl")
 - `.Track` - The current track being processed (see [`type Track struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
+  - `.Track.Position` - Track number on the disc (1, 2, 3...)
+  - `.Track.Number` - Track number as string (e.g., "1", "A1" for vinyl)
+  - `.Track.Title` - Track title
+  - `.Track.Artists` - Track artists
 - `.Ext` - The file extension for the current track, including the dot (e.g., ".flac")
 
 ## Helper functions
@@ -579,10 +591,16 @@ Including multi-album artist support, release group year, release group and rele
 /music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }} {{ if .IsCompilation }}{{ artistsString .Track.Artists | safepath }} - {{ end }}{{ .Track.Title | safepath }}{{ .Ext }}
 ```
 
-### With disc and track numbers
+### With track position and total tracks
 
 ```
 /music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}
+```
+
+### With disc number for multi-disc releases
+
+```
+/music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ .Media.Position }}-{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}
 ```
 
 # Addons
@@ -682,6 +700,8 @@ Example track is [America Is Waiting](https://musicbrainz.org/release/3b28412d-8
 | `GENRE`                      | Primary genre                                             | `ambient`                                                                                                                                                                                                                    |
 | `GENRES`                     | Genre list as multi-valued tag                            | `ambient`, `art rock`, `electronic`, `experimental`                                                                                                                                                                          |
 | `TRACKNUMBER`                | Track number                                              | `1`                                                                                                                                                                                                                          |
+| `DISCNUMBER`                 | Disc number                                               | `1`                                                                                                                                                                                                                          |
+| `DISCSUBTITLE`               | Disc subtitle (media title)                               | `Bonus Disc`                                                                                                                                                                                                                 |
 | `ISRC`                       | International Standard Recording Code                     | `GBAAA0500384`                                                                                                                                                                                                               |
 | `REMIXER`                    | Concatenated remixers on the recording                    | `Artist One, Artist Two`                                                                                                                                                                                                     |
 | `REMIXERS`                   | multi-valued remixers on the recording                    | `Artist One`, `Artist Two`                                                                                                                                                                                                   |
