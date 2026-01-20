@@ -149,6 +149,7 @@ func (c *MBClient) request(ctx context.Context, r *http.Request, dest any) error
 	c.initOnce.Do(func() {
 		c.HTTPClient = clientutil.Wrap(c.HTTPClient, clientutil.Chain(
 			clientutil.WithRateLimit(c.RateLimit),
+			clientutil.WithTimeout(30*time.Second),
 		))
 	})
 

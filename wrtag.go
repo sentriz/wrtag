@@ -337,9 +337,6 @@ func ProcessDir(
 }
 
 func searchRelease(ctx context.Context, client *musicbrainz.MBClient, query musicbrainz.ReleaseQuery) (*musicbrainz.Release, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Second*30)
-	defer cancel()
-
 	release, err := client.SearchRelease(ctx, query)
 	if err != nil {
 		return nil, err
@@ -1093,9 +1090,6 @@ func processCover(
 }
 
 func tryDownloadMusicBrainzCover(ctx context.Context, caa *musicbrainz.CAAClient, release *musicbrainz.Release, skipFunc func(*http.Response) bool) (string, error) {
-	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
-	defer cancel()
-
 	coverURL, err := caa.GetCoverURL(ctx, release)
 	if err != nil {
 		return "", err
