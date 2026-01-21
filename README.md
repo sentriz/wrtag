@@ -66,7 +66,7 @@ To describe the general workflow:
 - **Cover fetching** or upgrades from the [Cover Art Archive](https://coverartarchive.org/).
 - Care taken to ensure **no orphan** folders are left in the library when moves or copies occur.
 - Validation to ensure your library is **always consistent** with no duplicates or unrecognised paths.
-- Proper **multi-disc** release handling with correct disc numbers and subtitles.
+- Proper **multi-disc/media** release handling with disc/media numbers and subtitles.
 - Safe **concurrent** processing with tree-style filesystem locking.
 - Addons for fetching lyrics, calculating [ReplayGain](https://wiki.hydrogenaud.io/index.php?title=ReplayGain_2.0_specification), or any user-defined subprocess.
 - Rescanning the library and processing it for new changes in MusicBrainz (`wrtag sync`).
@@ -518,7 +518,7 @@ path-format C:\User\John\Music\{{ <some artist format> }}\({{ <some release form
 ```
 
 > [!NOTE]
-> Path formats are validated to ensure that all tracks from a release (including multi-disc releases) are placed in the same directory. If your format uses `.Media` fields in the directory portion (not just the filename), validation will fail.
+> Path formats are validated to ensure that all tracks from a release (including multi-disc/media releases) are placed in the same directory. If your format uses `.Media` fields in the directory portion (not just the filename), validation will fail.
 
 ## Available template data
 
@@ -527,13 +527,13 @@ The template has access to the following data:
 - `.Release` - The full MusicBrainz release object (see [`type Release struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
 - `.ReleaseDisambiguation` - A string for release and release group disambiguation
 - `.IsCompilation` - Boolean indicating if this is a compilation album
-- `.Media` - The current media/disc being processed (see [`type Media struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
-  - `.Media.Position` - Disc number (1, 2, 3...)
-  - `.Media.TrackCount` - Total tracks on this disc
-  - `.Media.Title` - Disc subtitle (if any)
+- `.Media` - The current disc/media being processed (see [`type Media struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
+  - `.Media.Position` - Media number (1, 2, 3...)
+  - `.Media.TrackCount` - Total tracks on this media
+  - `.Media.Title` - Media subtitle (if any)
   - `.Media.Format` - Media format (e.g., "CD", "Vinyl")
 - `.Track` - The current track being processed (see [`type Track struct {`](https://github.com/sentriz/wrtag/blob/master/musicbrainz/musicbrainz.go))
-  - `.Track.Position` - Track number on the disc (1, 2, 3...)
+  - `.Track.Position` - Track number on the media (1, 2, 3...)
   - `.Track.Number` - Track number as string (e.g., "1", "A1" for vinyl)
   - `.Track.Title` - Track title
   - `.Track.Artists` - Track artists
@@ -567,7 +567,7 @@ In addition to what's provided by Go [text/template](https://pkg.go.dev/text/tem
 
 ### The recommended format
 
-Including multi-album artist support, release group year, release group and release disambiguations, disc number prefix for multi-disc releases, track numbers, total track numbers, artist names if the release is a compilation album:
+Including multi-album artist support, release group year, release group and release disambiguations, disc/media number prefix for multi-media releases, track numbers, total track numbers, artist names if the release is a compilation album:
 
 ```
 /music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ if gt (len .Release.Media) 1 }}d{{ pad0 2 .Media.Position }} {{ end }}{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ if .IsCompilation }}{{ artistsString .Track.Artists | safepath }} - {{ end }}{{ .Track.Title | safepath }}{{ .Ext }}
@@ -597,7 +597,7 @@ Including multi-album artist support, release group year, release group and rele
 /music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}
 ```
 
-### With disc number for multi-disc releases
+### With disc/media number for multi-media releases
 
 ```
 /music/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}/{{ .Media.Position }}-{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}
@@ -700,8 +700,10 @@ Example track is [America Is Waiting](https://musicbrainz.org/release/3b28412d-8
 | `GENRE`                      | Primary genre                                             | `ambient`                                                                                                                                                                                                                    |
 | `GENRES`                     | Genre list as multi-valued tag                            | `ambient`, `art rock`, `electronic`, `experimental`                                                                                                                                                                          |
 | `TRACKNUMBER`                | Track number                                              | `1`                                                                                                                                                                                                                          |
-| `DISCNUMBER`                 | Disc number                                               | `1`                                                                                                                                                                                                                          |
-| `DISCSUBTITLE`               | Disc subtitle (media title)                               | `Bonus Disc`                                                                                                                                                                                                                 |
+| `TRACKTOTAL`                 | Total tracks on disc/media                                | `11`                                                                                                                                                                                                                         |
+| `DISCNUMBER`                 | Disc/media number                                         | `1`                                                                                                                                                                                                                          |
+| `DISCTOTAL`                  | Total discs/medias in release                             | `2`                                                                                                                                                                                                                          |
+| `DISCSUBTITLE`               | Disc/media subtitle                                       | `Bonus Disc`                                                                                                                                                                                                                 |
 | `ISRC`                       | International Standard Recording Code                     | `GBAAA0500384`                                                                                                                                                                                                               |
 | `REMIXER`                    | Concatenated remixers on the recording                    | `Artist One, Artist Two`                                                                                                                                                                                                     |
 | `REMIXERS`                   | multi-valued remixers on the recording                    | `Artist One`, `Artist Two`                                                                                                                                                                                                   |
