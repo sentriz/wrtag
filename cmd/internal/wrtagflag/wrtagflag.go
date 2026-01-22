@@ -101,6 +101,9 @@ func Config() *wrtag.Config {
 
 	flag.BoolVar(&cfg.UpgradeCover, "cover-upgrade", false, "Fetch new cover art even if it exists locally")
 
+	cfg.FileMode = defaultFileMode
+	flag.Var(&fileModeParser{&cfg.FileMode}, "file-mode", "File mode for destinations files (on Unix-like systems, the default respects current umask)")
+
 	return &cfg
 }
 
@@ -114,19 +117,6 @@ func ResearchLinks() *researchlink.Builder {
 	var r researchlink.Builder
 	flag.Var(&researchLinkParser{&r}, "research-link", "Define a helper URL to help find information about an unmatched release (stackable)")
 	return &r
-}
-
-func OperationByName(name string, dryRun bool) (wrtag.FileSystemOperation, error) {
-	switch name {
-	case "copy":
-		return wrtag.NewCopy(dryRun), nil
-	case "move":
-		return wrtag.NewMove(dryRun), nil
-	case "reflink":
-		return wrtag.NewReflink(dryRun), nil
-	default:
-		return nil, errors.New("unknown operation")
-	}
 }
 
 var _ flag.Value = (*pathFormatParser)(nil)
@@ -345,3 +335,35 @@ func (rl *rateLimitParser) String() string {
 	}
 	return dur.String()
 }
+
+type fileModeParser struct {
+	m *os.FileMode
+}
+
+func (fm fileModeParser) Set(value string) error {
+	mode, err := strconv.ParseInt(value, 8, 32)
+	if err != nil {
+		return err
+	}
+	*fm.m = os.FileMode(mode) //nolint:gosec
+	return nil
+}
+func (fm *fileModeParser) String() string {
+	return fmt.Sprintf("%04o", *fm.m)
+}
+
+func OperationByName(name string, dryRun bool) (wrtag.FileSystemOperation, error) {
+	switch name {
+	case "copy":
+		return wrtag.NewCopy(dryRun), nil
+	case "move":
+		return wrtag.NewMove(dryRun), nil
+	case "reflink":
+		return wrtag.NewReflink(dryRun), nil
+	default:
+		return nil, errors.New("unknown operation")
+	}
+}
+
+// overridden in _unix.go to respect umask.
+var defaultFileMode os.FileMode = 0666

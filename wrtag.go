@@ -140,6 +140,9 @@ type Config struct {
 
 	// UpgradeCover specifies whether to attempt to replace existing covers with better versions
 	UpgradeCover bool
+
+	// FileMode is the mode destination files should be set to
+	FileMode os.FileMode
 }
 
 // ProcessDir processes a music directory by looking up metadata on MusicBrainz and
@@ -276,7 +279,7 @@ func ProcessDir(
 	for i := range pathTags {
 		pt, rt, destPath := pathTags[i], releaseTracks[i], destPaths[i]
 
-		if err := op.ProcessPath(ctx, dc, pt.Path, destPath); err != nil {
+		if err := op.ProcessPath(ctx, dc, pt.Path, destPath, cfg.FileMode); err != nil {
 			return nil, fmt.Errorf("process path %q: %w", filepath.Base(pt.Path), err)
 		}
 
@@ -316,7 +319,7 @@ func ProcessDir(
 	}
 
 	for kf := range cfg.KeepFiles {
-		if err := op.ProcessPath(ctx, dc, filepath.Join(srcDir, kf), filepath.Join(destDir, kf)); err != nil && !errors.Is(err, os.ErrNotExist) {
+		if err := op.ProcessPath(ctx, dc, filepath.Join(srcDir, kf), filepath.Join(destDir, kf), cfg.FileMode); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("process keep file %q: %w", kf, err)
 		}
 	}
@@ -747,7 +750,7 @@ type FileSystemOperation interface {
 	// It ensures the destination directory exists and records the path in the DirContext.
 	// The exact behaviour (move/copy/reflink) depends on the specific implementation.
 	// Returns an error if the operation fails.
-	ProcessPath(ctx context.Context, dc DirContext, src, dest string) error
+	ProcessPath(ctx context.Context, dc DirContext, src, dest string, mode os.FileMode) error
 
 	// PostSource performs any cleanup or post-processing on the source directory
 	// after all files have been processed. For example, removing empty directories
@@ -786,7 +789,7 @@ func (m Move) CanModifyDest() bool {
 // ProcessPath moves a file from src to dest, ensuring the destination directory exists.
 // If the operation is in dry-run mode, it will only log the intended action.
 // If src and dest are the same, no action is taken.
-func (m Move) ProcessPath(ctx context.Context, dc DirContext, src, dest string) error {
+func (m Move) ProcessPath(ctx context.Context, dc DirContext, src, dest string, mode os.FileMode) error {
 	dc.knownDestPaths[dest] = struct{}{}
 
 	if filepath.Clean(src) == filepath.Clean(dest) {
@@ -811,11 +814,19 @@ func (m Move) ProcessPath(ctx context.Context, dc DirContext, src, dest string) 
 			if err := os.Remove(src); err != nil {
 				return fmt.Errorf("remove from move: %w", err)
 			}
+			if err := os.Chmod(dest, mode); err != nil {
+				return fmt.Errorf("chmod dest: %w", err)
+			}
 
 			slog.DebugContext(ctx, "moved path", "from", src, "to", dest)
 			return nil
 		}
+
 		return fmt.Errorf("rename: %w", err)
+	}
+
+	if err := os.Chmod(dest, mode); err != nil {
+		return fmt.Errorf("chmod dest: %w", err)
 	}
 
 	slog.DebugContext(ctx, "moved path", "from", src, "to", dest)
@@ -869,7 +880,7 @@ func (c Copy) CanModifyDest() bool {
 // ProcessPath copies a file from src to dest, ensuring the destination directory exists.
 // If the operation is in dry-run mode, it will only log the intended action.
 // If src and dest are the same, it returns ErrSelfCopy.
-func (c Copy) ProcessPath(ctx context.Context, dc DirContext, src, dest string) error {
+func (c Copy) ProcessPath(ctx context.Context, dc DirContext, src, dest string, mode os.FileMode) error {
 	dc.knownDestPaths[dest] = struct{}{}
 
 	if filepath.Clean(src) == filepath.Clean(dest) {
@@ -889,6 +900,10 @@ func (c Copy) ProcessPath(ctx context.Context, dc DirContext, src, dest string) 
 		return err
 	}
 
+	if err := os.Chmod(dest, mode); err != nil {
+		return fmt.Errorf("chmod dest: %w", err)
+	}
+
 	slog.DebugContext(ctx, "copied path", "from", src, "to", dest)
 	return nil
 }
@@ -906,7 +921,9 @@ type Reflink struct {
 
 // NewReflink creates a new Reflink operation with the specified dry-run mode.
 // If dryRun is true, no files will actually be reflinked.
-func NewReflink(dryRun bool) Reflink { return Reflink{dryRun: dryRun} }
+func NewReflink(dryRun bool) Reflink {
+	return Reflink{dryRun: dryRun}
+}
 
 // CanModifyDest returns whether this operation can modify destination files.
 // For Reflink operations, this is determined by the dryRun setting.
@@ -917,7 +934,7 @@ func (c Reflink) CanModifyDest() bool {
 // ProcessPath creates a reflink (copy-on-write) clone of a file from src to dest.
 // If the operation is in dry-run mode, it will only log the intended action.
 // If src and dest are the same, it returns ErrSelfCopy.
-func (c Reflink) ProcessPath(ctx context.Context, dc DirContext, src, dest string) error {
+func (c Reflink) ProcessPath(ctx context.Context, dc DirContext, src, dest string, mode os.FileMode) error {
 	dc.knownDestPaths[dest] = struct{}{}
 
 	if filepath.Clean(src) == filepath.Clean(dest) {
@@ -935,6 +952,10 @@ func (c Reflink) ProcessPath(ctx context.Context, dc DirContext, src, dest strin
 
 	if err := reflink.Always(src, dest); err != nil {
 		return fmt.Errorf("reflink file: %w", err)
+	}
+
+	if err := os.Chmod(dest, mode); err != nil {
+		return fmt.Errorf("chmod dest: %w", err)
 	}
 
 	slog.DebugContext(ctx, "reflinked path", "from", src, "to", dest)
@@ -1071,7 +1092,7 @@ func processCover(
 		}
 		if coverTmp != "" {
 			destCover := coverPath(coverTmp)
-			if err := (Move{}).ProcessPath(ctx, dc, coverTmp, destCover); err != nil {
+			if err := (Move{}).ProcessPath(ctx, dc, coverTmp, destCover, cfg.FileMode); err != nil {
 				return "", fmt.Errorf("move new cover to dest: %w", err)
 			}
 			return destCover, nil
@@ -1081,7 +1102,7 @@ func processCover(
 	// process any existing cover if we didn't fetch (or find) any from musicbrainz
 	if cover != "" {
 		destCover := coverPath(cover)
-		if err := op.ProcessPath(ctx, dc, cover, destCover); err != nil {
+		if err := op.ProcessPath(ctx, dc, cover, destCover, cfg.FileMode); err != nil {
 			return "", fmt.Errorf("move file to dest: %w", err)
 		}
 		return destCover, nil

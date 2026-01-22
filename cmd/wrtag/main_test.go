@@ -38,13 +38,15 @@ func TestMain(m *testing.M) {
 	os.Setenv("WRTAG_CAA_RATE_LIMIT", "0")
 
 	testscript.Main(m, map[string]func(){
-		"wrtag":    main,
-		"tag":      mainTag,
-		"find":     mainFind,
-		"touch":    mainTouch,
-		"mime":     mainMIME,
-		"mod-time": mainModTime,
-		"rand":     mainRand,
+		"wrtag":     main,
+		"tag":       mainTag,
+		"find":      mainFind,
+		"touch":     mainTouch,
+		"mime":      mainMIME,
+		"chmod":     mainChmod,
+		"file-mode": mainFileMode,
+		"mod-time":  mainModTime,
+		"rand":      mainRand,
 	})
 }
 
@@ -154,6 +156,45 @@ func mainMIME() {
 
 	mime := http.DetectContentType(data)
 	fmt.Println(mime)
+}
+
+func mainChmod() {
+	flag.Parse()
+
+	mode, err := strconv.ParseInt(flag.Arg(0), 8, 32)
+	if err != nil {
+		log.Fatalf("parse mode: %v", err)
+	}
+
+	pat := flag.Arg(1)
+	paths := parsePattern(pat)
+	if len(paths) == 0 {
+		log.Fatalf("no paths to match pattern")
+	}
+
+	for _, p := range paths {
+		if err := os.Chmod(p, os.FileMode(mode)); err != nil {
+			log.Fatalf("chmod %s: %v", p, err)
+		}
+	}
+}
+
+func mainFileMode() {
+	flag.Parse()
+
+	pat := flag.Arg(0)
+	paths := parsePattern(pat)
+	if len(paths) == 0 {
+		log.Fatalf("no paths to match pattern")
+	}
+
+	for _, p := range paths {
+		info, err := os.Stat(p)
+		if err != nil {
+			log.Fatalf("error stating: %v", err)
+		}
+		fmt.Printf("%04o\n", info.Mode().Perm())
+	}
 }
 
 func mainModTime() {

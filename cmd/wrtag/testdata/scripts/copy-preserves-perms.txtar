@@ -1,0 +1,45 @@
+exec tag write kat_moda/01.flac
+exec tag write kat_moda/02.flac
+exec tag write kat_moda/03.flac
+exec touch kat_moda/keep-me
+exec touch kat_moda/cover.png
+
+exec chmod 0612 kat_moda/*.flac
+exec chmod 0612 kat_moda/cover.png
+exec chmod 0612 kat_moda/keep-me
+
+exec file-mode kat_moda/*.flac
+stdout -count=3 0612
+exec file-mode kat_moda/cover.png
+stdout 0612
+exec file-mode kat_moda/keep-me
+stdout 0612
+
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
+env WRTAG_KEEP_FILE=keep-me
+
+env WRTAG_FILE_MODE=644
+
+# copy
+exec wrtag copy -yes -mbid e47d04a4-7460-427d-a731-cc82386d85f1 kat_moda/
+
+# expect all respect umask
+exec file-mode 'albums/Kat Moda/*.flac'
+stdout -count=3 0644
+exec file-mode 'albums/Kat Moda/cover.png'
+stdout 0644
+exec file-mode 'albums/Kat Moda/keep-me'
+stdout 0644
+
+env WRTAG_FILE_MODE=642
+
+# copy
+exec wrtag copy -yes -mbid e47d04a4-7460-427d-a731-cc82386d85f1 kat_moda/
+
+# expect all respect umask
+exec file-mode 'albums/Kat Moda/*.flac'
+stdout -count=3 0642
+exec file-mode 'albums/Kat Moda/cover.png'
+stdout 0642
+exec file-mode 'albums/Kat Moda/keep-me'
+stdout 0642
