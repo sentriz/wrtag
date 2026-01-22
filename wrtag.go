@@ -206,21 +206,21 @@ func ProcessDir(
 		}
 	}
 
-	release, err := searchRelease(ctx, &cfg.MusicBrainzClient, query)
+	release, err := cfg.MusicBrainzClient.SearchRelease(ctx, query)
 	if err != nil {
 		return nil, fmt.Errorf("search musicbrainz: %w", err)
 	}
 
-	tagFiles := mapFunc(pathTags, func(_ int, pt PathTags) map[string][]string {
-		return pt.Tags
-	})
-
 	releaseTracks := releaseTracks(release.Media)
-	releaseTracksOnly := mapFunc(releaseTracks, func(_ int, tm trackWithMedia) musicbrainz.Track {
-		return tm.track
-	})
 
-	score, diff := DiffRelease(cfg.DiffWeights, release, releaseTracksOnly, tagFiles)
+	var score float64
+	var diff []Diff
+	{
+		tagsOnly := mapFunc(pathTags, func(_ int, pt PathTags) map[string][]string { return pt.Tags })
+		tracksOnly := mapFunc(releaseTracks, func(_ int, tm releaseTrack) musicbrainz.Track { return tm.track })
+
+		score, diff = DiffRelease(cfg.DiffWeights, release, tracksOnly, tagsOnly)
+	}
 
 	if len(pathTags) != len(releaseTracks) {
 		return &SearchResult{release, query, 0, "", diff, originFile}, fmt.Errorf("%w: %d remote / %d local", ErrTrackCountMismatch, len(releaseTracks), len(pathTags))
@@ -336,33 +336,28 @@ func ProcessDir(
 	return &SearchResult{release, query, score, destDir, diff, originFile}, nil
 }
 
-func searchRelease(ctx context.Context, client *musicbrainz.MBClient, query musicbrainz.ReleaseQuery) (*musicbrainz.Release, error) {
-	release, err := client.SearchRelease(ctx, query)
-	if err != nil {
-		return nil, err
-	}
-	return release, nil
-}
-
-type trackWithMedia struct {
+type releaseTrack struct {
 	track musicbrainz.Track
 	media musicbrainz.Media
 }
 
-func releaseTracks(media []musicbrainz.Media) []trackWithMedia {
+func releaseTracks(media []musicbrainz.Media) []releaseTrack {
 	var numTracks int
 	for _, media := range media {
 		numTracks += len(media.Tracks)
+		if media.Pregap != nil {
+			numTracks++
+		}
 	}
 
-	tracks := make([]trackWithMedia, 0, numTracks)
+	tracks := make([]releaseTrack, 0, numTracks)
 	for _, media := range media {
 		if strings.Contains(media.Format, "DVD") || strings.Contains(media.Format, "Blu-ray") {
 			// not supported for now
 			continue
 		}
 		if media.Pregap != nil {
-			tracks = append(tracks, trackWithMedia{
+			tracks = append(tracks, releaseTrack{
 				track: *media.Pregap,
 				media: media,
 			})
@@ -374,7 +369,7 @@ func releaseTracks(media []musicbrainz.Media) []trackWithMedia {
 			if track.Title == "[data track]" {
 				continue
 			}
-			tracks = append(tracks, trackWithMedia{
+			tracks = append(tracks, releaseTrack{
 				track: track,
 				media: media,
 			})
