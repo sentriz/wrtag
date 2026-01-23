@@ -1,5 +1,28 @@
 # Changelog
 
+## [0.30.0](https://github.com/sentriz/wrtag/compare/v0.20.0...v0.30.0) (2026-01-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **wrtag:** revise path-format template data for media-aware tracks
+
+### Features
+
+* **pathformat:** add validations for multi disc releases ([9ea5bec](https://github.com/sentriz/wrtag/commit/9ea5bec4de9c13e5f9dabffecc26073d326f988f))
+* separate rate limiting from timeouts ([b9e9a70](https://github.com/sentriz/wrtag/commit/b9e9a7055c81dfc642d49a71fb11889977406fb7))
+* **wrtag:** add file-mode option to chmod files with respect to umask ([05f31c9](https://github.com/sentriz/wrtag/commit/05f31c94726d948586e668ff839729b5c0c2bde6)), closes [#204](https://github.com/sentriz/wrtag/issues/204)
+* **wrtag:** filter out data tracks ([ce435d1](https://github.com/sentriz/wrtag/commit/ce435d12e3c57c37ee8a05412a255af242370179)), closes [#202](https://github.com/sentriz/wrtag/issues/202)
+* **wrtagflag:** add hint for v0.30.0 migration ([ba07e0c](https://github.com/sentriz/wrtag/commit/ba07e0c51f6660cf7c48b3dda1310accd85070e6))
+* **wrtag:** revise path-format template data for media-aware tracks ([c48707b](https://github.com/sentriz/wrtag/commit/c48707b6061df4473d2457c4d1f41d638ef4a132)), closes [#165](https://github.com/sentriz/wrtag/issues/165) [#177](https://github.com/sentriz/wrtag/issues/177) [#199](https://github.com/sentriz/wrtag/issues/199)
+* **wrtag:** write disc information ([b9934f9](https://github.com/sentriz/wrtag/commit/b9934f96fd822f1900e56c22bddaced15c54aa87))
+* **wrtag:** write track and disc total ([3d7fa95](https://github.com/sentriz/wrtag/commit/3d7fa9536d46e8b393c561f8e970fc9a21e3f3a4))
+
+
+### Bug Fixes
+
+* **wrtag:** run HTTP timeouts after rate limiter ([cebbf0a](https://github.com/sentriz/wrtag/commit/cebbf0aa526649b4bb55a9296a7c0ddd20d48640)), closes [#201](https://github.com/sentriz/wrtag/issues/201)
+
 ## [0.20.0](https://github.com/sentriz/wrtag/compare/v0.19.0...v0.20.0) (2026-01-12)
 
 
