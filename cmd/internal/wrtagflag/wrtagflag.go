@@ -349,6 +349,9 @@ func (fm fileModeParser) Set(value string) error {
 	return nil
 }
 func (fm *fileModeParser) String() string {
+	if fm.m == nil {
+		return ""
+	}
 	return fmt.Sprintf("%04o", *fm.m)
 }
 
