@@ -1,14 +1,11 @@
 // Package clientutil provides HTTP client middleware for common functionality
-// like rate limiting, caching, logging, and user agent management.
+// like rate limiting, logging, and user agent management.
 package clientutil
 
 import (
 	"log/slog"
 	"net/http"
-	"sync"
 	"time"
-
-	"github.com/gregjones/httpcache"
 )
 
 type Middleware func(http.RoundTripper) http.RoundTripper
@@ -22,15 +19,6 @@ func Chain(middlewares ...Middleware) Middleware {
 			final = middlewares[i](final)
 		}
 		return final
-	}
-}
-
-func WithCache() Middleware {
-	cache := NewMemoryCache()
-	return func(next http.RoundTripper) http.RoundTripper {
-		transport := httpcache.NewTransport(cache)
-		transport.Transport = next
-		return transport
 	}
 }
 
@@ -81,40 +69,3 @@ func Wrap(c *http.Client, mw Middleware) *http.Client {
 	return c
 }
 
-type MemoryCache struct {
-	mu    sync.RWMutex
-	items map[string][]byte
-}
-
-func NewMemoryCache() *MemoryCache {
-	cache := &MemoryCache{items: map[string][]byte{}}
-	go func() {
-		t := time.NewTicker(45 * time.Second)
-		defer t.Stop()
-		for range t.C {
-			cache.mu.Lock()
-			clear(cache.items)
-			cache.mu.Unlock()
-		}
-	}()
-	return cache
-}
-
-func (c *MemoryCache) Get(key string) ([]byte, bool) {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	resp, ok := c.items[key]
-	return resp, ok
-}
-
-func (c *MemoryCache) Set(key string, data []byte) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.items[key] = data
-}
-
-func (c *MemoryCache) Delete(key string) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	delete(c.items, key)
-}

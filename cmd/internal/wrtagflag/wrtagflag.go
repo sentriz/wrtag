@@ -95,9 +95,7 @@ func Config() *wrtag.Config {
 	cfg.CoverArtArchiveClient.Limiter = rate.NewLimiter(rate.Inf, 0)
 	flag.Var(&rateLimitParser{cfg.CoverArtArchiveClient.Limiter}, "caa-rate-limit", "CoverArtArchive rate limit duration")
 
-	cfg.CoverArtArchiveClient.HTTPClient = clientutil.Wrap(&http.Client{Timeout: 30 * time.Second},
-		clientutil.WithCache(),
-	)
+	cfg.CoverArtArchiveClient.HTTPClient = &http.Client{Timeout: 30 * time.Second}
 
 	flag.BoolVar(&cfg.UpgradeCover, "cover-upgrade", false, "Fetch new cover art even if it exists locally")
 
