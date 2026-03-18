@@ -1,0 +1,46 @@
+# test that tracks are not deleted as "extra files" when the destination
+# path format uses a symlink and the directory already exists (issue #214)
+
+exec tag write source/01.flac title 'alarms'
+exec tag write source/02.flac title 'the bells'
+exec tag write source/03.flac title 'the bells festival mix'
+
+exec tag write source/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+exec tag write source/*.flac album 'kat moda ep'
+exec tag write source/*.flac albumartist 'jeff pills !! '
+exec tag write source/*.flac label 'purpose maker'
+exec tag write source/*.flac catalognumber 'PMD002'
+exec tag write source/*.flac media 'digital media'
+
+exec touch source/cover.png
+
+# create real destination directory and a symlink to it
+exec mkdir -p real_dest
+exec ln -s real_dest dest_link
+
+env WRTAG_PATH_FORMAT='dest_link/albums/{{ artistsString .Release.Artists | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
+
+# initial copy works fine (dest dir doesn't exist yet, so EvalSymlinks is a no-op)
+exec wrtag copy -yes source/
+
+exec find real_dest/
+cmp stdout exp-layout
+
+# now sync the already-imported directory via the symlink path
+# this should NOT delete the tracks
+exec wrtag sync dest_link/albums
+! stderr 'deleted extra file'
+
+# verify tracks still exist after sync
+exec find real_dest/
+cmp stdout exp-layout
+
+-- exp-layout --
+real_dest
+real_dest/albums
+real_dest/albums/Jeff Mills
+real_dest/albums/Jeff Mills/Kat Moda
+real_dest/albums/Jeff Mills/Kat Moda/1 Alarms.flac
+real_dest/albums/Jeff Mills/Kat Moda/2 The Bells.flac
+real_dest/albums/Jeff Mills/Kat Moda/3 The Bells (Festival mix).flac
+real_dest/albums/Jeff Mills/Kat Moda/cover.png

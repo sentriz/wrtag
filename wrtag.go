@@ -248,6 +248,7 @@ func ProcessDir(
 		return nil, fmt.Errorf("gen dest dir: %w", err)
 	}
 
+	origDestDir := destDir
 	if dir, err := filepath.EvalSymlinks(destDir); err == nil {
 		destDir = dir
 	}
@@ -255,7 +256,7 @@ func ProcessDir(
 	labelInfo := musicbrainz.AnyLabelInfo(release)
 	genres := musicbrainz.AnyGenres(release)
 
-	// calculate new paths
+	// calculate new paths, rebasing to the resolved destDir if symlinks were involved
 	destPaths := make([]string, 0, len(pathTags))
 	for i, pt := range pathTags {
 		trackMedia := releaseTracks[i]
@@ -263,7 +264,9 @@ func ProcessDir(
 		if err != nil {
 			return nil, fmt.Errorf("create path: %w", err)
 		}
-
+		if origDestDir != destDir {
+			destPath = filepath.Join(destDir, strings.TrimPrefix(destPath, origDestDir))
+		}
 		destPaths = append(destPaths, destPath)
 	}
 

@@ -52,9 +52,6 @@ func (pf *Format) Parse(str string) error {
 		return fmt.Errorf("find root: %w", ErrInvalidFormat)
 	}
 	root = filepath.Clean(root)
-	if dir, err := filepath.EvalSymlinks(root); err == nil {
-		root = dir
-	}
 	*pf = Format{*tmpl, root}
 	return nil
 }
