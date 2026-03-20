@@ -32,8 +32,11 @@ func TestValidation(t *testing.T) {
 	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}/{{ .Track.ID }}`), pathformat.ErrBadData) // implicit trailing slash from missing ID
 	require.ErrorIs(t, pf.Parse(`/albums/test/{{ .Track.ID }}/`), pathformat.ErrBadData)                                                               //
 
+	// missing safepath
+	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}/{{ .Track.Position }}`), pathformat.ErrInvalidFormat)
+
 	// good
-	require.NoError(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}/{{ .Track.Position }}`))
+	require.NoError(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Position }}`))
 	assert.Equal(t, "/albums/test", pf.Root())
 }
 
@@ -78,7 +81,7 @@ func TestPathFormat(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, `/music/albums/Luke Vibert/(2018) Valvable (Deluxe Edition)/01.01 Sharon's Tone.flac`, path)
 
-	require.NoError(t, pf.Parse(`/music/albums/{{ artists .Release.Artists | the | sort | join "; " | safepath }}/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}`))
+	require.NoError(t, pf.Parse(`/music/albums/{{ artists .Release.Artists | the | sort | join "; " | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Position }}{{ .Ext }}`))
 
 	release.Artists[0].Artist.Name = "A House"
 

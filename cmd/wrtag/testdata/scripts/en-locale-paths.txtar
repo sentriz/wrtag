@@ -1,4 +1,4 @@
-env WRTAG_PATH_FORMAT='albums/{{ artistsEnString .Release.Artists }}/{{ .Release.Title }}/{{ .Track.Position }} {{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ artistsEnString .Release.Artists | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
 
 exec tag write ship_scope/1.flac
 exec tag write ship_scope/2.flac

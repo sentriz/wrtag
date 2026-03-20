@@ -14,7 +14,7 @@ exec tag write wipeout/*.flac musicbrainz_albumid '70130d47-2145-4e61-972e-49d3d
 exec tag write wipeout/*.flac album               'wipEout'
 exec tag write wipeout/*.flac albumartist         'CoLD SToRAGE'
 
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ pad0 2 .Track.Position }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }}{{ .Ext }}'
 
 exec wrtag move -yes wipeout
 

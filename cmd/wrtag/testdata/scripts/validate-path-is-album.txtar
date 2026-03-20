@@ -1,5 +1,5 @@
 env WRTAG_DIFF_WEIGHT='label 0, catalogue num 0, media format 0'
-env WRTAG_PATH_FORMAT='albums/{{ artistsString .Release.Artists }}/{{ .Release.Title }}/{{ pad0 2 .Track.Position }} {{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ artistsString .Release.Artists | safepathUnicode }}/{{ .Release.Title | safepathUnicode }}/{{ pad0 2 .Track.Position }} {{ .Track.Title | safepathUnicode }}{{ .Ext }}'
 
 # set up files, already in correct place
 exec tag write 'albums/Khruangbin/A LA SALA/01 Fifteen Fifty‐Three.flac'    tracknumber  1 , title 'Fifteen Fifty‐Three'

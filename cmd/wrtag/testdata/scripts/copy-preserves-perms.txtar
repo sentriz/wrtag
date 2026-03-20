@@ -15,7 +15,7 @@ stdout 0612
 exec file-mode kat_moda/keep-me
 stdout 0612
 
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title | safepath }}/{{ .Track.Position }}{{ .Ext }}'
 env WRTAG_KEEP_FILE=keep-me
 
 env WRTAG_FILE_MODE=644

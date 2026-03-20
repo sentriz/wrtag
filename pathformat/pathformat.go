@@ -112,7 +112,7 @@ type Data struct {
 }
 
 func validate(f Format) error {
-	newRelease := func(artist, name string, medias ...musicbrainz.Media) musicbrainz.Release { //nolint: unparam
+	newRelease := func(artist, name string, medias ...musicbrainz.Media) musicbrainz.Release {
 		var release musicbrainz.Release
 		release.Title = name
 		release.Artists = append(release.Artists, musicbrainz.ArtistCredit{Name: artist, Artist: musicbrainz.Artist{Name: artist}})
@@ -212,6 +212,23 @@ func validate(f Format) error {
 				}
 				dir = d
 			}
+		}
+	}
+
+	{
+		sep := string(filepath.Separator)
+		cleanRelease := newRelease("ar", "rel", newMedia("track"))
+		dirtyRelease := newRelease("a"+sep+"r", "r"+sep+"el", newMedia("tr"+sep+"ack"))
+		cleanPath, err := f.Execute(cleanRelease, cleanRelease.Media[0], cleanRelease.Media[0].Tracks[0], "")
+		if err != nil {
+			return fmt.Errorf("execute clean data: %w", err)
+		}
+		dirtyPath, err := f.Execute(dirtyRelease, dirtyRelease.Media[0], dirtyRelease.Media[0].Tracks[0], "")
+		if err != nil {
+			return fmt.Errorf("execute dirty data: %w", err)
+		}
+		if strings.Count(cleanPath, sep) != strings.Count(dirtyPath, sep) {
+			return fmt.Errorf("%w: path separator in data leaks into output path (missing safepath?)", ErrInvalidFormat)
 		}
 	}
 

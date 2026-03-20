@@ -1,4 +1,4 @@
-env WRTAG_PATH_FORMAT='albums/{{ .Release.Title }}/{{ .Track.Position }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title | safepath }}/{{ .Track.Position }}{{ .Ext }}'
 
 ! exec wrtag sync
 stderr 'albums: no such file or directory'
@@ -7,7 +7,7 @@ stderr 'albums: no such file or directory'
 stderr 'x: no such file or directory'
 
 env WRTAG_LOG_LEVEL=debug
-env WRTAG_PATH_FORMAT='albums/{{ artistsString .Release.Artists }}/{{ .Release.Title }}/{{ pad0 2 .Track.Position }} {{ .Track.Title }}{{ .Ext }}'
+env WRTAG_PATH_FORMAT='albums/{{ artistsString .Release.Artists | safepath }}/{{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
 
 # set up files, already in correct place
 exec tag write 'albums/Khruangbin/A LA SALA/01 Fifteen Fifty‐Three.flac'    tracknumber  1 , title 'Fifteen Fifty‐Three'
