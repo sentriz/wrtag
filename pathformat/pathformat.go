@@ -112,10 +112,18 @@ type Data struct {
 }
 
 func validate(f Format) error {
+	var idc = 1
+	newID := func() string {
+		idc++
+		return fmt.Sprintf("00000000-0000-0000-0000-%012d", idc)
+	}
+
 	newRelease := func(artist, name string, medias ...musicbrainz.Media) musicbrainz.Release {
 		var release musicbrainz.Release
+		release.ID = newID()
 		release.Title = name
-		release.Artists = append(release.Artists, musicbrainz.ArtistCredit{Name: artist, Artist: musicbrainz.Artist{Name: artist}})
+		release.ReleaseGroup.ID = newID()
+		release.Artists = append(release.Artists, musicbrainz.ArtistCredit{Name: artist, Artist: musicbrainz.Artist{ID: newID(), Name: artist}})
 		for i, m := range medias {
 			m.Title = strconv.Itoa(i + 1)
 			m.Position = i + 1
@@ -127,11 +135,14 @@ func validate(f Format) error {
 	newMedia := func(tracks ...string) musicbrainz.Media {
 		var media musicbrainz.Media
 		for i, t := range tracks {
-			media.Tracks = append(media.Tracks, musicbrainz.Track{
-				Title:    t,
-				Position: i + 1,
-				Number:   strconv.Itoa(i + 1),
-			})
+			var track musicbrainz.Track
+			track.ID = newID()
+			track.Title = t
+			track.Position = i + 1
+			track.Number = strconv.Itoa(i + 1)
+			track.Recording.ID = newID()
+			track.Recording.Artists = append(track.Recording.Artists, musicbrainz.ArtistCredit{Name: t, Artist: musicbrainz.Artist{ID: newID(), Name: t}})
+			media.Tracks = append(media.Tracks, track)
 			media.TrackCount++
 		}
 		return media

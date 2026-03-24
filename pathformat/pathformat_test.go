@@ -27,17 +27,21 @@ func TestValidation(t *testing.T) {
 	require.ErrorIs(t, pf.Parse(`/albums/test/{{ .Track.Position }}`), pathformat.ErrAmbiguousFormat)
 
 	// bad data
-	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.ID }}/`), pathformat.ErrBadData)                   // test case is missing ID
-	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}//`), pathformat.ErrBadData)                                    // double slash anyway
-	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}/{{ .Track.ID }}`), pathformat.ErrBadData) // implicit trailing slash from missing ID
-	require.ErrorIs(t, pf.Parse(`/albums/test/{{ .Track.ID }}/`), pathformat.ErrBadData)                                                               //
+	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.ID }}/`), pathformat.ErrBadData) // trailing slash
+	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}//`), pathformat.ErrBadData)                  // double slash anyway
+	require.ErrorIs(t, pf.Parse(`/albums/test/{{ .Track.ID }}/`), pathformat.ErrBadData)                                             // trailing slash
 
 	// missing safepath
 	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}/{{ .Track.Position }}`), pathformat.ErrInvalidFormat)
+	require.ErrorIs(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " }}/{{ .Release.Title }}/{{ .Track.ID }}`), pathformat.ErrInvalidFormat) // Release.Title not safepath'd
 
 	// good
 	require.NoError(t, pf.Parse(`/albums/test/{{ artists .Release.Artists | join " " | safepath }}/{{ .Release.Title | safepath }}/{{ .Track.Position }}`))
 	assert.Equal(t, "/albums/test", pf.Root())
+
+	// good - MBID-based paths
+	require.NoError(t, pf.Parse(`/albums/test/{{ .Release.ID }}/{{ .Track.Recording.ID }}{{ .Ext }}`))
+	require.NoError(t, pf.Parse(`/albums/test/{{ .Release.ID }}/{{ .Track.ID }}{{ .Ext }}`))
 }
 
 func TestPathFormat(t *testing.T) {
