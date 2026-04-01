@@ -37,7 +37,6 @@ import (
 	"go.senan.xyz/wrtag/researchlink"
 
 	_ "github.com/ncruces/go-sqlite3/driver"
-	_ "github.com/ncruces/go-sqlite3/embed"
 	"go.senan.xyz/sqlb"
 	"golang.org/x/sync/errgroup"
 )
@@ -191,7 +190,7 @@ func main() {
 		ctx := r.Context()
 
 		var job Job
-		if err := sqlb.ScanRow(ctx, db, &job, "insert into jobs (source_path, operation, time) values (?, ?, ?) returning *", path, operationStr, time.Now()); err != nil {
+		if err := sqlb.QueryRow(ctx, db, &job, "insert into jobs (source_path, operation, time) values (?, ?, ?) returning *", path, operationStr, time.Now()); err != nil {
 			http.Error(w, fmt.Sprintf("error saving job: %v", err), http.StatusInternalServerError)
 			return
 		}
@@ -208,7 +207,7 @@ func main() {
 		ctx := r.Context()
 
 		var job Job
-		if err := sqlb.ScanRow(ctx, db, &job, "select * from jobs where id=?", id); err != nil {
+		if err := sqlb.QueryRow(ctx, db, &job, "select * from jobs where id=?", id); err != nil {
 			respErrf(w, http.StatusInternalServerError, "error getting job")
 			return
 		}
@@ -228,7 +227,7 @@ func main() {
 		ctx := r.Context()
 
 		var job Job
-		if err := sqlb.ScanRow(ctx, db, &job, "update jobs set confirm=?, use_mbid=?, status=?, updated_time=? where id=? and status<>? returning *", confirm, useMBID, StatusEnqueued, time.Now(), id, StatusInProgress); err != nil {
+		if err := sqlb.QueryRow(ctx, db, &job, "update jobs set confirm=?, use_mbid=?, status=?, updated_time=? where id=? and status<>? returning *", confirm, useMBID, StatusEnqueued, time.Now(), id, StatusInProgress); err != nil {
 			respErrf(w, http.StatusInternalServerError, "error getting job")
 			return
 		}
@@ -335,7 +334,7 @@ func main() {
 		ctx := r.Context()
 
 		var job Job
-		if err := sqlb.ScanRow(ctx, db, &job, "insert into jobs (source_path, operation, use_mbid, confirm, time) values (?, ?, ?, ?, ?) returning *", pth, operationStr, useMBID, confirm, time.Now()); err != nil {
+		if err := sqlb.QueryRow(ctx, db, &job, "insert into jobs (source_path, operation, use_mbid, confirm, time) values (?, ?, ?, ?, ?) returning *", pth, operationStr, useMBID, confirm, time.Now()); err != nil {
 			http.Error(w, fmt.Sprintf("error saving job: %v", err), http.StatusInternalServerError)
 			return
 		}
@@ -419,7 +418,7 @@ func main() {
 
 func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.Notifications, researchLinkQuerier *researchlink.Builder, publicURL string, db *sql.DB, jobSSEUpdate func(uint64), jobID uint64) error {
 	var job Job
-	err := sqlb.ScanRow(ctx, db, &job, "update jobs set status=? where id=? and status=? returning *", StatusInProgress, jobID, StatusEnqueued)
+	err := sqlb.QueryRow(ctx, db, &job, "update jobs set status=? where id=? and status=? returning *", StatusInProgress, jobID, StatusEnqueued)
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil
 	}
@@ -480,7 +479,7 @@ func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.No
 		job.SourcePath = job.DestPath
 	}
 
-	if err := sqlb.ScanRow(ctx, db, &job, "update jobs set ? where id=? returning *", sqlb.UpdateSQL(job), job.ID); err != nil {
+	if err := sqlb.QueryRow(ctx, db, &job, "update jobs set ? where id=? returning *", sqlb.UpdateSQL(job), job.ID); err != nil {
 		return err
 	}
 
@@ -549,7 +548,7 @@ func listJobs(ctx context.Context, db *sql.DB, status JobStatus, search string, 
 	}
 
 	var total int
-	if err := sqlb.ScanRow(ctx, db, sqlb.Values(&total), "select count(1) from jobs where ?", cond); err != nil {
+	if err := sqlb.QueryRow(ctx, db, sqlb.Into(&total), "select count(1) from jobs where ?", cond); err != nil {
 		return jobsListing{}, fmt.Errorf("count total: %w", err)
 	}
 
@@ -559,7 +558,7 @@ func listJobs(ctx context.Context, db *sql.DB, status JobStatus, search string, 
 	}
 
 	var jobs []*Job
-	if err := sqlb.ScanRows(ctx, db, sqlb.AppendPtr(&jobs), "select * from jobs where ? order by time desc limit ? offset ?", cond, pageSize, pageSize*page); err != nil {
+	if err := sqlb.QueryRows(ctx, db, sqlb.AppendPtr(&jobs), "select * from jobs where ? order by time desc limit ? offset ?", cond, pageSize, pageSize*page); err != nil {
 		return jobsListing{}, fmt.Errorf("list jobs: %w", err)
 	}
 

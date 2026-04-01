@@ -50,7 +50,7 @@ var schema []byte
 
 func dbMigrate(ctx context.Context, db *sql.DB) error {
 	var nextVer int
-	if err := sqlb.ScanRow(ctx, db, sqlb.Values(&nextVer), "pragma user_version"); err != nil {
+	if err := sqlb.QueryRow(ctx, db, sqlb.Into(&nextVer), "pragma user_version"); err != nil {
 		return fmt.Errorf("get schema version: %w", err)
 	}
 
