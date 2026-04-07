@@ -17,7 +17,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.11
 	go.senan.xyz/natcmp v0.1.2
-	go.senan.xyz/sqlb v0.5.1
+	go.senan.xyz/sqlb v0.5.3
 	go.senan.xyz/table v0.0.0-20251023151529-96acc7f0ad6c
 	go.senan.xyz/taglib v0.11.1
 	golang.org/x/net v0.52.0
@@ -32,7 +32,7 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	github.com/ncruces/go-sqlite3-wasm v1.0.5-0.20260329114232-2491c387476c // indirect
+	github.com/ncruces/go-sqlite3-wasm v1.0.5-0.20260406124437-9d20f9df3ecf // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
