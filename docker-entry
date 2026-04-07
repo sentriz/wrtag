@@ -8,7 +8,7 @@ USERNAME=wrtag
 
 [ "$PUID" -eq 0 ] && exec "$@"
 
-adduser -D -u "$PUID" -g "$PGID" "$USERNAME" 2>/dev/null
+adduser -D -u "$PUID" -g "$PGID" "$USERNAME" 2>/dev/null || true
 
 [ -d "/data" ] && chown -R "$PUID:$PGID" /data
 [ -d "/config" ] && chown -R "$PUID:$PGID" /config
