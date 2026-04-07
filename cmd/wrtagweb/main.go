@@ -401,7 +401,7 @@ func main() {
 
 	// restart old jobs just in case the process was killed abruptly last time
 	errgrp.Go(func() error {
-		for job, err := range sqlb.Rows[Job](ctx, db, "update jobs set status=? where status=? returning *", StatusEnqueued, StatusInProgress) {
+		for job, err := range sqlb.Rows[Job](ctx, db, "update jobs set status=? where status in (?, ?) returning *", StatusEnqueued, StatusInProgress, StatusEnqueued) {
 			if err != nil {
 				return fmt.Errorf("iter old jobs: %w", err)
 			}
