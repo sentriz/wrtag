@@ -18,7 +18,7 @@ exec wrtag move -yes kat_moda/
 exec find albums/
 cmp stdout exp-layout
 
-! exists 'albums/Kat Moda/cover.PNG'
+[!darwin] ! exists 'albums/Kat Moda/cover.PNG'
 exists 'albums/Kat Moda/cover.png'
 
 -- exp-layout --
