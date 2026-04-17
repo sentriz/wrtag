@@ -548,7 +548,7 @@ func listJobs(ctx context.Context, db *sql.DB, status JobStatus, search string, 
 	}
 
 	var total int
-	if err := sqlb.QueryRow(ctx, db, sqlb.Into(&total), "select count(1) from jobs where ?", cond); err != nil {
+	if err := sqlb.QueryRow(ctx, db, sqlb.Scan(&total), "select count(1) from jobs where ?", cond); err != nil {
 		return jobsListing{}, fmt.Errorf("count total: %w", err)
 	}
 
