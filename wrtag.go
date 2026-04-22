@@ -321,9 +321,23 @@ func ProcessDir(
 		}
 	}
 
+	seenKeepDest := map[string]struct{}{}
 	for kf := range cfg.KeepFiles {
-		if err := op.ProcessPath(ctx, dc, filepath.Join(srcDir, kf), filepath.Join(destDir, kf), cfg.FileMode); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("process keep file %q: %w", kf, err)
+		for _, pattern := range []string{kf, "*/" + kf} {
+			matches, err := fileutil.GlobDir(srcDir, pattern)
+			if err != nil {
+				return nil, fmt.Errorf("glob keep file %q: %w", kf, err)
+			}
+			for _, match := range matches {
+				dest := filepath.Join(destDir, filepath.Base(match))
+				if _, seen := seenKeepDest[dest]; seen {
+					return nil, fmt.Errorf("process keep file %q: duplicate dest path %q", kf, dest)
+				}
+				seenKeepDest[dest] = struct{}{}
+				if err := op.ProcessPath(ctx, dc, match, dest, cfg.FileMode); err != nil && !errors.Is(err, os.ErrNotExist) {
+					return nil, fmt.Errorf("process keep file %q: %w", kf, err)
+				}
+			}
 		}
 	}
 
