@@ -27,7 +27,39 @@ exec find albums
 stdout '^albums/Kat Moda/keep-me-1$'
 stdout '^albums/Kat Moda/keep-me-2$'
 
+# wildcard pattern matches files at root
+exec rm -r albums
+env WRTAG_KEEP_FILE=*.txt
+exec wrtag copy -yes kat_moda/
+exec find albums
+stdout '^albums/Kat Moda/notes.txt$'
+! stdout keep-me
+
+# wildcard pattern matches files in disc subdir, flattened into dest
+exec rm -r albums
+env WRTAG_KEEP_FILE=*.log
+exec wrtag copy -yes kat_moda/
+exec find albums
+stdout '^albums/Kat Moda/disc1.log$'
+stdout '^albums/Kat Moda/disc2.log$'
+
+# duplicate dest from two disc subdirs with same filename errors
+exec rm -r albums
+env WRTAG_KEEP_FILE=dupe.log
+! exec wrtag copy -yes kat_moda/
+stderr 'duplicate dest path'
+
 -- kat_moda/keep-me-1 --
 oh please keep me, don't delete me
 -- kat_moda/keep-me-2 --
 oh please keep me, don't delete me
+-- kat_moda/notes.txt --
+some notes
+-- kat_moda/disc 1/disc1.log --
+ripping log disc 1
+-- kat_moda/disc 2/disc2.log --
+ripping log disc 2
+-- kat_moda/disc 1/dupe.log --
+dupe log disc 1
+-- kat_moda/disc 2/dupe.log --
+dupe log disc 2
