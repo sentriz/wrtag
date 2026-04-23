@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.31.0](https://github.com/sentriz/wrtag/compare/v0.30.0...v0.31.0) (2026-04-23)
+
+
+### Features
+
+* **normtag:** add more artist credits ([fec4b6e](https://github.com/sentriz/wrtag/commit/fec4b6e433cb860ca27dd367d84278f90c7bda21))
+
+
+### Bug Fixes
+
+* **test:** skip case sensitivity check on darwin ([#219](https://github.com/sentriz/wrtag/issues/219)) ([1152eb6](https://github.com/sentriz/wrtag/commit/1152eb65fa9e6922037d3c7e853d6038b274d51b))
+
 ## [0.30.0](https://github.com/sentriz/wrtag/compare/v0.20.0...v0.30.0) (2026-04-07)
 
 
