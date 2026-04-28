@@ -163,7 +163,7 @@ func (r researchLinkParser) String() string {
 		return ""
 	}
 	var names []string
-	for s := range r.Builder.IterSources() {
+	for s := range r.Builder.Sources() {
 		names = append(names, s)
 	}
 	return strings.Join(names, ", ")

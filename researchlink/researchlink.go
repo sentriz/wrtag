@@ -21,7 +21,7 @@ type Builder struct {
 	sources []source
 }
 
-func (b *Builder) IterSources() iter.Seq2[string, *texttemplate.Template] {
+func (b *Builder) Sources() iter.Seq2[string, *texttemplate.Template] {
 	return func(yield func(string, *texttemplate.Template) bool) {
 		for _, s := range b.sources {
 			if !yield(s.name, s.template) {
