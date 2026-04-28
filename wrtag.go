@@ -267,6 +267,7 @@ func ProcessDir(
 		if origDestDir != destDir {
 			destPath = filepath.Join(destDir, strings.TrimPrefix(destPath, origDestDir))
 		}
+		destPath = fileutil.TrimLength(destPath, 255)
 		destPaths = append(destPaths, destPath)
 	}
 

@@ -3,6 +3,7 @@ package fileutil_test
 import (
 	"io/fs"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -39,6 +40,25 @@ func TestSafePathUnicode(t *testing.T) {
 	assert.Equal(t, "50 ¢.flac", fileutil.SafePathUnicode("50 ¢.flac"))
 	assert.Equal(t, "(2007) ✝", fileutil.SafePathUnicode("(2007) ✝"))
 	assert.Equal(t, "_", fileutil.SafePathUnicode(">///<"))
+}
+
+func TestTruncateFilename(t *testing.T) {
+	t.Parallel()
+
+	assert.Equal(t, "hello.flac", fileutil.TrimLength("hello.flac", 255))
+	assert.Equal(t, "hello.flac", fileutil.TrimLength("hello.flac", 10))
+	assert.Equal(t, "hell.flac", fileutil.TrimLength("hello.flac", 9))
+	assert.Equal(t, "h.flac", fileutil.TrimLength("hello.flac", 6))
+	assert.Equal(t, "hell", fileutil.TrimLength("hello.flac", 4))       // ext doesn't fit
+	assert.Equal(t, "abc.flac", fileutil.TrimLength("abc def.flac", 8)) // trailing space trimmed
+
+	long := strings.Repeat("a", 300) + ".flac"
+	assert.Equal(t, strings.Repeat("a", 250)+".flac", fileutil.TrimLength(long, 255))
+
+	assert.Equal(t, "ähn", fileutil.TrimLength("ähnlich", 3)) // unicode-aware
+
+	// only the basename gets truncated, leading directories are left alone
+	assert.Equal(t, "/very long dir name not truncated/hell.flac", fileutil.TrimLength("/very long dir name not truncated/hello.flac", 9))
 }
 
 func TestWalkLeaves(t *testing.T) {

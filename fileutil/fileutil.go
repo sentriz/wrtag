@@ -57,6 +57,24 @@ func SafePath(path string) string {
 	return path
 }
 
+// TrimLength truncates the final component of p to at most max runes, preserving the file extension (if room).
+func TrimLength(p string, mx int) string {
+	base := filepath.Base(p)
+	rs := []rune(base)
+	if len(rs) <= mx {
+		return p
+	}
+	ext := filepath.Ext(base)
+	er := []rune(ext)
+	var truncated string
+	if len(er) >= mx {
+		truncated = string(rs[:mx])
+	} else {
+		truncated = strings.TrimRight(string(rs[:mx-len(er)]), " ") + ext
+	}
+	return filepath.Join(filepath.Dir(p), truncated)
+}
+
 func SafePathUnicode(path string) string {
 	path = safePathReplacer.Replace(path)
 	path = strings.Join(strings.Fields(path), " ")
