@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.31.0](https://github.com/sentriz/wrtag/compare/v0.30.0...v0.31.0) (2026-05-05)
+
+
+### Features
+
+* **normtag:** add more artist credits ([fec4b6e](https://github.com/sentriz/wrtag/commit/fec4b6e433cb860ca27dd367d84278f90c7bda21))
+* **wrtag:** trim very long filenames ([6b34ac7](https://github.com/sentriz/wrtag/commit/6b34ac7109150372997de535961f40260450e24b)), closes [#224](https://github.com/sentriz/wrtag/issues/224)
+
+
+### Bug Fixes
+
+* **coverparse:** filter more spectrograms ([4a6b4fd](https://github.com/sentriz/wrtag/commit/4a6b4fde187095d0de91adb0732cc05cd62b5e3b))
+* **test:** skip case sensitivity check on darwin ([#219](https://github.com/sentriz/wrtag/issues/219)) ([1152eb6](https://github.com/sentriz/wrtag/commit/1152eb65fa9e6922037d3c7e853d6038b274d51b))
+
 ## [0.30.0](https://github.com/sentriz/wrtag/compare/v0.20.0...v0.30.0) (2026-04-07)
 
 
