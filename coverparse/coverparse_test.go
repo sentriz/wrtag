@@ -103,6 +103,16 @@ func TestSelection(t *testing.T) {
 			covers:   []string{"cover 54726004201008202314524616977775956.png", "cover.jpg"},
 			expected: "cover.jpg",
 		},
+		{
+			name: "album cover among track spectrograms",
+			covers: []string{
+				"06.flac.Spectrogram.jpg",
+				"05.flac.Spectrogram.jpg",
+				"02.flac.Spectrogram.jpg",
+				"Artist - Album. 2CD (2025).jpg",
+			},
+			expected: "Artist - Album. 2CD (2025).jpg",
+		},
 	}
 
 	for _, test := range cases {

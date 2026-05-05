@@ -43,12 +43,13 @@ func BestBetween(cover string, other string) string {
 }
 
 var artTypePriorities = map[string]int{
-	"front":    -3,
-	"cover":    -3,
-	"album":    -3,
-	"folder":   -2,
-	"albumart": -2,
-	"scan":     -1,
+	"front":       -3,
+	"cover":       -3,
+	"album":       -3,
+	"folder":      -2,
+	"albumart":    -2,
+	"scan":        -1,
+	"spectrogram": 1,
 }
 
 var artTypeExpr *regexp.Regexp
