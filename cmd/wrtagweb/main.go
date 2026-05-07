@@ -30,6 +30,7 @@ import (
 	"syscall"
 	"time"
 
+	"go.senan.xyz/sqlitenotify"
 	"go.senan.xyz/wrtag"
 	wrtagflag "go.senan.xyz/wrtag/cmd/internal/wrtagflag"
 	"go.senan.xyz/wrtag/cmd/internal/wrtaglog"
@@ -134,8 +135,6 @@ func main() {
 	jobSSENew := func() { sse.send(0) }
 	jobSSEUpdate := func(id uint64) { sse.send(id) }
 
-	var jobQueue = make(chan uint64, 32_768)
-
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("GET /sse", func(w http.ResponseWriter, r *http.Request) {
@@ -198,7 +197,6 @@ func main() {
 		respTmpl(w, "job-import", struct{ Operation string }{Operation: operationStr})
 
 		jobSSENew()
-		jobQueue <- job.ID
 	})
 
 	mux.HandleFunc("GET /jobs/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -235,7 +233,6 @@ func main() {
 		respTmpl(w, "job", job)
 
 		jobSSENew()
-		jobQueue <- job.ID
 	})
 
 	mux.HandleFunc("DELETE /jobs/{id}", func(w http.ResponseWriter, r *http.Request) {
@@ -340,12 +337,22 @@ func main() {
 		}
 
 		jobSSENew()
-		jobQueue <- job.ID
 	})
 
 	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
 	defer cancel()
 	errgrp, ctx := errgroup.WithContext(ctx)
+
+	if err := sqlb.Exec(ctx, db, "update jobs set status=? where status in (?, ?)", StatusEnqueued, StatusInProgress, StatusEnqueued); err != nil {
+		slog.ErrorContext(ctx, "update old jobs", "err", err)
+		return
+	}
+
+	dbNotify, err := sqlitenotify.NewNotifier(ctx, sqlitenotify.SQLite(db))
+	if err != nil {
+		slog.ErrorContext(ctx, "new sqlite watch", "err", err)
+		return
+	}
 
 	errgrp.Go(func() error {
 		defer logJob("http", "addr", *listenAddr)()
@@ -386,29 +393,14 @@ func main() {
 		errgrp.Go(func() error {
 			defer logJob("process jobs", "worker", w)()
 
-			for {
-				select {
-				case <-ctx.Done():
-					return nil
-				case jobID := <-jobQueue:
-					if err := processJob(ctx, cfg, notifs, researchLinkQuerier, *publicURL, db, jobSSEUpdate, jobID); err != nil {
-						return fmt.Errorf("next job: %w", err)
-					}
+			for range dbNotify.Listen(ctx, 200*time.Millisecond, 12*time.Hour) {
+				if err := processJobs(ctx, cfg, notifs, researchLinkQuerier, *publicURL, db, jobSSEUpdate); err != nil {
+					return fmt.Errorf("process jobs: %w", err)
 				}
 			}
+			return nil
 		})
 	}
-
-	// restart old jobs just in case the process was killed abruptly last time
-	errgrp.Go(func() error {
-		for job, err := range sqlb.Rows[Job](ctx, db, "update jobs set status=? where status in (?, ?) returning *", StatusEnqueued, StatusInProgress, StatusEnqueued) {
-			if err != nil {
-				return fmt.Errorf("iter old jobs: %w", err)
-			}
-			jobQueue <- job.ID
-		}
-		return nil
-	})
 
 	if err := errgrp.Wait(); err != nil {
 		slog.Error("wait for jobs", "err", err)
@@ -416,16 +408,24 @@ func main() {
 	}
 }
 
-func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.Notifications, researchLinkQuerier *researchlink.Builder, publicURL string, db *sql.DB, jobSSEUpdate func(uint64), jobID uint64) error {
-	var job Job
-	err := sqlb.QueryRow(ctx, db, &job, "update jobs set status=? where id=? and status=? returning *", StatusInProgress, jobID, StatusEnqueued)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil
+func processJobs(ctx context.Context, cfg *wrtag.Config, notifs *notifications.Notifications, researchLinkQuerier *researchlink.Builder, publicURL string, db *sql.DB, jobSSEUpdate func(uint64)) error {
+	for {
+		var job Job
+		err := sqlb.QueryRow(ctx, db, &job, "update jobs set status=? where id = (select id from jobs where status=? order by id limit 1) returning *", StatusInProgress, StatusEnqueued)
+		if errors.Is(err, sql.ErrNoRows) {
+			break
+		}
+		if err != nil {
+			return err
+		}
+		if err := processJob(ctx, cfg, notifs, researchLinkQuerier, publicURL, db, jobSSEUpdate, job); err != nil {
+			return err
+		}
 	}
-	if err != nil {
-		return err
-	}
+	return nil
+}
 
+func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.Notifications, researchLinkQuerier *researchlink.Builder, publicURL string, db *sql.DB, jobSSEUpdate func(uint64), job Job) error {
 	jobSSEUpdate(job.ID)
 	defer jobSSEUpdate(job.ID)
 
