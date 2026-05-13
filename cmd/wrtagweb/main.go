@@ -348,11 +348,11 @@ func main() {
 		return
 	}
 
-	dbNotify, err := sqlitenotify.NewNotifier(ctx, sqlitenotify.SQLite(db))
-	if err != nil {
-		slog.ErrorContext(ctx, "new sqlite watch", "err", err)
-		return
-	}
+	var dbNotify sqlitenotify.Notifier
+	errgrp.Go(func() error {
+		defer logJob("watch db")()
+		return dbNotify.Start(ctx, sqlitenotify.SQLite(db))
+	})
 
 	errgrp.Go(func() error {
 		defer logJob("http", "addr", *listenAddr)()
