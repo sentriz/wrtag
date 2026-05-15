@@ -1,5 +1,3 @@
-// Package replaygain provides an addon for calculating and writing
-// ReplayGain values to audio files using rsgain.
 package replaygain
 
 import (

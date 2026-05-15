@@ -1,5 +1,3 @@
-// Package musicdesc provides an addon for extracting and writing
-// music descriptors (BPM and key) to audio files using Essentia.
 package musicdesc
 
 import (
