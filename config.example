@@ -3,8 +3,8 @@
 
 #path-format /mnt/music/albums/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ if .IsCompilation }}{{ artistsString .Track.Artists | safepath }} - {{ end }}{{ .Track.Title | safepath }}{{ .Ext }}
 
-# search links are shortcuts on for the ui to help research data, and populate missing musicbrainz data. the template is fed with tag data
-# see go.senan.xyz/tags/tagcommon for type definitions
+# research links are shortcuts on for the ui to help research data, to help you adding missing musicbrainz data
+# see "type Query struct {" in researchlink.go for type definitions
 
 #research-link kagi https://kagi.com/search?l=4&q={{ printf "%s %s" .Artist .Album | urlquery }}
 #research-link juno https://www.junodownload.com/search/?q%5Ball%5D%5B%5D={{ printf "%s %s" .Artist .Album | urlquery }}
