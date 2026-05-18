@@ -9,7 +9,8 @@
 #research-link kagi https://kagi.com/search?l=4&q={{ printf "%s %s" .Artist .Album | urlquery }}
 #research-link juno https://www.junodownload.com/search/?q%5Ball%5D%5B%5D={{ printf "%s %s" .Artist .Album | urlquery }}
 #research-link deezer https://www.deezer.com/search/{{ printf "%s %s" .Artist .Album | urlquery }}
-#research-link harmony https://harmony.pulsewidth.org.uk/release?url=&gtin={{ .Barcode | urlquery }}&region=&deezer=&itunes=&spotify=&tidal=&beatport=
+#research-link harmony https://harmony.pulsewidth.org.uk/release?url={{ if .MBID }}https%3A%2F%2Fmusicbrainz.org%2Frelease%2F{{ .MBID }}{{ end }}&gtin={{ .Barcode | urlquery }}&region=&deezer=&itunes=&spotify=&tidal=&beatport=
+#research-link harmony-actions {{ if .MBID }}https://harmony.pulsewidth.org.uk/release/actions?release_mbid={{ .MBID }}{{ end }}
 #research-link musicbrainz https://musicbrainz.org/taglookup?tag-lookup.artist={{ .Artist | urlquery }}&tag-lookup.release={{ .Album | urlquery }}
 #research-link discogs https://www.discogs.com/search/?type=release&q={{ printf "%s %s" .Artist .Album | urlquery }}&barcode={{ .Barcode | urlquery }}
 #research-link google https://www.google.com/search?q={{ printf "%s %s" .Artist .Album | urlquery }}

@@ -4,6 +4,7 @@ package main
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"crypto/subtle"
 	"database/sql"
@@ -447,6 +448,7 @@ func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.No
 			Album:   searchResult.Query.Release,
 			Barcode: searchResult.Query.Barcode,
 			Date:    searchResult.Query.Date,
+			MBID:    cmp.Or(searchResult.Query.MBReleaseID, searchResult.Release.ID),
 		})
 		if err != nil {
 			return fmt.Errorf("build links: %w", err)

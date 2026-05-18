@@ -4,6 +4,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"flag"
@@ -196,6 +197,7 @@ func runOperation(
 		Album:   r.Query.Release,
 		Barcode: r.Query.Barcode,
 		Date:    r.Query.Date,
+		MBID:    cmp.Or(r.Query.MBReleaseID, r.Release.ID),
 	})
 	if err != nil {
 		return fmt.Errorf("research search: %w", err)

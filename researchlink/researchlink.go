@@ -53,6 +53,7 @@ type Query struct {
 	Album   string
 	Barcode string
 	Date    time.Time
+	MBID    string
 }
 
 type SearchResult struct {
@@ -68,7 +69,13 @@ func (b *Builder) Build(query Query) ([]SearchResult, error) {
 			buildErrs = append(buildErrs, fmt.Errorf("%s: %w", s.name, err))
 			continue
 		}
-		results = append(results, SearchResult{Name: s.name, URL: buff.String()})
+		// templates can opt out of rendering (eg when a required field is missing)
+		// by emitting an empty string
+		url := strings.TrimSpace(buff.String())
+		if url == "" {
+			continue
+		}
+		results = append(results, SearchResult{Name: s.name, URL: url})
 	}
 	return results, errors.Join(buildErrs...)
 }
