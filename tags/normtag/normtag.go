@@ -67,20 +67,28 @@ const (
 	LyricistCredit  = "LYRICIST_CREDIT"
 	LyricistsCredit = "LYRICISTS_CREDIT"
 
+	MusicBrainzLyricistID = "MUSICBRAINZ_LYRICISTID"
+
 	Conductor        = "CONDUCTOR" //tag: alts "TPE3" "TP3"
 	Conductors       = "CONDUCTORS"
 	ConductorCredit  = "CONDUCTOR_CREDIT"
 	ConductorsCredit = "CONDUCTORS_CREDIT"
+
+	MusicBrainzConductorID = "MUSICBRAINZ_CONDUCTORID"
 
 	Producer        = "PRODUCER"
 	Producers       = "PRODUCERS"
 	ProducerCredit  = "PRODUCER_CREDIT"
 	ProducersCredit = "PRODUCERS_CREDIT"
 
+	MusicBrainzProducerID = "MUSICBRAINZ_PRODUCERID"
+
 	Arranger        = "ARRANGER"
 	Arrangers       = "ARRANGERS"
 	ArrangerCredit  = "ARRANGER_CREDIT"
 	ArrangersCredit = "ARRANGERS_CREDIT"
+
+	MusicBrainzArrangerID = "MUSICBRAINZ_ARRANGERID"
 
 	MusicBrainzRecordingID = "MUSICBRAINZ_TRACKID"
 	MusicBrainzTrackID     = "MUSICBRAINZ_RELEASETRACKID"
