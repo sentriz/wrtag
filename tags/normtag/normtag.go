@@ -20,18 +20,18 @@ const (
 	AlbumArtistCredit  = "ALBUMARTIST_CREDIT"  //tag: alts "ALBUM_ARTIST_CREDIT"
 	AlbumArtistsCredit = "ALBUMARTISTS_CREDIT" //tag: alts "ALBUM_ARTISTS_CREDIT"
 	Date               = "DATE"                //tag: alts "YEAR" "RELEASEDATE" "TDRC" "TYER" "TDAT" "©DAY" "TYE"
-	OriginalDate       = "ORIGINALDATE"        //tag: alts "ORIGINAL_YEAR" "TDOR" "TORY"
+	OriginalDate       = "ORIGINALDATE"        //tag: alts "ORIGINAL_DATE" "ORIGINAL_YEAR" "TDOR" "TORY"
 	MediaFormat        = "MEDIA"
 	Label              = "LABEL"         //tag: alts "TPUB"
-	CatalogueNum       = "CATALOGNUMBER" //tag: alts "CATALOGNUM" "CAT#" "CATALOGID" "CATNUM"
+	CatalogueNum       = "CATALOGNUMBER" //tag: alts "CATALOG_NUMBER" "CATALOGNUM" "CAT#" "CATALOGID" "CATNUM"
 	Barcode            = "BARCODE"       //tag: alts "UPC" "MCN"
 	Compilation        = "COMPILATION"   //tag: alts "TCMP" "CPIL"
-	ReleaseType        = "RELEASETYPE"
+	ReleaseType        = "RELEASETYPE"   //tag: alts "RELEASE_TYPE"
 
-	MusicBrainzReleaseID      = "MUSICBRAINZ_ALBUMID"
-	MusicBrainzReleaseGroupID = "MUSICBRAINZ_RELEASEGROUPID"
-	MusicBrainzAlbumArtistID  = "MUSICBRAINZ_ALBUMARTISTID"
-	MusicBrainzAlbumComment   = "MUSICBRAINZ_ALBUMCOMMENT"
+	MusicBrainzReleaseID      = "MUSICBRAINZ_ALBUMID"        //tag: alts "MUSICBRAINZ_ALBUM_ID" "MUSICBRAINZ_RELEASEID" "MUSICBRAINZ_RELEASE_ID"
+	MusicBrainzReleaseGroupID = "MUSICBRAINZ_RELEASEGROUPID" //tag: alts "MUSICBRAINZ_RELEASEGROUP_ID" "MUSICBRAINZ_RELEASE_GROUP_ID"
+	MusicBrainzAlbumArtistID  = "MUSICBRAINZ_ALBUMARTISTID"  //tag: alts "MUSICBRAINZ_ALBUMARTIST_ID" "MUSICBRAINZ_ALBUM_ARTIST_ID" "MUSICBRAINZ_RELEASEARTISTID" "MUSICBRAINZ_RELEASE_ARTIST_ID"
+	MusicBrainzAlbumComment   = "MUSICBRAINZ_ALBUMCOMMENT"   //tag: alts "MUSICBRAINZ_ALBUM_COMMENT" "MUSICBRAINZ_RELEASECOMMENT" "MUSICBRAINZ_RELEASE_COMMENT"
 
 	Title         = "TITLE"  //tag: alts "TIT2" "©NAM" "TT2"
 	Artist        = "ARTIST" //tag: alts "TPE1" "©ART" "TP1"
@@ -40,11 +40,11 @@ const (
 	ArtistsCredit = "ARTISTS_CREDIT" //tag: alts "ARTISTSCREDIT"
 	Genre         = "GENRE"          //tag: alts "TCON" "©GEN" "TCO"
 	Genres        = "GENRES"
-	TrackNumber   = "TRACKNUMBER"  //tag: alts "TRACK" "TRACKNUM" "TRCK" "TRKN" "TRK"
-	TrackTotal    = "TRACKTOTAL"   //tag: alts "TOTALTRACKS" "TOTALTRACK"
-	DiscNumber    = "DISCNUMBER"   //tag: alts "DISC" "TPOS" "DISK" "TPA"
-	DiscTotal     = "DISCTOTAL"    //tag: alts "TOTALDISCS" "TOTALDISKS" "TOTALDISC" "TOTALDISK"
-	DiscSubtitle  = "DISCSUBTITLE" //tag: alts "SETSUBTITLE" "TSST"
+	TrackNumber   = "TRACKNUMBER"  //tag: alts "TRACK_NUMBER" "TRACK" "TRACKNUM" "TRCK" "TRKN" "TRK"
+	TrackTotal    = "TRACKTOTAL"   //tag: alts "TRACK_TOTAL" "TOTALTRACKS" "TOTALTRACK"
+	DiscNumber    = "DISCNUMBER"   //tag: alts "DISC_NUMBER" "DISC" "TPOS" "DISK" "TPA"
+	DiscTotal     = "DISCTOTAL"    //tag: alts "DISC_TOTAL" "TOTALDISCS" "TOTALDISKS" "TOTALDISC" "TOTALDISK"
+	DiscSubtitle  = "DISCSUBTITLE" //tag: alts "DISC_SUBTITLE" "SETSUBTITLE" "TSST"
 
 	ISRC = "ISRC"
 
@@ -53,46 +53,46 @@ const (
 	RemixerCredit  = "REMIXER_CREDIT"
 	RemixersCredit = "REMIXERS_CREDIT"
 
-	MusicBrainzRemixerID = "MUSICBRAINZ_REMIXERID"
+	MusicBrainzRemixerID = "MUSICBRAINZ_REMIXERID" //tag: alts "MUSICBRAINZ_REMIXER_ID"
 
 	Composer        = "COMPOSER" //tag: alts "TCOM" "©WRT" "TCM"
 	Composers       = "COMPOSERS"
 	ComposerCredit  = "COMPOSER_CREDIT"
 	ComposersCredit = "COMPOSERS_CREDIT"
 
-	MusicBrainzComposerID = "MUSICBRAINZ_COMPOSERID"
+	MusicBrainzComposerID = "MUSICBRAINZ_COMPOSERID" //tag: alts "MUSICBRAINZ_COMPOSER_ID"
 
 	Lyricist        = "LYRICIST" //tag: alts "TEXT" "TXT"
 	Lyricists       = "LYRICISTS"
 	LyricistCredit  = "LYRICIST_CREDIT"
 	LyricistsCredit = "LYRICISTS_CREDIT"
 
-	MusicBrainzLyricistID = "MUSICBRAINZ_LYRICISTID"
+	MusicBrainzLyricistID = "MUSICBRAINZ_LYRICISTID" //tag: alts "MUSICBRAINZ_LYRICIST_ID"
 
 	Conductor        = "CONDUCTOR" //tag: alts "TPE3" "TP3"
 	Conductors       = "CONDUCTORS"
 	ConductorCredit  = "CONDUCTOR_CREDIT"
 	ConductorsCredit = "CONDUCTORS_CREDIT"
 
-	MusicBrainzConductorID = "MUSICBRAINZ_CONDUCTORID"
+	MusicBrainzConductorID = "MUSICBRAINZ_CONDUCTORID" //tag: alts "MUSICBRAINZ_CONDUCTOR_ID"
 
 	Producer        = "PRODUCER"
 	Producers       = "PRODUCERS"
 	ProducerCredit  = "PRODUCER_CREDIT"
 	ProducersCredit = "PRODUCERS_CREDIT"
 
-	MusicBrainzProducerID = "MUSICBRAINZ_PRODUCERID"
+	MusicBrainzProducerID = "MUSICBRAINZ_PRODUCERID" //tag: alts "MUSICBRAINZ_PRODUCER_ID"
 
 	Arranger        = "ARRANGER"
 	Arrangers       = "ARRANGERS"
 	ArrangerCredit  = "ARRANGER_CREDIT"
 	ArrangersCredit = "ARRANGERS_CREDIT"
 
-	MusicBrainzArrangerID = "MUSICBRAINZ_ARRANGERID"
+	MusicBrainzArrangerID = "MUSICBRAINZ_ARRANGERID" //tag: alts "MUSICBRAINZ_ARRANGER_ID"
 
-	MusicBrainzRecordingID = "MUSICBRAINZ_TRACKID"
-	MusicBrainzTrackID     = "MUSICBRAINZ_RELEASETRACKID"
-	MusicBrainzArtistID    = "MUSICBRAINZ_ARTISTID"
+	MusicBrainzRecordingID = "MUSICBRAINZ_TRACKID"        //tag: alts "MUSICBRAINZ_TRACK_ID" "MUSICBRAINZ_RECORDINGID" "MUSICBRAINZ_RECORDING_ID"
+	MusicBrainzTrackID     = "MUSICBRAINZ_RELEASETRACKID" //tag: alts "MUSICBRAINZ_RELEASETRACK_ID" "MUSICBRAINZ_RELEASE_TRACK_ID"
+	MusicBrainzArtistID    = "MUSICBRAINZ_ARTISTID"       //tag: alts "MUSICBRAINZ_ARTIST_ID"
 
 	ReplayGainTrackGain         = "REPLAYGAIN_TRACK_GAIN"
 	ReplayGainTrackPeak         = "REPLAYGAIN_TRACK_PEAK"
