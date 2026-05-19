@@ -476,20 +476,22 @@ func WriteRelease(
 	disambiguationParts := trimZero(release.ReleaseGroup.Disambiguation, release.Disambiguation)
 	disambiguation := strings.Join(disambiguationParts, ", ")
 
-	var remixers, remixersCredit []string
+	var remixers, remixersCredit, remixerIDs []string
 	for _, r := range trk.Recording.Relations {
 		if r.Artist.ID != "" && r.Type == "remixer" {
 			remixers = append(remixers, r.Artist.Name)
 			remixersCredit = append(remixersCredit, cmp.Or(r.TargetCredit, r.Artist.Name))
+			remixerIDs = append(remixerIDs, r.Artist.ID)
 		}
 	}
 
-	var composers, composersCredit []string
+	var composers, composersCredit, composerIDs []string
 	for _, rel := range trk.Recording.Relations {
 		for _, rel := range rel.Work.Relations {
 			if rel.Artist.ID != "" && rel.Type == "composer" {
 				composers = append(composers, rel.Artist.Name)
 				composersCredit = append(composersCredit, cmp.Or(rel.TargetCredit, rel.Artist.Name))
+				composerIDs = append(composerIDs, rel.Artist.ID)
 			}
 		}
 	}
@@ -534,11 +536,13 @@ func WriteRelease(
 	normtag.Set(t, normtag.Remixers, trimZero(remixers...)...)
 	normtag.Set(t, normtag.RemixerCredit, trimZero(strings.Join(remixersCredit, ", "))...)
 	normtag.Set(t, normtag.RemixersCredit, trimZero(remixersCredit...)...)
+	normtag.Set(t, normtag.MusicBrainzRemixerID, trimZero(remixerIDs...)...)
 
 	normtag.Set(t, normtag.Composer, trimZero(strings.Join(composers, ", "))...)
 	normtag.Set(t, normtag.Composers, trimZero(composers...)...)
 	normtag.Set(t, normtag.ComposerCredit, trimZero(strings.Join(composersCredit, ", "))...)
 	normtag.Set(t, normtag.ComposersCredit, trimZero(composersCredit...)...)
+	normtag.Set(t, normtag.MusicBrainzComposerID, trimZero(composerIDs...)...)
 
 	normtag.Set(t, normtag.MusicBrainzRecordingID, trimZero(trk.Recording.ID)...)
 	normtag.Set(t, normtag.MusicBrainzTrackID, trimZero(trk.ID)...)

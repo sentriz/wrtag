@@ -53,10 +53,14 @@ const (
 	RemixerCredit  = "REMIXER_CREDIT"
 	RemixersCredit = "REMIXERS_CREDIT"
 
+	MusicBrainzRemixerID = "MUSICBRAINZ_REMIXERID"
+
 	Composer        = "COMPOSER" //tag: alts "TCOM" "©WRT" "TCM"
 	Composers       = "COMPOSERS"
 	ComposerCredit  = "COMPOSER_CREDIT"
 	ComposersCredit = "COMPOSERS_CREDIT"
+
+	MusicBrainzComposerID = "MUSICBRAINZ_COMPOSERID"
 
 	Lyricist        = "LYRICIST" //tag: alts "TEXT" "TXT"
 	Lyricists       = "LYRICISTS"
