@@ -84,17 +84,29 @@ L:
 	}
 	fmt.Fprintf(outFile, "}\n")
 
+	seen := map[string]string{}
+	emit := func(alt, key string) {
+		if existing, ok := seen[alt]; ok {
+			if existing != key {
+				cerr(fmt.Errorf("alt %q maps to both %q and %q", alt, existing, key))
+			}
+			return
+		}
+		seen[alt] = key
+		if alt != key {
+			fmt.Fprintf(outFile, "\t%q: %q,\n", alt, key)
+		}
+	}
+
 	fmt.Fprintf(outFile, "var alternatives = map[string]string{\n")
 	for _, key := range tagKeys {
 		for _, alt := range append([]string{key}, tagList[key]...) {
-			if alt != key {
-				fmt.Fprintf(outFile, "\t%q: %q,\n", alt, key)
-			}
+			emit(alt, key)
 			if strings.Contains(alt, "_") {
-				fmt.Fprintf(outFile, "\t%q: %q,\n", strings.ReplaceAll(alt, "_", " "), key)
+				emit(strings.ReplaceAll(alt, "_", " "), key)
 			}
 			if strings.Contains(alt, "-") {
-				fmt.Fprintf(outFile, "\t%q: %q,\n", strings.ReplaceAll(alt, "-", " "), key)
+				emit(strings.ReplaceAll(alt, "-", " "), key)
 			}
 		}
 	}
