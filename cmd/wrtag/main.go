@@ -226,7 +226,7 @@ func runSync(ctx context.Context, cfg *wrtag.Config, stats *syncStats, dirs []st
 				return nil
 			})
 			if err != nil {
-				slog.Error("walking paths", "err", err)
+				slog.ErrorContext(ctx, "walking paths", "err", err)
 				continue
 			}
 		}

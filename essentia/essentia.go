@@ -23,7 +23,7 @@ func Read(ctx context.Context, path string) (info *Info, err error) {
 		return nil, fmt.Errorf("%w: %w", ErrNoStreamingExtractorMusic, err)
 	}
 
-	cmd := exec.CommandContext(ctx, StreamingExtractorMusicCommand, path, "-")
+	cmd := exec.CommandContext(ctx, StreamingExtractorMusicCommand, path, "-") //nolint:gosec // args are only args and paths
 
 	var stderr bytes.Buffer
 	cmd.Stderr = &stderr

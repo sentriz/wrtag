@@ -123,7 +123,7 @@ func main() {
 	ctx := context.Background()
 	if lev := slog.LevelDebug; slog.Default().Enabled(context.Background(), lev) {
 		ctx = sqlb.WithLogFunc(ctx, func(ctx context.Context, typ string, query string, duration time.Duration) {
-			slog.Log(ctx, lev, typ, "took", duration, "query", query)
+			slog.Log(ctx, lev, typ, "took", duration, "query", query) //nolint:sloglint // message comes from sqlb log callback
 		})
 	}
 

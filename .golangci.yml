@@ -31,7 +31,7 @@ linters:
     - godox
     - goheader
     - gomoddirectives
-    - gomodguard
+    - gomodguard_v2
     - goprintffuncname
     - gosec
     - govet
@@ -94,6 +94,8 @@ linters:
     gosec:
       excludes:
         - G104 # errors unhandled
+        - G704 # SSRF via taint analysis - HTTP clients hit user-configured endpoints
+        - G705 # XSS via taint analysis - we don't render untrusted strings as HTML
     errcheck:
       exclude-functions:
         - fmt.Fprintf
@@ -111,6 +113,7 @@ linters:
       - path: '(.+)_test\.go'
         linters:
           - gosec
+          - goconst
       - path: "main.go"
         linters:
           - noctx
