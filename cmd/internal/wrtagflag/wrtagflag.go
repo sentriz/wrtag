@@ -24,10 +24,7 @@ import (
 	"go.senan.xyz/wrtag/researchlink"
 	"golang.org/x/time/rate"
 
-	_ "go.senan.xyz/wrtag/addon/lyrics"
-	_ "go.senan.xyz/wrtag/addon/musicdesc"
-	_ "go.senan.xyz/wrtag/addon/replaygain"
-	_ "go.senan.xyz/wrtag/addon/subproc"
+	_ "go.senan.xyz/wrtag/addon/all"
 )
 
 func DefaultClient() {
