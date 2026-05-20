@@ -4,7 +4,6 @@
 package main
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"flag"
@@ -192,12 +191,16 @@ func runOperation(
 		return fmt.Errorf("flush table: %w", err)
 	}
 
+	var confirmedMBID string
+	if searchErr == nil {
+		confirmedMBID = r.Release.ID
+	}
 	links, err := researchLinks.Build(researchlink.Query{
 		Artist:  r.Query.Artist,
 		Album:   r.Query.Release,
 		Barcode: r.Query.Barcode,
 		Date:    r.Query.Date,
-		MBID:    cmp.Or(r.Query.MBReleaseID, r.Release.ID),
+		MBID:    confirmedMBID,
 	})
 	if err != nil {
 		return fmt.Errorf("research search: %w", err)
