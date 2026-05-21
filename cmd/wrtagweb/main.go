@@ -441,18 +441,8 @@ func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.No
 
 	searchResult, processErr := wrtag.ProcessDir(ctx, cfg, op, job.SourcePath, ic, job.UseMBID)
 
-	if searchResult != nil && searchResult.Query.Artist != "" {
-		var confirmedMBID string
-		if processErr == nil {
-			confirmedMBID = searchResult.Release.ID
-		}
-		researchLinks, err := researchLinkQuerier.Build(researchlink.Query{
-			Artist:  searchResult.Query.Artist,
-			Album:   searchResult.Query.Release,
-			Barcode: searchResult.Query.Barcode,
-			Date:    searchResult.Query.Date,
-			MBID:    confirmedMBID,
-		})
+	if searchResult != nil {
+		researchLinks, err := researchLinkQuerier.Build(wrtagflag.ResearchQuery(searchResult, processErr == nil))
 		if err != nil {
 			return fmt.Errorf("build links: %w", err)
 		}

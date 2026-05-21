@@ -114,6 +114,20 @@ func ResearchLinks() *researchlink.Builder {
 	return &r
 }
 
+func ResearchQuery(r *wrtag.SearchResult, imported bool) researchlink.Query {
+	var q researchlink.Query
+	q.Artist = r.Query.Artist
+	q.Album = r.Query.Release
+	q.Barcode = r.Query.Barcode
+	q.Date = r.Query.Date
+
+	if r.Release != nil && imported {
+		q.MBID = r.Release.ID
+	}
+
+	return q
+}
+
 var _ flag.Value = (*pathFormatParser)(nil)
 var _ flag.Value = (*researchLinkParser)(nil)
 var _ flag.Value = (*notificationsParser)(nil)
