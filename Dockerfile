@@ -12,7 +12,7 @@ RUN  \
     --mount=type=cache,target=/root/.cache/go-build \
     CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /out/ ./cmd/...
 
-FROM alpine:3.23 AS essentia-extractors
+FROM --platform=$BUILDPLATFORM alpine:3.23 AS essentia-extractors
 ARG VERSION="v2.1_beta2"
 ARG TARGETARCH
 WORKDIR /tmp
