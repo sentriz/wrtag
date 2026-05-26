@@ -1,7 +1,7 @@
 # path-format is rooted in your destination music dir. the template is fed with musicbrainz release data
 # see go.senan.xyz/wrtag/musicbrainz for type definitions
 
-#path-format /mnt/music/albums/{{ artistsEn .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ releaseOrGroupEn .Release | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ if .IsCompilation }}{{ artistsEnString .Track.Artists | safepath }} - {{ end }}{{ .Track.Title | safepath }}{{ .Ext }}
+#path-format /mnt/music/albums/{{ artistsEn .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ releaseOrGroupEn .Release | safepath }}{{ with disambiguation .Release }} ({{ . | safepath }}){{ end }}/{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ if isCompilation .Release.ReleaseGroup }}{{ artistsEnString .Track.Artists | safepath }} - {{ end }}{{ .Track.Title | safepath }}{{ .Ext }}
 
 # research links are shortcuts on for the ui to help research data, to help you adding missing musicbrainz data
 # see "type Query struct {" in researchlink.go for type definitions

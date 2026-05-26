@@ -73,7 +73,7 @@ func TestPathFormat(t *testing.T) {
 	}
 
 	var pf pathformat.Format
-	require.NoError(t, pf.Parse(`/music/albums/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}`))
+	require.NoError(t, pf.Parse(`/music/albums/{{ artists .Release.Artists | sort | join "; " | safepath }}/({{ .Release.ReleaseGroup.FirstReleaseDate.Year }}) {{ .Release.Title | safepath }}{{ with disambiguation .Release }} ({{ . | safepath }}){{ end }}/{{ pad0 2 .Track.Position }}.{{ .Media.TrackCount | pad0 2 }} {{ .Track.Title | safepath }}{{ .Ext }}`))
 
 	path, err := pf.Execute(release, release.Media[0], release.Media[0].Tracks[0], ".flac")
 	require.NoError(t, err)
@@ -98,4 +98,30 @@ func TestPathFormat(t *testing.T) {
 	path, err = pf.Execute(release, release.Media[0], release.Media[0].Tracks[0], ".flac")
 	require.NoError(t, err)
 	assert.Equal(t, `/music/albums/House, The/Valvable/1.flac`, path)
+}
+
+// the .ReleaseDisambiguation and .IsCompilation fields became the disambiguation and
+// isCompilation funcs, but stay available on the template data so old formats keep working.
+func TestLegacyFields(t *testing.T) {
+	t.Parallel()
+
+	const variousArtistsMBID = "89ad4ac3-39f7-470e-963a-56509c546377"
+
+	track := musicbrainz.Track{Title: "Track", Position: 1}
+	release := musicbrainz.Release{
+		Title: "Album",
+		ReleaseGroup: musicbrainz.ReleaseGroup{
+			Disambiguation: "remaster",
+			Artists:        []musicbrainz.ArtistCredit{{Artist: musicbrainz.Artist{ID: variousArtistsMBID}}},
+		},
+		Disambiguation: "deluxe",
+		Media:          []musicbrainz.Media{{Tracks: []musicbrainz.Track{track}, TrackCount: 1}},
+	}
+
+	var pf pathformat.Format
+	require.NoError(t, pf.Parse(`/m/{{ .Release.Title | safepath }}{{ if not (eq .ReleaseDisambiguation "") }} ({{ .ReleaseDisambiguation | safepath }}){{ end }}/{{ pad0 2 .Track.Position }}{{ if .IsCompilation }} VA{{ end }}{{ .Ext }}`))
+
+	path, err := pf.Execute(release, release.Media[0], release.Media[0].Tracks[0], ".flac")
+	require.NoError(t, err)
+	assert.Equal(t, `/m/Album (remaster, deluxe)/01 VA.flac`, path)
 }

@@ -423,6 +423,17 @@ func ReleaseOrGroupEnTitle(release Release) string {
 	return release.Title
 }
 
+func ReleaseDisambiguation(release Release) string {
+	var parts []string
+	if release.ReleaseGroup.Disambiguation != "" {
+		parts = append(parts, release.ReleaseGroup.Disambiguation)
+	}
+	if release.Disambiguation != "" {
+		parts = append(parts, release.Disambiguation)
+	}
+	return strings.Join(parts, ", ")
+}
+
 func joinCredits(names []string, credits []ArtistCredit) string {
 	var sb strings.Builder
 	for i, c := range credits {

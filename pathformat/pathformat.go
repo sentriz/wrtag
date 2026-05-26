@@ -65,27 +65,10 @@ func (pf *Format) Execute(release musicbrainz.Release, media musicbrainz.Media, 
 		return "", errors.New("not initialised yet")
 	}
 
-	var d Data
-	d.Release = release
-	{
-		var parts []string
-		if release.ReleaseGroup.Disambiguation != "" {
-			parts = append(parts, release.ReleaseGroup.Disambiguation)
-		}
-		if release.Disambiguation != "" {
-			parts = append(parts, release.Disambiguation)
-		}
-		d.ReleaseDisambiguation = strings.Join(parts, ", ")
-	}
-	d.IsCompilation = musicbrainz.IsCompilation(release.ReleaseGroup)
-
-	d.Media = media
-
-	d.Track = track
-	d.Ext = ext
+	data := Data{Release: release, Media: media, Track: track, Ext: ext}
 
 	var buff strings.Builder
-	if err := pf.tt.Execute(&buff, d); err != nil {
+	if err := pf.tt.Execute(&buff, withLegacyFields(data)); err != nil {
 		return "", fmt.Errorf("create path: %w", err)
 	}
 	destPath := buff.String()
@@ -101,14 +84,10 @@ func (pf *Format) Execute(release musicbrainz.Release, media musicbrainz.Media, 
 }
 
 type Data struct {
-	Release               musicbrainz.Release
-	ReleaseDisambiguation string
-	IsCompilation         bool
-
-	Media musicbrainz.Media
-
-	Track musicbrainz.Track
-	Ext   string
+	Release musicbrainz.Release
+	Media   musicbrainz.Media
+	Track   musicbrainz.Track
+	Ext     string
 }
 
 func validate(f Format) error {
@@ -263,6 +242,8 @@ var funcMap = texttemplate.FuncMap{
 	"releaseEn":           musicbrainz.ReleaseEnTitle,
 	"releaseGroupEn":      musicbrainz.ReleaseGroupEnTitle,
 	"releaseOrGroupEn":    musicbrainz.ReleaseOrGroupEnTitle,
+	"disambiguation":      musicbrainz.ReleaseDisambiguation,
+	"isCompilation":       musicbrainz.IsCompilation,
 
 	"the": func(strs []string) []string {
 		for i, s := range strs {
@@ -272,4 +253,16 @@ var funcMap = texttemplate.FuncMap{
 		}
 		return strs
 	},
+}
+
+func withLegacyFields(d Data) any {
+	return struct {
+		Data
+		ReleaseDisambiguation string
+		IsCompilation         bool
+	}{
+		Data:                  d,
+		ReleaseDisambiguation: musicbrainz.ReleaseDisambiguation(d.Release),
+		IsCompilation:         musicbrainz.IsCompilation(d.Release.ReleaseGroup),
+	}
 }
