@@ -317,6 +317,7 @@ type Release struct {
 	} `json:"release-events"`
 	PackagingID string      `json:"packaging-id"`
 	LabelInfo   []LabelInfo `json:"label-info"`
+	Aliases     []Alias     `json:"aliases"`
 }
 
 type ReleaseGroup struct {
@@ -330,6 +331,7 @@ type ReleaseGroup struct {
 	ID               string                      `json:"id"`
 	SecondaryTypes   []ReleaseGroupSecondaryType `json:"secondary-types"`
 	Title            string                      `json:"title"`
+	Aliases          []Alias                     `json:"aliases"`
 }
 
 type ReleaseGroupPrimaryType string
@@ -425,6 +427,55 @@ func ArtistsSortString(sorts []ArtistCredit) string {
 		sb.WriteString(c.JoinPhrase)
 	}
 	return sb.String()
+}
+
+func ReleaseEnTitle(release Release) string {
+	if isLatin(release.Title) {
+		return release.Title
+	}
+
+	for _, a := range release.Aliases {
+		if isEnLocale(a.Locale) && a.Primary && !a.Ended {
+			return a.Name
+		}
+	}
+	for _, a := range release.Aliases {
+		if isEnLocale(a.Locale) && !a.Ended {
+			return a.Name
+		}
+	}
+	return release.Title
+}
+
+func ReleaseGroupEnTitle(rg ReleaseGroup) string {
+	if isLatin(rg.Title) {
+		return rg.Title
+	}
+
+	for _, a := range rg.Aliases {
+		if isEnLocale(a.Locale) && a.Primary && !a.Ended {
+			return a.Name
+		}
+	}
+	for _, a := range rg.Aliases {
+		if isEnLocale(a.Locale) && !a.Ended {
+			return a.Name
+		}
+	}
+	return rg.Title
+}
+
+func ReleaseOrGroupEnTitle(release Release) string {
+	if isLatin(release.Title) {
+		return release.Title
+	}
+	if t := ReleaseEnTitle(release); t != release.Title {
+		return t
+	}
+	if t := ReleaseGroupEnTitle(release.ReleaseGroup); t != "" && isLatin(t) {
+		return t
+	}
+	return release.Title
 }
 
 func artistEnName(artist Artist) string {

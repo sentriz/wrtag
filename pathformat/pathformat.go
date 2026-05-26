@@ -260,6 +260,9 @@ var funcMap = texttemplate.FuncMap{
 	"artistsCreditString": musicbrainz.ArtistsCreditString,
 	"artistsSort":         musicbrainz.ArtistsSortNames,
 	"artistsSortString":   musicbrainz.ArtistsSortString,
+	"releaseEn":           musicbrainz.ReleaseEnTitle,
+	"releaseGroupEn":      musicbrainz.ReleaseGroupEnTitle,
+	"releaseOrGroupEn":    musicbrainz.ReleaseOrGroupEnTitle,
 
 	"the": func(strs []string) []string {
 		for i, s := range strs {

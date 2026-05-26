@@ -559,6 +559,9 @@ In addition to what's provided by Go [text/template](https://pkg.go.dev/text/tem
 | `artistsCreditString` | Formats artist credits as a string                                 | `{{ artistsCreditString .Release.Artists }}`                 |
 | `artistsSort`         | Gets sort names from artist credits                                | `{{ artistsSort .Release.Artists \| sort \| join "; " }}`    |
 | `artistsSortString`   | Formats artist sort names as a credits                             | `{{ artistsSortString .Release.Artists }}`                   |
+| `releaseEn`           | Gets the release title in the English locale                       | `{{ releaseEn .Release \| safepath }}`                       |
+| `releaseGroupEn`      | Gets the release group title in the English locale                 | `{{ releaseGroupEn .Release.ReleaseGroup \| safepath }}`     |
+| `releaseOrGroupEn`    | Like `releaseEn` but falls back to the release group               | `{{ releaseOrGroupEn .Release \| safepath }}`                |
 
 ## Example formats
 
