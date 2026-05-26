@@ -368,14 +368,8 @@ func ArtistsNames(credits []ArtistCredit) []string {
 	}
 	return r
 }
-
 func ArtistsString(credits []ArtistCredit) string {
-	var sb strings.Builder
-	for _, c := range credits {
-		sb.WriteString(c.Artist.Name)
-		sb.WriteString(c.JoinPhrase)
-	}
-	return sb.String()
+	return joinCredits(ArtistsNames(credits), credits)
 }
 
 func ArtistsEnNames(credits []ArtistCredit) []string {
@@ -385,14 +379,8 @@ func ArtistsEnNames(credits []ArtistCredit) []string {
 	}
 	return r
 }
-
 func ArtistsEnString(credits []ArtistCredit) string {
-	var sb strings.Builder
-	for _, c := range credits {
-		sb.WriteString(artistEnName(c.Artist))
-		sb.WriteString(c.JoinPhrase)
-	}
-	return sb.String()
+	return joinCredits(ArtistsEnNames(credits), credits)
 }
 
 func ArtistsCreditNames(credits []ArtistCredit) []string {
@@ -402,74 +390,31 @@ func ArtistsCreditNames(credits []ArtistCredit) []string {
 	}
 	return r
 }
-
 func ArtistsCreditString(credits []ArtistCredit) string {
-	var sb strings.Builder
-	for _, c := range credits {
-		sb.WriteString(c.Name)
-		sb.WriteString(c.JoinPhrase)
-	}
-	return sb.String()
+	return joinCredits(ArtistsCreditNames(credits), credits)
 }
 
-func ArtistsSortNames(sorts []ArtistCredit) []string {
+func ArtistsSortNames(credits []ArtistCredit) []string {
 	var r []string
-	for _, c := range sorts {
+	for _, c := range credits {
 		r = append(r, c.Artist.SortName)
 	}
 	return r
 }
-
-func ArtistsSortString(sorts []ArtistCredit) string {
-	var sb strings.Builder
-	for _, c := range sorts {
-		sb.WriteString(c.Artist.SortName)
-		sb.WriteString(c.JoinPhrase)
-	}
-	return sb.String()
+func ArtistsSortString(credits []ArtistCredit) string {
+	return joinCredits(ArtistsSortNames(credits), credits)
 }
 
 func ReleaseEnTitle(release Release) string {
-	if isLatin(release.Title) {
-		return release.Title
-	}
-
-	for _, a := range release.Aliases {
-		if isEnLocale(a.Locale) && a.Primary && !a.Ended {
-			return a.Name
-		}
-	}
-	for _, a := range release.Aliases {
-		if isEnLocale(a.Locale) && !a.Ended {
-			return a.Name
-		}
-	}
-	return release.Title
+	return enName(release.Title, release.Aliases)
 }
 
 func ReleaseGroupEnTitle(rg ReleaseGroup) string {
-	if isLatin(rg.Title) {
-		return rg.Title
-	}
-
-	for _, a := range rg.Aliases {
-		if isEnLocale(a.Locale) && a.Primary && !a.Ended {
-			return a.Name
-		}
-	}
-	for _, a := range rg.Aliases {
-		if isEnLocale(a.Locale) && !a.Ended {
-			return a.Name
-		}
-	}
-	return rg.Title
+	return enName(rg.Title, rg.Aliases)
 }
 
 func ReleaseOrGroupEnTitle(release Release) string {
-	if isLatin(release.Title) {
-		return release.Title
-	}
-	if t := ReleaseEnTitle(release); t != release.Title {
+	if t := ReleaseEnTitle(release); isLatin(t) {
 		return t
 	}
 	if t := ReleaseGroupEnTitle(release.ReleaseGroup); t != "" && isLatin(t) {
@@ -478,27 +423,38 @@ func ReleaseOrGroupEnTitle(release Release) string {
 	return release.Title
 }
 
-func artistEnName(artist Artist) string {
-	// Sometimes there exists English locale aliases for artists whose name is already
-	// in English. eg. "James Brown" -> "James Joseph Brown". In those cases we'd prefer
-	// to use the orignal name.
-	// Since MusicBrainz can't tell us the locale of the artist name, we guess by looking at the
-	// alphabet used. If so, use the orignal name.
-	if isLatin(artist.Name) {
-		return artist.Name
+func joinCredits(names []string, credits []ArtistCredit) string {
+	var sb strings.Builder
+	for i, c := range credits {
+		sb.WriteString(names[i])
+		sb.WriteString(c.JoinPhrase)
 	}
+	return sb.String()
+}
 
-	for _, a := range artist.Aliases {
+func artistEnName(artist Artist) string {
+	return enName(artist.Name, artist.Aliases)
+}
+
+// enName returns the English locale alias for a name that isn't already in a Latin script,
+// eg "二度寝" -> "Nidone". Names already in a Latin script are returned as-is, since their
+// English aliases are often unwanted expansions eg. "James Brown" -> "James Joseph Brown".
+// MusicBrainz doesn't tell us the locale of the name, so we guess by looking at the alphabet used.
+func enName(name string, aliases []Alias) string {
+	if isLatin(name) {
+		return name
+	}
+	for _, a := range aliases {
 		if isEnLocale(a.Locale) && a.Primary && !a.Ended {
 			return a.Name
 		}
 	}
-	for _, a := range artist.Aliases {
+	for _, a := range aliases {
 		if isEnLocale(a.Locale) && !a.Ended {
 			return a.Name
 		}
 	}
-	return artist.Name
+	return name
 }
 
 const enLocale = "en"
@@ -515,11 +471,6 @@ func IsCompilation(rg ReleaseGroup) bool {
 	return slices.ContainsFunc(rg.Artists, func(ac ArtistCredit) bool {
 		return ac.Artist.ID == variousArtistsMBID
 	})
-}
-
-type GenreInfo struct {
-	Name  string
-	Count uint
 }
 
 func AnyGenres(release *Release) (genres []Genre) {

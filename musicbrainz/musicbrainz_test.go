@@ -39,86 +39,51 @@ func TestMergeAndSortGenres(t *testing.T) {
 	)
 }
 
-func TestArtistEnName(t *testing.T) {
+func TestArtists(t *testing.T) {
 	t.Parallel()
 
-	t.Run("returns primary non-ended English alias", func(t *testing.T) {
-		t.Parallel()
-		artist := Artist{
-			Name: "跡部進一",
-			Aliases: []Alias{
-				{Name: "Shinichi Atobe", Locale: "en", Primary: true, Ended: false},
-				{Name: "Other English Name", Locale: "en", Primary: false, Ended: false},
-			},
-		}
-		assert.Equal(t, "Shinichi Atobe", artistEnName(artist))
-	})
+	// 菊池桃子 has an English alias; Madonna is already Latin so its expansion alias is ignored.
+	credits := []ArtistCredit{
+		{Name: "桃子", JoinPhrase: " & ", Artist: Artist{
+			Name:     "菊池桃子",
+			SortName: "Kikuchi, Momoko",
+			Aliases:  []Alias{{Name: "Momoko Kikuchi", Locale: "en"}},
+		}},
+		{Name: "Madonna", Artist: Artist{
+			Name:     "Madonna",
+			SortName: "Madonna",
+			Aliases:  []Alias{{Name: "Madonna Louise Ciccone", Locale: "en"}},
+		}},
+	}
 
-	t.Run("returns non-primary non-ended English alias when no primary exists", func(t *testing.T) {
-		t.Parallel()
-		artist := Artist{
-			Name: "ネイティブ名",
-			Aliases: []Alias{
-				{Name: "English Name", Locale: "en", Primary: false, Ended: false},
-			},
-		}
-		assert.Equal(t, "English Name", artistEnName(artist))
-	})
+	assert.Equal(t, []string{"菊池桃子", "Madonna"}, ArtistsNames(credits))
+	assert.Equal(t, "菊池桃子 & Madonna", ArtistsString(credits))
+	assert.Equal(t, []string{"Momoko Kikuchi", "Madonna"}, ArtistsEnNames(credits))
+	assert.Equal(t, "Momoko Kikuchi & Madonna", ArtistsEnString(credits))
+	assert.Equal(t, []string{"桃子", "Madonna"}, ArtistsCreditNames(credits))
+	assert.Equal(t, "桃子 & Madonna", ArtistsCreditString(credits))
+	assert.Equal(t, []string{"Kikuchi, Momoko", "Madonna"}, ArtistsSortNames(credits))
+	assert.Equal(t, "Kikuchi, Momoko & Madonna", ArtistsSortString(credits))
+}
 
-	t.Run("skips ended English aliases", func(t *testing.T) {
-		t.Parallel()
-		artist := Artist{
-			Name: "Taylor Swift",
-			Aliases: []Alias{
-				{Name: "Dr. Taylor Alison Swift", Locale: "en", Primary: false, Ended: true},
-				{Name: "Taylor Swift", Locale: "en", Primary: true, Ended: false},
-			},
-		}
-		assert.Equal(t, "Taylor Swift", artistEnName(artist))
-	})
+func TestReleaseEnTitle(t *testing.T) {
+	t.Parallel()
+	release := Release{Title: "二度寝", Aliases: []Alias{{Name: "Nidone", Locale: "en"}}}
+	assert.Equal(t, "Nidone", ReleaseEnTitle(release))
+}
 
-	t.Run("returns artist name when only ended English aliases exist", func(t *testing.T) {
-		t.Parallel()
-		artist := Artist{
-			Name: "Artist Name",
-			Aliases: []Alias{
-				{Name: "Old English Name", Locale: "en", Primary: true, Ended: true},
-			},
-		}
-		assert.Equal(t, "Artist Name", artistEnName(artist))
-	})
+func TestReleaseGroupEnTitle(t *testing.T) {
+	t.Parallel()
+	rg := ReleaseGroup{Title: "二度寝", Aliases: []Alias{{Name: "Nidone", Locale: "en"}}}
+	assert.Equal(t, "Nidone", ReleaseGroupEnTitle(rg))
+}
 
-	t.Run("returns artist name when no English aliases exist", func(t *testing.T) {
-		t.Parallel()
-		artist := Artist{
-			Name: "Artist Name",
-			Aliases: []Alias{
-				{Name: "日本語名", Locale: "ja", Primary: true, Ended: false},
-			},
-		}
-		assert.Equal(t, "Artist Name", artistEnName(artist))
-	})
-
-	t.Run("prioritizes primary over non-primary even if non-primary appears first", func(t *testing.T) {
-		t.Parallel()
-		artist := Artist{
-			Name: "ネイティブ名",
-			Aliases: []Alias{
-				{Name: "Non-Primary English", Locale: "en", Primary: false, Ended: false},
-				{Name: "Primary English", Locale: "en", Primary: true, Ended: false},
-			},
-		}
-		assert.Equal(t, "Primary English", artistEnName(artist))
-	})
-
-	t.Run("returns Latin name directly without checking aliases", func(t *testing.T) {
-		t.Parallel()
-		artist := Artist{
-			Name: "Chris Brown",
-			Aliases: []Alias{
-				{Name: "Christopher Maurice Brown", Locale: "en", Primary: true, Ended: false},
-			},
-		}
-		assert.Equal(t, "Chris Brown", artistEnName(artist))
-	})
+func TestReleaseOrGroupEnTitle(t *testing.T) {
+	t.Parallel()
+	// the release has no alias, so the English title comes from the release group (#137)
+	var release Release
+	release.Title = "二度寝"
+	release.ReleaseGroup.Title = "二度寝"
+	release.ReleaseGroup.Aliases = []Alias{{Name: "Nidone", Locale: "en"}}
+	assert.Equal(t, "Nidone", ReleaseOrGroupEnTitle(release))
 }
