@@ -3,12 +3,11 @@
 {{ end }}
 
 {{ define "job" }}
-<div id="job-{{ .ID }}" hx-get="/jobs/{{ .ID }}" hx-trigger="sse-job[detail.id=={{ .ID }}] from:body" hx-swap="outerHTML" hx-include="">
+<div id="job-{{ .ID }}" hx-get="/jobs/{{ .ID }}" hx-trigger="sse-job[detail.id=={{ .ID }}] from:body" hx-include="">
 <form
   hx-put="/jobs/{{ .ID }}"
-  hx-target="#job-{{ .ID }}"
+  hx-target:inherited="#job-{{ .ID }}"
   hx-indicator="this"
-  hx-swap="outerHTML"
   class="w-max sm:w-auto shadow-sm {{ template "job-colour" .Status }} {{ if eq .Status "in-progress" }}in-progress{{ end }}"
 >
   <div class="p-3 cursor-pointer flex justify-between items-center">
@@ -107,6 +106,7 @@ origin file info
     <title>wrtag</title>
     <link rel="icon" href="dist/favicon.svg" sizes="any" type="image/svg+xml">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="htmx-config" content='{"defaultSwap":"outerMorph"}'>
     <script src="dist/tailwind.js"></script>
     <script src="dist/htmx.js"></script>
 
@@ -136,21 +136,16 @@ origin file info
         const id = window.location.hash.substring(1);
         if (!id) {
           modal.close();
-          try { htmx.remove(htmx.find("#modal > *")) } catch(e) {};
+          htmx.find("#modal > *")?.remove();
           return
         };
         modal.showModal();
-        htmx.ajax("GET", `/jobs/${id}`, "#modal");
+        htmx.ajax("GET", `/jobs/${id}`, { target: "#modal", swap: "innerMorph" });
       }
 
       checkModal();
       window.addEventListener('hashchange', () => { checkModal() })
       modal.addEventListener('close', () => { history.replaceState("", "", "/"); checkModal(); })
-
-      document.body.addEventListener('htmx:beforeSwap', (e) => {
-        if (e.detail.xhr.status)
-          e.detail.shouldSwap = true;
-      });
 
       const sseSource = new EventSource("/sse", { withCredentials: true });
       const sseUpdates = new Set();
@@ -173,7 +168,7 @@ origin file info
   <body class="font-mono antialiased leading-tight text-sm text-gray-800 flex flex-col items-start gap-3 m-0 p-3">
     <h1 class="text-lg">wrtag</h1>
     <hr class="w-full border border-b-gray-100" />
-    <form hx-post="/jobs" class="self-stretch">
+    <form hx-post="/jobs" hx-swap="innerMorph" class="self-stretch">
       {{ block "job-import" . }}
       <div class="flex flex-col gap-2">
         <span class="text-gray-600">
@@ -191,6 +186,7 @@ origin file info
           hx-get="/dirs"
           hx-trigger="keyup changed delay:100ms"
           hx-target="#path-dirs"
+          hx-swap="innerMorph"
           hx-include="[name='path']"
         />
         <datalist id="path-dirs"></datalist>
@@ -203,7 +199,6 @@ origin file info
       hx-get="/jobs"
       hx-trigger="sse-job from:body, input changed from:#job-search delay:300ms, input changed from:#job-filter, input changed from:#job-page"
       hx-include="#job-search, #job-filter, #job-page"
-      hx-swap="outerHTML"
       class="contents"
     >
       <div class="grid grid-cols-2 w-full sm:flex sm:w-auto gap-3">
