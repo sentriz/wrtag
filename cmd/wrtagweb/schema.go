@@ -25,8 +25,9 @@ const (
 )
 
 const (
-	OperationCopy = "copy"
-	OperationMove = "move"
+	OperationCopy    = "copy"
+	OperationMove    = "move"
+	OperationReflink = "reflink"
 )
 
 //go:generate go tool sqlbgen type Job generated ID -- schema.gen.go
