@@ -29,6 +29,7 @@ import (
 
 func DefaultClient() {
 	chain := clientutil.Chain(
+		clientutil.WithRetry(3),
 		clientutil.WithLogging(slog.Default()),
 		clientutil.WithUserAgent(fmt.Sprintf(`%s/%s`, wrtag.Name, wrtag.Version)),
 	)

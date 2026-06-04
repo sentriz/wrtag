@@ -5,6 +5,7 @@ package clientutil
 import (
 	"log/slog"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -32,6 +33,34 @@ func WithLogging(logger *slog.Logger) Middleware {
 			}
 			logger.DebugContext(r.Context(), "response", "status", resp.StatusCode, "url", r.URL, "took", time.Since(start))
 			return resp, nil
+		})
+	}
+}
+
+func WithRetry(maxAttempts int) Middleware {
+	return func(next http.RoundTripper) http.RoundTripper {
+		return RoundTripFunc(func(r *http.Request) (*http.Response, error) {
+			for attempt := 1; ; attempt++ {
+				resp, err := next.RoundTrip(r)
+				if err != nil {
+					return nil, err
+				}
+				if resp.StatusCode != http.StatusTooManyRequests || attempt >= maxAttempts || r.Body != nil {
+					return resp, nil
+				}
+
+				wait := time.Duration(attempt) * time.Second
+				if secs, err := strconv.Atoi(resp.Header.Get("Retry-After")); err == nil && secs > 0 {
+					wait = time.Duration(secs) * time.Second
+				}
+				resp.Body.Close()
+
+				select {
+				case <-r.Context().Done():
+					return nil, r.Context().Err()
+				case <-time.After(wait):
+				}
+			}
 		})
 	}
 }
