@@ -25,7 +25,7 @@ func NewSource(name string) (Source, error) {
 	case "musixmatch":
 		return &Musixmatch{&http.Client{}, rate.NewLimiter(rate.Every(500*time.Millisecond), 1)}, nil
 	case "lrclib":
-		return &LRCLib{&http.Client{}, rate.NewLimiter(rate.Every(100*time.Millisecond), 1)}, nil
+		return &LRCLib{&http.Client{}, rate.NewLimiter(rate.Every(250*time.Millisecond), 1)}, nil
 	default:
 		return nil, errors.New("unknown source")
 	}
