@@ -10,7 +10,11 @@ USERNAME=wrtag
 
 adduser -D -u "$PUID" -g "$PGID" "$USERNAME" 2>/dev/null || true
 
-[ -d "/data" ] && chown -R "$PUID:$PGID" /data
-[ -d "/config" ] && chown -R "$PUID:$PGID" /config
+if [ -n "$WRTAG_WEB_DB_PATH" ]; then
+    db_dir=$(dirname "$WRTAG_WEB_DB_PATH")
+    mkdir -p "$db_dir"
+    chown "$PUID:$PGID" "$db_dir"
+    [ -f "$WRTAG_WEB_DB_PATH" ] && chown "$PUID:$PGID" "$WRTAG_WEB_DB_PATH"
+fi
 
 exec su-exec "$PUID:$PGID" "$@"
