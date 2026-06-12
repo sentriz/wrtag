@@ -4,15 +4,15 @@ go 1.26.0
 
 require (
 	github.com/KarpelesLab/reflink v1.0.2
-	github.com/andybalholm/cascadia v1.3.3
+	github.com/andybalholm/cascadia v1.3.4
 	github.com/araddon/dateparse v0.0.0-20210429162001-6b43995a97de
 	github.com/argusdusty/treelock v0.0.0-20180405040243-bde644eb4b53
 	github.com/containrrr/shoutrrr v0.8.0
 	github.com/goccy/go-yaml v1.19.2
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
 	github.com/gosimple/unidecode v1.0.1
-	github.com/ncruces/go-sqlite3 v0.34.1
-	github.com/rogpeppe/go-internal v1.14.1
+	github.com/ncruces/go-sqlite3 v0.35.0
+	github.com/rogpeppe/go-internal v1.15.0
 	github.com/sergi/go-diff v1.4.0
 	github.com/stretchr/testify v1.11.1
 	go.senan.xyz/flagconf v0.1.11
@@ -21,9 +21,9 @@ require (
 	go.senan.xyz/sqlitenotify v0.0.0-20260513112327-19a2c9e09109
 	go.senan.xyz/table v0.0.0-20251023151529-96acc7f0ad6c
 	go.senan.xyz/taglib v0.12.0
-	golang.org/x/net v0.54.0
-	golang.org/x/sync v0.20.0
-	golang.org/x/text v0.37.0
+	golang.org/x/net v0.55.0
+	golang.org/x/sync v0.21.0
+	golang.org/x/text v0.38.0
 	golang.org/x/time v0.15.0
 )
 
@@ -33,12 +33,12 @@ require (
 	github.com/kr/text v0.2.0 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.22 // indirect
-	github.com/ncruces/go-sqlite3-wasm/v2 v2.2.35301 // indirect
+	github.com/ncruces/go-sqlite3-wasm/v3 v3.1.35302 // indirect
 	github.com/ncruces/julianday v1.0.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/tetratelabs/wazero v1.11.1-0.20260511190115-a3374cf27a3a // indirect
-	golang.org/x/sys v0.44.0 // indirect
+	golang.org/x/sys v0.46.0 // indirect
 	golang.org/x/tools v0.45.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
