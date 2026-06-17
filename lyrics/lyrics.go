@@ -40,6 +40,9 @@ func (ms MultiSource) Search(ctx context.Context, artist, song string, duration 
 	for _, src := range ms {
 		lyricData, err := src.Search(ctx, artist, song, duration)
 		if err != nil && !errors.Is(err, ErrTrackNotFound) {
+			if ctx.Err() != nil || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return "", err
+			}
 			errs = errors.Join(errs, err)
 			continue
 		}

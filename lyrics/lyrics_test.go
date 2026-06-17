@@ -118,6 +118,16 @@ func TestMultiSource(t *testing.T) {
 		assert.True(t, errors.Is(err, err2))
 	})
 
+	t.Run("propagates context cancellation immediately", func(t *testing.T) {
+		src1 := &fakeSource{err: context.Canceled}
+		src2 := &fakeSource{lyrics: "later"}
+
+		resp, err := (lyrics.MultiSource{src1, src2}).Search(t.Context(), "", "", 0)
+		require.ErrorIs(t, err, context.Canceled)
+		assert.Empty(t, resp)
+		assert.False(t, src2.called)
+	})
+
 	t.Run("stops when track has no lyrics", func(t *testing.T) {
 		src1 := &fakeSource{}
 		src2 := &fakeSource{lyrics: "later lyrics"}
