@@ -97,13 +97,13 @@ func (c *MBClient) SearchRelease(ctx context.Context, q ReleaseQuery) (*Release,
 		params = append(params, boostField(field("label", strings.ToLower(q.Label)), 3)) // boosted
 	}
 	if q.CatalogueNum != "" {
-		params = append(params, boostField(field("catno", strings.ToLower(q.CatalogueNum)), 3)) // boosted
+		params = append(params, boostField(field("catno", strings.ToLower(q.CatalogueNum)), 2)) // boosted
 	}
 	if q.Barcode != "" {
-		params = append(params, field("barcode", q.Barcode))
+		params = append(params, boostField(field("barcode", q.Barcode), 5)) // boosted, unique per release
 	}
 	if q.NumTracks > 0 {
-		params = append(params, boostField(field("tracks", q.NumTracks), 10)) // boosted
+		params = append(params, boostField(field("tracks", q.NumTracks), 2)) // boosted
 	}
 	if len(params) == 0 {
 		return nil, ErrNoResults
