@@ -36,10 +36,15 @@ var ErrTrackNotFound = errors.New("track not found")
 type MultiSource []Source
 
 func (ms MultiSource) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
+	var errs error
 	for _, src := range ms {
 		lyricData, err := src.Search(ctx, artist, song, duration)
 		if err != nil && !errors.Is(err, ErrTrackNotFound) {
-			return "", err
+			if ctx.Err() != nil || errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return "", err
+			}
+			errs = errors.Join(errs, err)
+			continue
 		}
 		if lyricData != "" {
 			return lyricData, nil
@@ -49,6 +54,9 @@ func (ms MultiSource) Search(ctx context.Context, artist, song string, duration 
 		if err == nil {
 			return "", nil
 		}
+	}
+	if errs != nil {
+		return "", errs
 	}
 	return "", ErrTrackNotFound
 }
