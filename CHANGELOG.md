@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.33.0](https://github.com/sentriz/wrtag/compare/v0.32.0...v0.33.0) (2026-07-01)
+
+
+### Features
+
+* **metadata:** read bit depth, format, codec ([e47bada](https://github.com/sentriz/wrtag/commit/e47bada14e1e4d4268903d4a66d9ab0965ceda8e))
+* **musicbrainz:** boost barcode, lower tracks in release search ([e5e8b45](https://github.com/sentriz/wrtag/commit/e5e8b454692708234cc9833a13199e43a6ffb4f3))
+
+
+### Bug Fixes
+
+* **docker:** don't recursive chown ([cc9b0d8](https://github.com/sentriz/wrtag/commit/cc9b0d8328e24b48e381729b374c7aa68e97f8e6)), closes [#218](https://github.com/sentriz/wrtag/issues/218)
+
 ## [0.32.0](https://github.com/sentriz/wrtag/compare/v0.31.0...v0.32.0) (2026-06-04)
 
 
