@@ -45,7 +45,7 @@ func (mm *Musixmatch) Search(ctx context.Context, artist, song string, duration 
 	url = url.JoinPath(musixmatchEsc.Replace(artist))
 	url = url.JoinPath(musixmatchEsc.Replace(song))
 
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
+	req := newLyricsRequest(ctx, url.String())
 	resp, err := mm.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("req page: %w", err)

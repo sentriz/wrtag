@@ -47,7 +47,7 @@ func (g *Genius) Search(ctx context.Context, artist, song string, duration time.
 	url, _ := url.Parse(geniusBaseURL)
 	url = url.JoinPath(geniusEsc.Replace(page))
 
-	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, url.String(), nil)
+	req := newLyricsRequest(ctx, url.String())
 	resp, err := g.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("req page: %w", err)
