@@ -541,32 +541,32 @@ The template has access to the following data:
 
 In addition to what's provided by Go [text/template](https://pkg.go.dev/text/template), several helper functions are available to format your paths:
 
-| Function              | Description                                                        | Example                                                      |
-| --------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------ |
-| `join`                | Joins strings with a delimiter                                     | `{{ artists .Release.Artists \| join "; " }}`                |
-| `pad0`                | Zero-pads a number to specified width                              | `{{ pad0 2 .Track.Position }}` → "01"                        |
-| `sort`                | Sorts a string array                                               | `{{ artists .Release.Artists \| sort }}`                     |
-| `the`                 | Moves `A` and `The` to the end of each string in the input         | `{{ artists .Release.Artists \| sort \| the \| join "; " }}` |
-| `safepath`            | Makes a string safe for filesystem use                             | `{{ .Track.Title \| safepath }}`                             |
-| `safepathUnicode`     | Removes illegal characters from filenames while preserving Unicode | `{{ .Track.Title \| safepathUnicode}}`                       |
-| `artists`             | Gets artist names from artist credits                              | `{{ artists .Release.Artists }}`                             |
-| `artistsString`       | Formats artists as a string                                        | `{{ artistsString .Track.Artists }}`                         |
-| `artistsEn`           | Gets artist names in English locale from artist credits            | `{{ artistsEn .Release.Artists }}`                           |
-| `artistsEnString`     | Formats artists names in English locale as a string                | `{{ artistsEnString .Track.Artists }}`                       |
-| `artistsCredit`       | Gets credit names from artist credits                              | `{{ artistsCredit .Release.Artists }}`                       |
-| `artistsCreditString` | Formats artist credits as a string                                 | `{{ artistsCreditString .Release.Artists }}`                 |
-| `artistsSort`         | Gets sort names from artist credits                                | `{{ artistsSort .Release.Artists \| sort \| join "; " }}`    |
-| `artistsSortString`   | Formats artist sort names as a credits                             | `{{ artistsSortString .Release.Artists }}`                   |
-| `releaseEn`           | Gets the release title in the English locale                       | `{{ releaseEn .Release \| safepath }}`                       |
-| `releaseGroupEn`      | Gets the release group title in the English locale                 | `{{ releaseGroupEn .Release.ReleaseGroup \| safepath }}`     |
-| `releaseOrGroupEn`    | Like `releaseEn` but falls back to the release group               | `{{ releaseOrGroupEn .Release \| safepath }}`                |
+| Function              | Description                                                        | Example                                                             |
+| --------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `join`                | Joins strings with a delimiter                                     | `{{ artists .Release.Artists \| join "; " }}`                       |
+| `pad0`                | Zero-pads a number to specified width                              | `{{ pad0 2 .Track.Position }}` → "01"                               |
+| `sort`                | Sorts a string array                                               | `{{ artists .Release.Artists \| sort }}`                            |
+| `the`                 | Moves `A` and `The` to the end of each string in the input         | `{{ artists .Release.Artists \| sort \| the \| join "; " }}`        |
+| `safepath`            | Makes a string safe for filesystem use                             | `{{ .Track.Title \| safepath }}`                                    |
+| `safepathUnicode`     | Removes illegal characters from filenames while preserving Unicode | `{{ .Track.Title \| safepathUnicode}}`                              |
+| `artists`             | Gets artist names from artist credits                              | `{{ artists .Release.Artists }}`                                    |
+| `artistsString`       | Formats artists as a string                                        | `{{ artistsString .Track.Artists }}`                                |
+| `artistsEn`           | Gets artist names in English locale from artist credits            | `{{ artistsEn .Release.Artists }}`                                  |
+| `artistsEnString`     | Formats artists names in English locale as a string                | `{{ artistsEnString .Track.Artists }}`                              |
+| `artistsCredit`       | Gets credit names from artist credits                              | `{{ artistsCredit .Release.Artists }}`                              |
+| `artistsCreditString` | Formats artist credits as a string                                 | `{{ artistsCreditString .Release.Artists }}`                        |
+| `artistsSort`         | Gets sort names from artist credits                                | `{{ artistsSort .Release.Artists \| sort \| join "; " }}`           |
+| `artistsSortString`   | Formats artist sort names as a credits                             | `{{ artistsSortString .Release.Artists }}`                          |
+| `releaseEn`           | Gets the release title in the English locale                       | `{{ releaseEn .Release \| safepath }}`                              |
+| `releaseGroupEn`      | Gets the release group title in the English locale                 | `{{ releaseGroupEn .Release.ReleaseGroup \| safepath }}`            |
+| `releaseOrGroupEn`    | Like `releaseEn` but falls back to the release group               | `{{ releaseOrGroupEn .Release \| safepath }}`                       |
 | `disambiguation`      | Release and release group disambiguation joined into one string    | `{{ with disambiguation .Release }} ({{ . \| safepath }}){{ end }}` |
-| `isCompilation`       | Whether the release group is a compilation                         | `{{ if isCompilation .Release.ReleaseGroup }}...{{ end }}`   |
+| `isCompilation`       | Whether the release group is a compilation                         | `{{ if isCompilation .Release.ReleaseGroup }}...{{ end }}`          |
 
 ## Example formats
 
 > [!NOTE]
-> If you need help with creating custom path formats, please see the provided playground [here](https://go.dev/play/p/hbmSFWoq81G)
+> If you need help with creating custom path formats, please see the provided playground [here](https://go.dev/play/p/Umqsj5zN1a6)
 
 ### The recommended format
 

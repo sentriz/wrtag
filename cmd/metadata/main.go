@@ -201,13 +201,22 @@ func cmdRead(to io.Writer, path string, withProperties bool, keys []string) erro
 		fmt.Fprintf(to, "%s\t%s\t%s\n", path, k, formatDuration(properties.Length))
 	}
 	if k := "bitrate"; wantProperty(k) {
-		fmt.Fprintf(to, "%s\t%s\t%d\n", path, k, properties.Bitrate)
+		fmt.Fprintf(to, "%s\t%s\t%d\n", path, k, properties.BitRate)
 	}
 	if k := "sample_rate"; wantProperty(k) {
 		fmt.Fprintf(to, "%s\t%s\t%d\n", path, k, properties.SampleRate)
 	}
 	if k := "channels"; wantProperty(k) {
 		fmt.Fprintf(to, "%s\t%s\t%d\n", path, k, properties.Channels)
+	}
+	if k := "bit_depth"; wantProperty(k) {
+		fmt.Fprintf(to, "%s\t%s\t%d\n", path, k, properties.BitDepth)
+	}
+	if k := "format"; wantProperty(k) {
+		fmt.Fprintf(to, "%s\t%s\t%s\n", path, k, properties.Format)
+	}
+	if k := "inner_codec"; wantProperty(k) {
+		fmt.Fprintf(to, "%s\t%s\t%s\n", path, k, properties.InnerCodec)
 	}
 
 	for i, image := range properties.Images {
