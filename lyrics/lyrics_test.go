@@ -1,10 +1,13 @@
 package lyrics_test
 
 import (
+	"context"
 	"embed"
+	"errors"
 	"io/fs"
 	"net/http"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -76,6 +79,82 @@ func TestGeniusLineBreak(t *testing.T) {
 	assert.Contains(t, resp, `[Segue from "Speak to Me": Clare Torry]`)
 }
 
+func TestMultiSource(t *testing.T) {
+	t.Parallel()
+
+	t.Run("falls through track not found and finds lyrics", func(t *testing.T) {
+		t.Parallel()
+
+		src1 := &fakeSource{err: lyrics.ErrTrackNotFound}
+		src2 := &fakeSource{lyrics: "some lyrics"}
+
+		resp, err := (lyrics.MultiSource{src1, src2}).Search(t.Context(), "", "", 0)
+		require.NoError(t, err)
+		assert.Equal(t, "some lyrics", resp)
+		assert.True(t, src2.called)
+	})
+
+	t.Run("propagates transient error immediately", func(t *testing.T) {
+		t.Parallel()
+
+		err1 := errors.New("source 1 failed")
+		src1 := &fakeSource{err: err1}
+		src2 := &fakeSource{lyrics: "later"}
+
+		resp, err := (lyrics.MultiSource{src1, src2}).Search(t.Context(), "", "", 0)
+		require.ErrorIs(t, err, err1)
+		assert.Empty(t, resp)
+		assert.False(t, src2.called)
+	})
+
+	t.Run("propagates context cancellation immediately", func(t *testing.T) {
+		t.Parallel()
+
+		src1 := &fakeSource{err: context.Canceled}
+		src2 := &fakeSource{lyrics: "later"}
+
+		resp, err := (lyrics.MultiSource{src1, src2}).Search(t.Context(), "", "", 0)
+		require.ErrorIs(t, err, context.Canceled)
+		assert.Empty(t, resp)
+		assert.False(t, src2.called)
+	})
+
+	t.Run("stops when track has no lyrics", func(t *testing.T) {
+		t.Parallel()
+
+		src1 := &fakeSource{}
+		src2 := &fakeSource{lyrics: "later lyrics"}
+
+		resp, err := (lyrics.MultiSource{src1, src2}).Search(t.Context(), "", "", 0)
+		require.NoError(t, err)
+		assert.Empty(t, resp)
+		assert.False(t, src2.called)
+	})
+
+	t.Run("returns not found when all sources miss", func(t *testing.T) {
+		t.Parallel()
+
+		src1 := &fakeSource{err: lyrics.ErrTrackNotFound}
+		src2 := &fakeSource{err: lyrics.ErrTrackNotFound}
+
+		resp, err := (lyrics.MultiSource{src1, src2}).Search(t.Context(), "", "", 0)
+		require.ErrorIs(t, err, lyrics.ErrTrackNotFound)
+		assert.Empty(t, resp)
+	})
+
+	t.Run("stops at first source with lyrics", func(t *testing.T) {
+		t.Parallel()
+
+		src1 := &fakeSource{lyrics: "first"}
+		src2 := &fakeSource{lyrics: "later"}
+
+		resp, err := (lyrics.MultiSource{src1, src2}).Search(t.Context(), "", "", 0)
+		require.NoError(t, err)
+		assert.Equal(t, "first", resp)
+		assert.False(t, src2.called)
+	})
+}
+
 func fsClient(fsys fs.FS, sub string) *http.Client {
 	fsys, err := fs.Sub(fsys, sub)
 	if err != nil {
@@ -84,4 +163,15 @@ func fsClient(fsys fs.FS, sub string) *http.Client {
 	var c http.Client
 	c.Transport = http.NewFileTransportFS(fsys)
 	return &c
+}
+
+type fakeSource struct {
+	lyrics string
+	err    error
+	called bool
+}
+
+func (f *fakeSource) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
+	f.called = true
+	return f.lyrics, f.err
 }

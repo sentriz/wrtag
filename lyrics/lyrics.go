@@ -6,10 +6,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/http"
 	"strings"
 	"time"
 
+	"go.senan.xyz/wrtag/clientutil"
 	"golang.org/x/net/html"
 	"golang.org/x/time/rate"
 )
@@ -18,14 +18,19 @@ type Source interface {
 	Search(ctx context.Context, artist, song string, duration time.Duration) (string, error)
 }
 
+const browserUA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
+
 func NewSource(name string) (Source, error) {
+	client := clientutil.Wrap(nil,
+		clientutil.WithUserAgent(browserUA),
+	)
 	switch name {
 	case "genius":
-		return &Genius{&http.Client{}, rate.NewLimiter(rate.Every(500*time.Millisecond), 1)}, nil
+		return &Genius{client, rate.NewLimiter(rate.Every(500*time.Millisecond), 1)}, nil
 	case "musixmatch":
-		return &Musixmatch{&http.Client{}, rate.NewLimiter(rate.Every(500*time.Millisecond), 1)}, nil
+		return &Musixmatch{client, rate.NewLimiter(rate.Every(500*time.Millisecond), 1)}, nil
 	case "lrclib":
-		return &LRCLib{&http.Client{}, rate.NewLimiter(rate.Every(250*time.Millisecond), 1)}, nil
+		return &LRCLib{client, rate.NewLimiter(rate.Every(250*time.Millisecond), 1)}, nil
 	default:
 		return nil, errors.New("unknown source")
 	}
