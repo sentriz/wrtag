@@ -69,9 +69,14 @@ func WithUserAgent(userAgent string) Middleware {
 	if userAgent == "" {
 		return Passthrough
 	}
+
+	const header = "User-Agent"
+
 	return func(next http.RoundTripper) http.RoundTripper {
 		return RoundTripFunc(func(r *http.Request) (*http.Response, error) {
-			r.Header.Add("User-Agent", userAgent)
+			if r.Header.Get(header) == "" {
+				r.Header.Set(header, userAgent)
+			}
 			return next.RoundTrip(r)
 		})
 	}
@@ -97,4 +102,3 @@ func Wrap(c *http.Client, mw Middleware) *http.Client {
 	c.Transport = mw(c.Transport)
 	return c
 }
-

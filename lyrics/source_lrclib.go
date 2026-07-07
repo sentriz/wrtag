@@ -32,7 +32,7 @@ func (l *LRCLib) Search(ctx context.Context, artist, song string, duration time.
 	}
 	u.RawQuery = q.Encode()
 
-	req := newLyricsRequest(ctx, u.String())
+	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
 	resp, err := l.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("req page: %w", err)

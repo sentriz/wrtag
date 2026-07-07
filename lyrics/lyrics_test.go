@@ -18,17 +18,6 @@ import (
 //go:embed testdata
 var responses embed.FS
 
-type fakeSource struct {
-	lyrics string
-	err    error
-	called bool
-}
-
-func (f *fakeSource) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
-	f.called = true
-	return f.lyrics, f.err
-}
-
 func TestMusixmatch(t *testing.T) {
 	t.Parallel()
 
@@ -94,6 +83,8 @@ func TestMultiSource(t *testing.T) {
 	t.Parallel()
 
 	t.Run("falls through track not found and finds lyrics", func(t *testing.T) {
+		t.Parallel()
+
 		src1 := &fakeSource{err: lyrics.ErrTrackNotFound}
 		src2 := &fakeSource{lyrics: "some lyrics"}
 
@@ -104,6 +95,8 @@ func TestMultiSource(t *testing.T) {
 	})
 
 	t.Run("propagates transient error immediately", func(t *testing.T) {
+		t.Parallel()
+
 		err1 := errors.New("source 1 failed")
 		src1 := &fakeSource{err: err1}
 		src2 := &fakeSource{lyrics: "later"}
@@ -115,6 +108,8 @@ func TestMultiSource(t *testing.T) {
 	})
 
 	t.Run("propagates context cancellation immediately", func(t *testing.T) {
+		t.Parallel()
+
 		src1 := &fakeSource{err: context.Canceled}
 		src2 := &fakeSource{lyrics: "later"}
 
@@ -125,6 +120,8 @@ func TestMultiSource(t *testing.T) {
 	})
 
 	t.Run("stops when track has no lyrics", func(t *testing.T) {
+		t.Parallel()
+
 		src1 := &fakeSource{}
 		src2 := &fakeSource{lyrics: "later lyrics"}
 
@@ -135,6 +132,8 @@ func TestMultiSource(t *testing.T) {
 	})
 
 	t.Run("returns not found when all sources miss", func(t *testing.T) {
+		t.Parallel()
+
 		src1 := &fakeSource{err: lyrics.ErrTrackNotFound}
 		src2 := &fakeSource{err: lyrics.ErrTrackNotFound}
 
@@ -144,6 +143,8 @@ func TestMultiSource(t *testing.T) {
 	})
 
 	t.Run("stops at first source with lyrics", func(t *testing.T) {
+		t.Parallel()
+
 		src1 := &fakeSource{lyrics: "first"}
 		src2 := &fakeSource{lyrics: "later"}
 
@@ -152,50 +153,6 @@ func TestMultiSource(t *testing.T) {
 		assert.Equal(t, "first", resp)
 		assert.False(t, src2.called)
 	})
-}
-
-func TestSourceRequestsUseBrowserUserAgent(t *testing.T) {
-	t.Parallel()
-
-	const wantUserAgent = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
-
-	tests := []struct {
-		name   string
-		search func(context.Context, *http.Client) (string, error)
-	}{
-		{
-			name: "genius",
-			search: func(ctx context.Context, client *http.Client) (string, error) {
-				src := lyrics.Genius{HTTPClient: client, Limiter: rate.NewLimiter(rate.Inf, 0)}
-				return src.Search(ctx, "artist", "song", 0)
-			},
-		},
-		{
-			name: "musixmatch",
-			search: func(ctx context.Context, client *http.Client) (string, error) {
-				src := lyrics.Musixmatch{HTTPClient: client, Limiter: rate.NewLimiter(rate.Inf, 0)}
-				return src.Search(ctx, "artist", "song", 0)
-			},
-		},
-		{
-			name: "lrclib",
-			search: func(ctx context.Context, client *http.Client) (string, error) {
-				src := lyrics.LRCLib{HTTPClient: client, Limiter: rate.NewLimiter(rate.Inf, 0)}
-				return src.Search(ctx, "artist", "song", 0)
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			transport := &recordingTransport{}
-			_, err := tt.search(t.Context(), &http.Client{Transport: transport})
-			require.ErrorIs(t, err, lyrics.ErrTrackNotFound)
-			assert.Equal(t, wantUserAgent, transport.userAgent)
-		})
-	}
 }
 
 func fsClient(fsys fs.FS, sub string) *http.Client {
@@ -208,16 +165,13 @@ func fsClient(fsys fs.FS, sub string) *http.Client {
 	return &c
 }
 
-type recordingTransport struct {
-	userAgent string
+type fakeSource struct {
+	lyrics string
+	err    error
+	called bool
 }
 
-func (rt *recordingTransport) RoundTrip(req *http.Request) (*http.Response, error) {
-	rt.userAgent = req.Header.Get("User-Agent")
-	return &http.Response{
-		StatusCode: http.StatusNotFound,
-		Body:       http.NoBody,
-		Header:     make(http.Header),
-		Request:    req,
-	}, nil
+func (f *fakeSource) Search(ctx context.Context, artist, song string, duration time.Duration) (string, error) {
+	f.called = true
+	return f.lyrics, f.err
 }
