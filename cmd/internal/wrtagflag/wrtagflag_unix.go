@@ -10,5 +10,6 @@ import (
 func init() {
 	umask := syscall.Umask(0)
 	syscall.Umask(umask)
-	defaultFileMode = fs.FileMode(0o666 &^ umask) //nolint:gosec
+	defaultFileMode = fs.FileMode(0o666 &^ umask)      //nolint:gosec
+	defaultDirectoryMode = fs.FileMode(0o777 &^ umask) //nolint:gosec
 }
