@@ -98,14 +98,7 @@ func Config() *wrtag.Config {
 	flag.BoolVar(&cfg.UpgradeCover, "cover-upgrade", false, "Fetch new cover art even if it exists locally")
 
 	cfg.FileMode = defaultFileMode
-	flag.Var(&modeParser{&cfg.FileMode}, "file-mode", "Mode for destination files (on Unix-like systems, the default respects current umask)")
-
-	cfg.DirectoryMode = defaultDirectoryMode
-	flag.Var(
-		&modeParser{&cfg.DirectoryMode},
-		"directory-mode",
-		"Mode for newly created destination directories (on Unix-like systems, the default respects current umask)",
-	)
+	flag.Var(&fileModeParser{&cfg.FileMode}, "file-mode", "File mode for destinations files (on Unix-like systems, the default respects current umask)")
 
 	return &cfg
 }
@@ -353,11 +346,11 @@ func (rl *rateLimitParser) String() string {
 	return dur.String()
 }
 
-type modeParser struct {
+type fileModeParser struct {
 	m *os.FileMode
 }
 
-func (fm modeParser) Set(value string) error {
+func (fm fileModeParser) Set(value string) error {
 	mode, err := strconv.ParseInt(value, 8, 32)
 	if err != nil {
 		return err
@@ -365,11 +358,10 @@ func (fm modeParser) Set(value string) error {
 	*fm.m = os.FileMode(mode) //nolint:gosec
 	return nil
 }
-func (fm *modeParser) String() string {
+func (fm *fileModeParser) String() string {
 	if fm.m == nil {
 		return ""
 	}
-
 	return fmt.Sprintf("%04o", *fm.m)
 }
 
@@ -386,8 +378,5 @@ func OperationByName(name string, dryRun bool) (wrtag.FileSystemOperation, error
 	}
 }
 
-// Overridden in _unix.go to respect umask.
-var (
-	defaultFileMode      os.FileMode = 0o666
-	defaultDirectoryMode os.FileMode = 0o777
-)
+// overridden in _unix.go to respect umask.
+var defaultFileMode os.FileMode = 0666
