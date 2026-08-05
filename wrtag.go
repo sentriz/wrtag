@@ -237,14 +237,12 @@ func ProcessDir(
 	)
 
 	dc := NewDirContext()
-	dirMode := cfg.FileMode.Perm()
-	dirMode |= (dirMode & 0o444) >> 2
 
 	// move/copy and tag
 	for i := range pathTags {
 		pt, rt, destPath := pathTags[i], releaseTracks[i], destPaths[i]
 
-		if err := op.ProcessPath(ctx, dc, pt.Path, destPath, cfg.FileMode, dirMode); err != nil {
+		if err := op.ProcessPath(ctx, dc, pt.Path, destPath, cfg.FileMode); err != nil {
 			return nil, fmt.Errorf("process path %q: %w", filepath.Base(pt.Path), err)
 		}
 
@@ -269,7 +267,7 @@ func ProcessDir(
 		}
 	}
 
-	destCover, err := processCover(ctx, op, dc, destDir, cover, coverTmp, cfg.FileMode, dirMode)
+	destCover, err := processCover(ctx, op, dc, destDir, cover, coverTmp, cfg.FileMode)
 	if err != nil {
 		return nil, fmt.Errorf("place cover: %w", err)
 	}
@@ -284,7 +282,7 @@ func ProcessDir(
 	}
 
 	for kf := range cfg.KeepFiles {
-		if err := op.ProcessPath(ctx, dc, filepath.Join(srcDir, kf), filepath.Join(destDir, kf), cfg.FileMode, dirMode); err != nil && !errors.Is(err, os.ErrNotExist) {
+		if err := op.ProcessPath(ctx, dc, filepath.Join(srcDir, kf), filepath.Join(destDir, kf), cfg.FileMode); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("process keep file %q: %w", kf, err)
 		}
 	}
@@ -741,7 +739,7 @@ type FileSystemOperation interface {
 	CanModifyDest() bool
 
 	// ProcessPath handles transferring a file from src to dest path.
-	ProcessPath(ctx context.Context, dc DirContext, src, dest string, fileMode, dirMode os.FileMode) error
+	ProcessPath(ctx context.Context, dc DirContext, src, dest string, mode os.FileMode) error
 
 	// PostSource performs any cleanup or post-processing on the source directory after all files have been processed.
 	PostSource(ctx context.Context, dc DirContext, limit string, src string) error
@@ -767,7 +765,7 @@ func (m Move) CanModifyDest() bool {
 	return !m.dryRun
 }
 
-func (m Move) ProcessPath(ctx context.Context, dc DirContext, src, dest string, fileMode, dirMode os.FileMode) error {
+func (m Move) ProcessPath(ctx context.Context, dc DirContext, src, dest string, mode os.FileMode) error {
 	dc.knownDestPaths[dest] = struct{}{}
 
 	if filepath.Clean(src) == filepath.Clean(dest) {
@@ -779,7 +777,7 @@ func (m Move) ProcessPath(ctx context.Context, dc DirContext, src, dest string, 
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Dir(dest), dirMode); err != nil {
+	if err := mkdirAllFileMode(filepath.Dir(dest), mode); err != nil {
 		return fmt.Errorf("create dest path: %w", err)
 	}
 
@@ -792,7 +790,7 @@ func (m Move) ProcessPath(ctx context.Context, dc DirContext, src, dest string, 
 			if err := os.Remove(src); err != nil {
 				return fmt.Errorf("remove from move: %w", err)
 			}
-			if err := os.Chmod(dest, fileMode); err != nil {
+			if err := os.Chmod(dest, mode); err != nil {
 				return fmt.Errorf("chmod dest: %w", err)
 			}
 
@@ -803,7 +801,7 @@ func (m Move) ProcessPath(ctx context.Context, dc DirContext, src, dest string, 
 		return fmt.Errorf("rename: %w", err)
 	}
 
-	if err := os.Chmod(dest, fileMode); err != nil {
+	if err := os.Chmod(dest, mode); err != nil {
 		return fmt.Errorf("chmod dest: %w", err)
 	}
 
@@ -848,7 +846,7 @@ func (c Copy) CanModifyDest() bool {
 	return !c.dryRun
 }
 
-func (c Copy) ProcessPath(ctx context.Context, dc DirContext, src, dest string, fileMode, dirMode os.FileMode) error {
+func (c Copy) ProcessPath(ctx context.Context, dc DirContext, src, dest string, mode os.FileMode) error {
 	dc.knownDestPaths[dest] = struct{}{}
 
 	if filepath.Clean(src) == filepath.Clean(dest) {
@@ -860,7 +858,7 @@ func (c Copy) ProcessPath(ctx context.Context, dc DirContext, src, dest string, 
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Dir(dest), dirMode); err != nil {
+	if err := mkdirAllFileMode(filepath.Dir(dest), mode); err != nil {
 		return fmt.Errorf("create dest path: %w", err)
 	}
 
@@ -868,7 +866,7 @@ func (c Copy) ProcessPath(ctx context.Context, dc DirContext, src, dest string, 
 		return err
 	}
 
-	if err := os.Chmod(dest, fileMode); err != nil {
+	if err := os.Chmod(dest, mode); err != nil {
 		return fmt.Errorf("chmod dest: %w", err)
 	}
 
@@ -892,7 +890,7 @@ func (c Reflink) CanModifyDest() bool {
 	return !c.dryRun
 }
 
-func (c Reflink) ProcessPath(ctx context.Context, dc DirContext, src, dest string, fileMode, dirMode os.FileMode) error {
+func (c Reflink) ProcessPath(ctx context.Context, dc DirContext, src, dest string, mode os.FileMode) error {
 	dc.knownDestPaths[dest] = struct{}{}
 
 	if filepath.Clean(src) == filepath.Clean(dest) {
@@ -904,7 +902,7 @@ func (c Reflink) ProcessPath(ctx context.Context, dc DirContext, src, dest strin
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Dir(dest), dirMode); err != nil {
+	if err := mkdirAllFileMode(filepath.Dir(dest), mode); err != nil {
 		return fmt.Errorf("create dest path: %w", err)
 	}
 
@@ -912,7 +910,7 @@ func (c Reflink) ProcessPath(ctx context.Context, dc DirContext, src, dest strin
 		return fmt.Errorf("reflink file: %w", err)
 	}
 
-	if err := os.Chmod(dest, fileMode); err != nil {
+	if err := os.Chmod(dest, mode); err != nil {
 		return fmt.Errorf("chmod dest: %w", err)
 	}
 
@@ -922,6 +920,14 @@ func (c Reflink) ProcessPath(ctx context.Context, dc DirContext, src, dest strin
 
 func (Reflink) PostSource(ctx context.Context, dc DirContext, limit string, src string) error {
 	return nil
+}
+
+// mkdirAllFileMode is like os.MkdirAll with a mode derived from the given file mode,
+// adding an x bit wherever an r bit is set.
+func mkdirAllFileMode(path string, fileMode os.FileMode) error {
+	dirMode := fileMode.Perm()
+	dirMode |= (dirMode & 0o444) >> 2
+	return os.MkdirAll(path, dirMode)
 }
 
 // trimDestDir deletes all items in a destination dir that don't look like they should be there.
@@ -1043,7 +1049,7 @@ func maybeFetchUpgradedCover(ctx context.Context, caa *musicbrainz.CAAClient, re
 
 func processCover(
 	ctx context.Context, op FileSystemOperation, dc DirContext,
-	destDir, cover, coverNew string, fileMode, dirMode os.FileMode,
+	destDir, cover, coverNew string, mode os.FileMode,
 ) (string, error) {
 	coverPath := func(p string) string {
 		ext := strings.ToLower(filepath.Ext(p))
@@ -1052,7 +1058,7 @@ func processCover(
 
 	if coverNew != "" {
 		destCover := coverPath(coverNew)
-		if err := (Move{}).ProcessPath(ctx, dc, coverNew, destCover, fileMode, dirMode); err != nil {
+		if err := (Move{}).ProcessPath(ctx, dc, coverNew, destCover, mode); err != nil {
 			return "", fmt.Errorf("move new cover to dest: %w", err)
 		}
 		return destCover, nil
@@ -1060,7 +1066,7 @@ func processCover(
 
 	if cover != "" {
 		destCover := coverPath(cover)
-		if err := op.ProcessPath(ctx, dc, cover, destCover, fileMode, dirMode); err != nil {
+		if err := op.ProcessPath(ctx, dc, cover, destCover, mode); err != nil {
 			return "", fmt.Errorf("move file to dest: %w", err)
 		}
 		return destCover, nil
