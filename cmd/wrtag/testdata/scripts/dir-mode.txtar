@@ -1,0 +1,27 @@
+exec tag write kat_moda/01.flac
+exec tag write kat_moda/02.flac
+exec tag write kat_moda/03.flac
+
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title | safepath }}/{{ .Track.Position }}{{ .Ext }}'
+
+env WRTAG_FILE_MODE=644
+
+# copy
+exec wrtag copy -yes -mbid e47d04a4-7460-427d-a731-cc82386d85f1 kat_moda/
+
+# expect created dirs to get the file mode with an x bit wherever an r bit is set
+exec file-mode albums
+stdout 0755
+exec file-mode 'albums/Kat Moda'
+stdout 0755
+
+env WRTAG_FILE_MODE=640
+env WRTAG_PATH_FORMAT='albums-b/{{ .Release.Title | safepath }}/{{ .Track.Position }}{{ .Ext }}'
+
+# copy
+exec wrtag copy -yes -mbid e47d04a4-7460-427d-a731-cc82386d85f1 kat_moda/
+
+exec file-mode albums-b
+stdout 0750
+exec file-mode 'albums-b/Kat Moda'
+stdout 0750

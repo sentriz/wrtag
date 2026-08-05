@@ -777,7 +777,7 @@ func (m Move) ProcessPath(ctx context.Context, dc DirContext, src, dest string, 
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Dir(dest), 0o750); err != nil {
+	if err := mkdirAllFileMode(filepath.Dir(dest), mode); err != nil {
 		return fmt.Errorf("create dest path: %w", err)
 	}
 
@@ -858,7 +858,7 @@ func (c Copy) ProcessPath(ctx context.Context, dc DirContext, src, dest string, 
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Dir(dest), 0o750); err != nil {
+	if err := mkdirAllFileMode(filepath.Dir(dest), mode); err != nil {
 		return fmt.Errorf("create dest path: %w", err)
 	}
 
@@ -902,7 +902,7 @@ func (c Reflink) ProcessPath(ctx context.Context, dc DirContext, src, dest strin
 		return nil
 	}
 
-	if err := os.MkdirAll(filepath.Dir(dest), 0o750); err != nil {
+	if err := mkdirAllFileMode(filepath.Dir(dest), mode); err != nil {
 		return fmt.Errorf("create dest path: %w", err)
 	}
 
@@ -920,6 +920,14 @@ func (c Reflink) ProcessPath(ctx context.Context, dc DirContext, src, dest strin
 
 func (Reflink) PostSource(ctx context.Context, dc DirContext, limit string, src string) error {
 	return nil
+}
+
+// mkdirAllFileMode is like os.MkdirAll with a mode derived from the given file mode,
+// adding an x bit wherever an r bit is set.
+func mkdirAllFileMode(path string, fileMode os.FileMode) error {
+	dirMode := fileMode.Perm()
+	dirMode |= (dirMode & 0o444) >> 2
+	return os.MkdirAll(path, dirMode)
 }
 
 // trimDestDir deletes all items in a destination dir that don't look like they should be there.
