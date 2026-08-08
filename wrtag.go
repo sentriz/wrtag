@@ -88,6 +88,7 @@ type Config struct {
 	TagConfig             TagConfig
 	KeepFiles             map[string]struct{}
 	Addons                []addon.Addon
+	GroupCover            bool
 	UpgradeCover          bool
 	FileMode              os.FileMode
 }
@@ -220,6 +221,10 @@ func ProcessDir(
 
 	var coverTmp string
 	if op.CanModifyDest() && (cover == "" || cfg.UpgradeCover) {
+		if cfg.GroupCover {
+			release.CoverArtArchive.Front = false
+		}
+
 		var err error
 		coverTmp, err = maybeFetchUpgradedCover(ctx, &cfg.CoverArtArchiveClient, release, cover, maxCoverSizeBytes)
 		if err != nil {

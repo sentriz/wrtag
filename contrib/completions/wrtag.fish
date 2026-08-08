@@ -42,6 +42,9 @@ __complete_prefer_oldstyle -c wrtag -n "not __fish_seen_subcommand_from $command
     -o config-path -rF -d 'Path to config file (default "/$HOME/.config/wrtag/config")'
 
 __complete_prefer_oldstyle -c wrtag -n "not __fish_seen_subcommand_from $commands" \
+    -o cover-group -d "Fetch cover art from the MusicBrainz release group only, rather than the specific release too"
+
+__complete_prefer_oldstyle -c wrtag -n "not __fish_seen_subcommand_from $commands" \
     -o cover-upgrade -d "Fetch new cover art even if it exists locally"
 
 __complete_prefer_oldstyle -c wrtag -n "not __fish_seen_subcommand_from $commands" \

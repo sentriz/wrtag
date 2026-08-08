@@ -431,6 +431,7 @@ Global configuration is used by all tools. Any option can be provided with a CLI
 | -caa-rate-limit   | WRTAG_CAA_RATE_LIMIT   | caa-rate-limit   | CoverArtArchive rate limit duration                                                                  |
 | -config           | WRTAG_CONFIG           | config           | Print the parsed config and exit                                                                     |
 | -config-path      | WRTAG_CONFIG_PATH      | config-path      | Path to config file (default "$XDG_CONFIG_HOME/wrtag/config")                                        |
+| -cover-group      | WRTAG_COVER_GROUP      | cover-group      | Fetch cover art from the MusicBrainz release group only, rather than the specific release too        |
 | -cover-upgrade    | WRTAG_COVER_UPGRADE    | cover-upgrade    | Fetch new cover art even if it exists locally                                                        |
 | -diff-weight      | WRTAG_DIFF_WEIGHT      | diff-weight      | Adjust distance weighting for a tag (0 to ignore) (stackable)                                        |
 | -keep-file        | WRTAG_KEEP_FILE        | keep-file        | Define an extra file path to keep when moving/copying to root dir (stackable)                        |

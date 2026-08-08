@@ -95,6 +95,8 @@ func Config() *wrtag.Config {
 
 	cfg.CoverArtArchiveClient.HTTPClient = &http.Client{Timeout: 30 * time.Second}
 
+	flag.BoolVar(&cfg.GroupCover, "cover-group", false, "Fetch cover art from the MusicBrainz release group only, rather than the specific release too")
+
 	flag.BoolVar(&cfg.UpgradeCover, "cover-upgrade", false, "Fetch new cover art even if it exists locally")
 
 	cfg.FileMode = defaultFileMode
