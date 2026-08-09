@@ -16,12 +16,25 @@ type CAAClient struct {
 	Limiter    *rate.Limiter
 }
 
-func (c *CAAClient) GetCoverURL(ctx context.Context, release *Release) (string, error) {
+type CoverSource string
+
+const (
+	CoverSourceRelease      CoverSource = "release"
+	CoverSourceReleaseGroup CoverSource = "release-group"
+)
+
+func (c *CAAClient) GetCoverURL(ctx context.Context, release *Release, sources ...CoverSource) (string, error) {
 	var candidateURLs []string
-	if release.CoverArtArchive.Front {
-		candidateURLs = append(candidateURLs, joinPath(c.BaseURL, "release", release.ID))
+	for _, source := range sources {
+		switch source {
+		case CoverSourceRelease:
+			if release.CoverArtArchive.Front {
+				candidateURLs = append(candidateURLs, joinPath(c.BaseURL, "release", release.ID))
+			}
+		case CoverSourceReleaseGroup:
+			candidateURLs = append(candidateURLs, joinPath(c.BaseURL, "release-group", release.ReleaseGroup.ID))
+		}
 	}
-	candidateURLs = append(candidateURLs, joinPath(c.BaseURL, "release-group", release.ReleaseGroup.ID))
 
 	for _, candidate := range candidateURLs {
 		req, err := http.NewRequestWithContext(ctx, http.MethodGet, candidate, nil)

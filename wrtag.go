@@ -88,6 +88,7 @@ type Config struct {
 	TagConfig             TagConfig
 	KeepFiles             map[string]struct{}
 	Addons                []addon.Addon
+	CoverSources          []musicbrainz.CoverSource
 	UpgradeCover          bool
 	FileMode              os.FileMode
 }
@@ -221,7 +222,7 @@ func ProcessDir(
 	var coverTmp string
 	if op.CanModifyDest() && (cover == "" || cfg.UpgradeCover) {
 		var err error
-		coverTmp, err = maybeFetchUpgradedCover(ctx, &cfg.CoverArtArchiveClient, release, cover, maxCoverSizeBytes)
+		coverTmp, err = maybeFetchUpgradedCover(ctx, &cfg.CoverArtArchiveClient, release, cfg.CoverSources, cover, maxCoverSizeBytes)
 		if err != nil {
 			return nil, fmt.Errorf("fetch cover: %w", err)
 		}
@@ -1023,7 +1024,7 @@ func copyFile(src, dest string) (err error) {
 
 const maxCoverSizeBytes = 8 * 1024 * 1024 // 8 MiB
 
-func maybeFetchUpgradedCover(ctx context.Context, caa *musicbrainz.CAAClient, release *musicbrainz.Release, cover string, maxSize int64) (string, error) {
+func maybeFetchUpgradedCover(ctx context.Context, caa *musicbrainz.CAAClient, release *musicbrainz.Release, sources []musicbrainz.CoverSource, cover string, maxSize int64) (string, error) {
 	skipFunc := func(resp *http.Response) bool {
 		if resp.ContentLength > maxSize {
 			slog.WarnContext(ctx, "skipping downloading cover which is larger than max size", "size_bytes", resp.ContentLength, "max_size_bytes", maxCoverSizeBytes)
@@ -1039,7 +1040,7 @@ func maybeFetchUpgradedCover(ctx context.Context, caa *musicbrainz.CAAClient, re
 		return resp.ContentLength == info.Size()
 	}
 
-	coverTmp, err := downloadMusicBrainzCover(ctx, caa, release, skipFunc)
+	coverTmp, err := downloadMusicBrainzCover(ctx, caa, release, sources, skipFunc)
 	if err != nil {
 		return "", fmt.Errorf("maybe fetch better cover: %w", err)
 	}
@@ -1074,8 +1075,8 @@ func processCover(
 	return "", nil
 }
 
-func downloadMusicBrainzCover(ctx context.Context, caa *musicbrainz.CAAClient, release *musicbrainz.Release, skipFunc func(*http.Response) bool) (string, error) {
-	coverURL, err := caa.GetCoverURL(ctx, release)
+func downloadMusicBrainzCover(ctx context.Context, caa *musicbrainz.CAAClient, release *musicbrainz.Release, sources []musicbrainz.CoverSource, skipFunc func(*http.Response) bool) (string, error) {
+	coverURL, err := caa.GetCoverURL(ctx, release, sources...)
 	if err != nil {
 		return "", err
 	}

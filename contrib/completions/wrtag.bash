@@ -21,6 +21,7 @@ function _wrtag_completion() {
         --caa-rate-limit
         --config
         --config-path
+        --cover-source
         --cover-upgrade
         --diff-weight
         --keep-file
@@ -42,6 +43,7 @@ function _wrtag_completion() {
         -caa-rate-limit
         -config
         -config-path
+        -cover-source
         -cover-upgrade
         -diff-weight
         -keep-file

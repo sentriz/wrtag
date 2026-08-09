@@ -19,6 +19,7 @@ import (
 	"go.senan.xyz/wrtag"
 	"go.senan.xyz/wrtag/addon"
 	"go.senan.xyz/wrtag/clientutil"
+	"go.senan.xyz/wrtag/musicbrainz"
 	"go.senan.xyz/wrtag/notifications"
 	"go.senan.xyz/wrtag/pathformat"
 	"go.senan.xyz/wrtag/researchlink"
@@ -94,6 +95,9 @@ func Config() *wrtag.Config {
 	flag.Var(&rateLimitParser{cfg.CoverArtArchiveClient.Limiter}, "caa-rate-limit", "CoverArtArchive rate limit duration")
 
 	cfg.CoverArtArchiveClient.HTTPClient = &http.Client{Timeout: 30 * time.Second}
+
+	cfg.CoverSources = []musicbrainz.CoverSource{musicbrainz.CoverSourceRelease, musicbrainz.CoverSourceReleaseGroup}
+	flag.Var(&coverSourceParser{sources: &cfg.CoverSources}, "cover-source", "Fetch cover art from the given source, \"release\" or \"release-group\", in order (stackable)")
 
 	flag.BoolVar(&cfg.UpgradeCover, "cover-upgrade", false, "Fetch new cover art even if it exists locally")
 
@@ -319,6 +323,36 @@ func (a addonsParser) String() string {
 	var parts []string
 	for _, a := range *a.addons {
 		parts = append(parts, fmt.Sprint(a))
+	}
+	return strings.Join(parts, ", ")
+}
+
+type coverSourceParser struct {
+	sources *[]musicbrainz.CoverSource
+	set     bool
+}
+
+func (cs *coverSourceParser) Set(value string) error {
+	source := musicbrainz.CoverSource(value)
+	switch source {
+	case musicbrainz.CoverSourceRelease, musicbrainz.CoverSourceReleaseGroup:
+	default:
+		return fmt.Errorf("unknown cover source %q", value)
+	}
+	if !cs.set {
+		*cs.sources = nil
+		cs.set = true
+	}
+	*cs.sources = append(*cs.sources, source)
+	return nil
+}
+func (cs *coverSourceParser) String() string {
+	if cs.sources == nil {
+		return ""
+	}
+	var parts []string
+	for _, s := range *cs.sources {
+		parts = append(parts, string(s))
 	}
 	return strings.Join(parts, ", ")
 }
