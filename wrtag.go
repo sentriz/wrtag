@@ -90,6 +90,7 @@ type Config struct {
 	Addons                []addon.Addon
 	CoverSources          []musicbrainz.CoverSource
 	UpgradeCover          bool
+	MaxCoverSize          int64
 	FileMode              os.FileMode
 }
 
@@ -222,7 +223,7 @@ func ProcessDir(
 	var coverTmp string
 	if op.CanModifyDest() && (cover == "" || cfg.UpgradeCover) {
 		var err error
-		coverTmp, err = maybeFetchUpgradedCover(ctx, &cfg.CoverArtArchiveClient, release, cfg.CoverSources, cover, maxCoverSizeBytes)
+		coverTmp, err = maybeFetchUpgradedCover(ctx, &cfg.CoverArtArchiveClient, release, cfg.CoverSources, cover, cfg.MaxCoverSize)
 		if err != nil {
 			return nil, fmt.Errorf("fetch cover: %w", err)
 		}
@@ -1022,12 +1023,10 @@ func copyFile(src, dest string) (err error) {
 	return nil
 }
 
-const maxCoverSizeBytes = 8 * 1024 * 1024 // 8 MiB
-
 func maybeFetchUpgradedCover(ctx context.Context, caa *musicbrainz.CAAClient, release *musicbrainz.Release, sources []musicbrainz.CoverSource, cover string, maxSize int64) (string, error) {
 	skipFunc := func(resp *http.Response) bool {
 		if resp.ContentLength > maxSize {
-			slog.WarnContext(ctx, "skipping downloading cover which is larger than max size", "size_bytes", resp.ContentLength, "max_size_bytes", maxCoverSizeBytes)
+			slog.WarnContext(ctx, "skipping downloading cover which is larger than max size", "size_bytes", resp.ContentLength, "max_size_bytes", maxSize)
 			return true
 		}
 		if cover == "" {

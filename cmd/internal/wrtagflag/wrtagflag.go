@@ -101,6 +101,16 @@ func Config() *wrtag.Config {
 
 	flag.BoolVar(&cfg.UpgradeCover, "cover-upgrade", false, "Fetch new cover art even if it exists locally")
 
+	cfg.MaxCoverSize = 8 * 1024 * 1024
+	flag.Func("cover-max-size", "Maximum size in MiB for fetched cover art (default 8 MiB)", func(s string) error {
+		mib, err := strconv.ParseInt(s, 10, 64)
+		if err != nil || mib <= 0 {
+			return fmt.Errorf("must be positive non-zero integer")
+		}
+		cfg.MaxCoverSize = mib * 1024 * 1024
+		return nil
+	})
+
 	cfg.FileMode = defaultFileMode
 	flag.Var(&fileModeParser{&cfg.FileMode}, "file-mode", "File mode for destinations files (on Unix-like systems, the default respects current umask)")
 

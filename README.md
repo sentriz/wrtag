@@ -431,6 +431,7 @@ Global configuration is used by all tools. Any option can be provided with a CLI
 | -caa-rate-limit   | WRTAG_CAA_RATE_LIMIT   | caa-rate-limit   | CoverArtArchive rate limit duration                                                                  |
 | -config           | WRTAG_CONFIG           | config           | Print the parsed config and exit                                                                     |
 | -config-path      | WRTAG_CONFIG_PATH      | config-path      | Path to config file (default "$XDG_CONFIG_HOME/wrtag/config")                                        |
+| -cover-max-size   | WRTAG_COVER_MAX_SIZE   | cover-max-size   | Maximum size in MiB for fetched cover art (default 8 MiB)                                            |
 | -cover-source     | WRTAG_COVER_SOURCE     | cover-source     | Fetch cover art from the given source, "release" or "release-group", in order (stackable)            |
 | -cover-upgrade    | WRTAG_COVER_UPGRADE    | cover-upgrade    | Fetch new cover art even if it exists locally                                                        |
 | -diff-weight      | WRTAG_DIFF_WEIGHT      | diff-weight      | Adjust distance weighting for a tag (0 to ignore) (stackable)                                        |
