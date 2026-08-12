@@ -42,7 +42,7 @@ __complete_prefer_oldstyle -c wrtag -n "not __fish_seen_subcommand_from $command
     -o config-path -rF -d 'Path to config file (default "/$HOME/.config/wrtag/config")'
 
 __complete_prefer_oldstyle -c wrtag -n "not __fish_seen_subcommand_from $commands" \
-    -o cover-max-size -x -d "Maximum size in MiB for fetched cover art (default 8 MiB)"
+    -o cover-max-size -x -d "Maximum size in B, KiB, MiB, or GiB for fetched cover art (default 8MiB)"
 
 __complete_prefer_oldstyle -c wrtag -n "not __fish_seen_subcommand_from $commands" \
     -o cover-source -x -a "release release-group" -d "Fetch cover art from the given source, in order"

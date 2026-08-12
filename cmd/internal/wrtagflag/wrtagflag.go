@@ -102,14 +102,7 @@ func Config() *wrtag.Config {
 	flag.BoolVar(&cfg.UpgradeCover, "cover-upgrade", false, "Fetch new cover art even if it exists locally")
 
 	cfg.MaxCoverSize = 8 * 1024 * 1024
-	flag.Func("cover-max-size", "Maximum size in MiB for fetched cover art (default 8 MiB)", func(s string) error {
-		mib, err := strconv.ParseInt(s, 10, 64)
-		if err != nil || mib <= 0 {
-			return fmt.Errorf("must be positive non-zero integer")
-		}
-		cfg.MaxCoverSize = mib * 1024 * 1024
-		return nil
-	})
+	flag.Var(&sizeParser{&cfg.MaxCoverSize}, "cover-max-size", "Maximum size in B, KiB, MiB, or GiB for fetched cover art (default 8MiB)")
 
 	cfg.FileMode = defaultFileMode
 	flag.Var(&fileModeParser{&cfg.FileMode}, "file-mode", "File mode for destinations files (on Unix-like systems, the default respects current umask)")
@@ -388,6 +381,41 @@ func (rl *rateLimitParser) String() string {
 		return ""
 	}
 	return dur.String()
+}
+
+type sizeParser struct{ *int64 }
+
+func (s sizeParser) Set(value string) error {
+	value = strings.TrimSpace(value)
+	for i, suffix := range sizeUnits {
+		before, found := strings.CutSuffix(value, suffix)
+		if found {
+			n, err := strconv.ParseInt(strings.TrimSpace(before), 10, 64)
+			if err != nil || n <= 0 {
+				return errors.New("number must be a positive non-zero integer")
+			}
+			*s.int64 = n * sizeUnitBytes(i)
+			return nil
+		}
+	}
+	return errors.New("no valid size unit suffixed (B, KiB, MiB, GiB)")
+}
+func (s sizeParser) String() string {
+	if s.int64 == nil {
+		return ""
+	}
+	for i, suffix := range sizeUnits {
+		if *s.int64%sizeUnitBytes(i) == 0 {
+			return strconv.FormatInt(*s.int64/sizeUnitBytes(i), 10) + suffix
+		}
+	}
+	return ""
+}
+
+var sizeUnits = [...]string{"GiB", "MiB", "KiB", "B"}
+
+func sizeUnitBytes(i int) int64 {
+	return 1 << (10 * (len(sizeUnits) - 1 - i))
 }
 
 type fileModeParser struct {
