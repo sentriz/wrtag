@@ -502,12 +502,13 @@ func WriteRelease(
 
 	arrangers, arrangersCredit, arrangerIDs := collectCredits(append(trk.Recording.Relations, workRelations...), []string{"arranger", "instrument arranger", "vocal arranger", "orchestrator"})
 	composers, composersCredit, composerIDs := collectCredits(workRelations, []string{"composer"})
-	conductors, conductorsCredit, conductorIDs := collectCredits(trk.Recording.Relations, []string{"conductor"})
+	conductors, conductorsCredit, conductorIDs := collectCredits(trk.Recording.Relations, []string{"conductor", "chorus master", "concertmaster"})
 	engineers, engineersCredit, engineerIDs := collectCredits(trk.Recording.Relations, []string{"engineer", "audio", "mastering", "sound", "mix", "recording", "programming", "editor", "balance"})
 	lyricists, lyricistsCredit, lyricistIDs := collectCredits(workRelations, []string{"lyricist"})
 	performers, performersCredit, performerIDs := collectCredits(trk.Recording.Relations, []string{"performer", "vocal", "instrument", "performing orchestra", "conductor", "chorus master", "concertmaster"})
 	producers, producersCredit, producerIDs := collectCredits(trk.Recording.Relations, []string{"producer"})
 	remixers, remixersCredit, remixerIDs := collectCredits(trk.Recording.Relations, []string{"remixer"})
+	writers, writersCredit, writerIDs := collectCredits(workRelations, []string{"writer", "composer", "lyricist"})
 
 	// normtag.Set(t, x, trimZero(y)...) so that we clear out tags with no value from the map
 
@@ -595,6 +596,12 @@ func WriteRelease(
 	normtag.Set(t, normtag.RemixerCredit, trimZero(strings.Join(remixersCredit, ", "))...)
 	normtag.Set(t, normtag.RemixersCredit, trimZero(remixersCredit...)...)
 	normtag.Set(t, normtag.MusicBrainzRemixerID, trimZero(remixerIDs...)...)
+
+	normtag.Set(t, normtag.Writer, trimZero(strings.Join(writers, ", "))...)
+	normtag.Set(t, normtag.Writers, trimZero(writers...)...)
+	normtag.Set(t, normtag.WriterCredit, trimZero(strings.Join(writersCredit, ", "))...)
+	normtag.Set(t, normtag.WritersCredit, trimZero(writersCredit...)...)
+	normtag.Set(t, normtag.MusicBrainzWriterID, trimZero(writerIDs...)...)
 }
 
 // Diff represents a comparison between two tag values, showing the differences

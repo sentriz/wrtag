@@ -75,7 +75,7 @@ const (
 	EngineersCredit       = "ENGINEERS_CREDIT"
 	MusicBrainzEngineerID = "MUSICBRAINZ_ENGINEERID" //tag: alts "MUSICBRAINZ_ENGINEER_ID"
 
-	Lyricist              = "LYRICIST" //tag: alts "TEXT" "TXT"
+	Lyricist              = "LYRICIST" //tag: alts "TEXT" "TXT" "TOLY"
 	Lyricists             = "LYRICISTS"
 	LyricistCredit        = "LYRICIST_CREDIT"
 	LyricistsCredit       = "LYRICISTS_CREDIT"
@@ -98,6 +98,12 @@ const (
 	RemixerCredit        = "REMIXER_CREDIT"
 	RemixersCredit       = "REMIXERS_CREDIT"
 	MusicBrainzRemixerID = "MUSICBRAINZ_REMIXERID" //tag: alts "MUSICBRAINZ_REMIXER_ID"
+
+	Writer              = "WRITER" //tag: alts "TXXX:Writer"
+	Writers             = "WRITERS"
+	WriterCredit        = "WRITER_CREDIT"
+	WritersCredit       = "WRITERS_CREDIT"
+	MusicBrainzWriterID = "MUSICBRAINZ_WRITERID" //tag: alts "MUSICBRAINZ_WRITER_ID"
 
 	ReplayGainTrackGain         = "REPLAYGAIN_TRACK_GAIN"
 	ReplayGainTrackPeak         = "REPLAYGAIN_TRACK_PEAK"
