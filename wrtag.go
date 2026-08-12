@@ -500,15 +500,25 @@ func WriteRelease(
 		workRelations = append(workRelations, r.Work.Relations...)
 	}
 
-	arrangers, arrangersCredit, arrangerIDs := collectCredits(append(trk.Recording.Relations, workRelations...), []string{"arranger", "instrument arranger", "vocal arranger", "orchestrator"})
-	composers, composersCredit, composerIDs := collectCredits(workRelations, []string{"composer"})
-	conductors, conductorsCredit, conductorIDs := collectCredits(trk.Recording.Relations, []string{"conductor", "chorus master", "concertmaster"})
-	engineers, engineersCredit, engineerIDs := collectCredits(trk.Recording.Relations, []string{"engineer", "audio", "mastering", "sound", "mix", "recording", "programming", "editor", "balance"})
-	lyricists, lyricistsCredit, lyricistIDs := collectCredits(workRelations, []string{"lyricist"})
-	performers, performersCredit, performerIDs := collectCredits(trk.Recording.Relations, []string{"performer", "vocal", "instrument", "performing orchestra", "conductor", "chorus master", "concertmaster"})
-	producers, producersCredit, producerIDs := collectCredits(trk.Recording.Relations, []string{"producer"})
-	remixers, remixersCredit, remixerIDs := collectCredits(trk.Recording.Relations, []string{"remixer"})
-	writers, writersCredit, writerIDs := collectCredits(workRelations, []string{"writer", "composer", "lyricist"})
+	arrangerTypes := []string{"arranger", "instrument arranger", "orchestrator", "vocal arranger"}
+	composerTypes := []string{"composer"}
+	conductorTypes := []string{"chorus master", "chorusmaster", "concert master", "concertmaster", "conductor"}
+	engineerTypes := []string{"audio", "balance", "editor", "engineer", "mastering", "mix", "programming", "recording", "sound"}
+	lyricistTypes := []string{"lyricist"}
+	performerTypes := []string{"chorus master", "concertmaster", "conductor", "instrument", "performer", "performing orchestra", "vocal"}
+	producerTypes := []string{"producer"}
+	remixerTypes := []string{"compiler", "dj-mixer", "remixer"}
+	writerTypes := []string{"composer", "librettist", "lyricist", "translator", "writer"}
+
+	arrangers, arrangersCredit, arrangerIDs := collectCredits(append(trk.Recording.Relations, workRelations...), arrangerTypes)
+	composers, composersCredit, composerIDs := collectCredits(workRelations, composerTypes)
+	conductors, conductorsCredit, conductorIDs := collectCredits(trk.Recording.Relations, conductorTypes)
+	engineers, engineersCredit, engineerIDs := collectCredits(trk.Recording.Relations, engineerTypes)
+	lyricists, lyricistsCredit, lyricistIDs := collectCredits(workRelations, lyricistTypes)
+	performers, performersCredit, performerIDs := collectCredits(trk.Recording.Relations, performerTypes)
+	producers, producersCredit, producerIDs := collectCredits(trk.Recording.Relations, producerTypes)
+	remixers, remixersCredit, remixerIDs := collectCredits(trk.Recording.Relations, remixerTypes)
+	writers, writersCredit, writerIDs := collectCredits(workRelations, writerTypes)
 
 	// normtag.Set(t, x, trimZero(y)...) so that we clear out tags with no value from the map
 
