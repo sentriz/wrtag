@@ -505,6 +505,7 @@ func WriteRelease(
 	conductors, conductorsCredit, conductorIDs := collectCredits(trk.Recording.Relations, []string{"conductor"})
 	engineers, engineersCredit, engineerIDs := collectCredits(trk.Recording.Relations, []string{"engineer", "audio", "mastering", "sound", "mix", "recording", "programming", "editor", "balance"})
 	lyricists, lyricistsCredit, lyricistIDs := collectCredits(workRelations, []string{"lyricist"})
+	performers, performersCredit, performerIDs := collectCredits(trk.Recording.Relations, []string{"performer", "vocal", "instrument", "performing orchestra", "conductor", "chorus master", "concertmaster"})
 	producers, producersCredit, producerIDs := collectCredits(trk.Recording.Relations, []string{"producer"})
 	remixers, remixersCredit, remixerIDs := collectCredits(trk.Recording.Relations, []string{"remixer"})
 
@@ -576,6 +577,12 @@ func WriteRelease(
 	normtag.Set(t, normtag.LyricistCredit, trimZero(strings.Join(lyricistsCredit, ", "))...)
 	normtag.Set(t, normtag.LyricistsCredit, trimZero(lyricistsCredit...)...)
 	normtag.Set(t, normtag.MusicBrainzLyricistID, trimZero(lyricistIDs...)...)
+
+	normtag.Set(t, normtag.Performer, trimZero(strings.Join(performers, ", "))...)
+	normtag.Set(t, normtag.Performers, trimZero(performers...)...)
+	normtag.Set(t, normtag.PerformerCredit, trimZero(strings.Join(performersCredit, ", "))...)
+	normtag.Set(t, normtag.PerformersCredit, trimZero(performersCredit...)...)
+	normtag.Set(t, normtag.MusicBrainzPerformerID, trimZero(performerIDs...)...)
 
 	normtag.Set(t, normtag.Producer, trimZero(strings.Join(producers, ", "))...)
 	normtag.Set(t, normtag.Producers, trimZero(producers...)...)

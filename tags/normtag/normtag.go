@@ -81,6 +81,12 @@ const (
 	LyricistsCredit       = "LYRICISTS_CREDIT"
 	MusicBrainzLyricistID = "MUSICBRAINZ_LYRICISTID" //tag: alts "MUSICBRAINZ_LYRICIST_ID"
 
+	Performer              = "PERFORMER" //tag: alts "TMCL:instrument" "IPLS:instrument"
+	Performers             = "PERFORMERS"
+	PerformerCredit        = "PERFORMER_CREDIT"
+	PerformersCredit       = "PERFORMERS_CREDIT"
+	MusicBrainzPerformerID = "MUSICBRAINZ_PERFORMERID" //tag: alts "MUSICBRAINZ_PERFORMER_ID"
+
 	Producer              = "PRODUCER" //tag: alts "TIPL:producer" "IPLS:producer"
 	Producers             = "PRODUCERS"
 	ProducerCredit        = "PRODUCER_CREDIT"
