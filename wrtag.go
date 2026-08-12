@@ -478,12 +478,18 @@ func WriteRelease(
 	disambiguationParts := trimZero(release.ReleaseGroup.Disambiguation, release.Disambiguation)
 	disambiguation := strings.Join(disambiguationParts, ", ")
 
-	collectCredits := func(rels []musicbrainz.Relation, typ string) (names, credits, ids []string) {
+	collectCredits := func(rels []musicbrainz.Relation, types []string) (names, credits, ids []string) {
 		for _, r := range rels {
-			if r.Artist.ID != "" && r.Type == typ {
-				names = append(names, r.Artist.Name)
-				credits = append(credits, cmp.Or(r.TargetCredit, r.Artist.Name))
-				ids = append(ids, r.Artist.ID)
+			if r.Artist.ID != "" && slices.Contains(types, r.Type) {
+				if !slices.Contains(names, r.Artist.Name) {
+					names = append(names, r.Artist.Name)
+				}
+				if !slices.Contains(credits, cmp.Or(r.TargetCredit, r.Artist.Name)) {
+					credits = append(credits, cmp.Or(r.TargetCredit, r.Artist.Name))
+				}
+				if !slices.Contains(ids, r.Artist.ID) {
+					ids = append(ids, r.Artist.ID)
+				}
 			}
 		}
 		return
@@ -494,12 +500,12 @@ func WriteRelease(
 		workRelations = append(workRelations, r.Work.Relations...)
 	}
 
-	arrangers, arrangersCredit, arrangerIDs := collectCredits(workRelations, "arranger")
-	composers, composersCredit, composerIDs := collectCredits(workRelations, "composer")
-	conductors, conductorsCredit, conductorIDs := collectCredits(trk.Recording.Relations, "conductor")
-	lyricists, lyricistsCredit, lyricistIDs := collectCredits(workRelations, "lyricist")
-	producers, producersCredit, producerIDs := collectCredits(trk.Recording.Relations, "producer")
-	remixers, remixersCredit, remixerIDs := collectCredits(trk.Recording.Relations, "remixer")
+	arrangers, arrangersCredit, arrangerIDs := collectCredits(append(trk.Recording.Relations, workRelations...), []string{"arranger", "instrument arranger", "vocal arranger", "orchestrator"})
+	composers, composersCredit, composerIDs := collectCredits(workRelations, []string{"composer"})
+	conductors, conductorsCredit, conductorIDs := collectCredits(trk.Recording.Relations, []string{"conductor"})
+	lyricists, lyricistsCredit, lyricistIDs := collectCredits(workRelations, []string{"lyricist"})
+	producers, producersCredit, producerIDs := collectCredits(trk.Recording.Relations, []string{"producer"})
+	remixers, remixersCredit, remixerIDs := collectCredits(trk.Recording.Relations, []string{"remixer"})
 
 	// normtag.Set(t, x, trimZero(y)...) so that we clear out tags with no value from the map
 
