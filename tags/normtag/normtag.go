@@ -69,6 +69,12 @@ const (
 	ConductorsCredit       = "CONDUCTORS_CREDIT"
 	MusicBrainzConductorID = "MUSICBRAINZ_CONDUCTORID" //tag: alts "MUSICBRAINZ_CONDUCTOR_ID"
 
+	Engineer              = "ENGINEER" //tag: alts "TIPL:engineer" "IPLS:engineer"
+	Engineers             = "ENGINEERS"
+	EngineerCredit        = "ENGINEER_CREDIT"
+	EngineersCredit       = "ENGINEERS_CREDIT"
+	MusicBrainzEngineerID = "MUSICBRAINZ_ENGINEERID" //tag: alts "MUSICBRAINZ_ENGINEER_ID"
+
 	Lyricist              = "LYRICIST" //tag: alts "TEXT" "TXT"
 	Lyricists             = "LYRICISTS"
 	LyricistCredit        = "LYRICIST_CREDIT"
