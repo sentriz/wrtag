@@ -32,6 +32,7 @@ function _wrtag_completion() {
         --notification-uri
         --path-format
         --research-link
+        --score-min
         --tag-config
         --version
       )
@@ -55,6 +56,7 @@ function _wrtag_completion() {
         -notification-uri
         -path-format
         -research-link
+        -score-min
         -tag-config
         -version
         move
