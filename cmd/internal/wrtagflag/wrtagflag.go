@@ -87,7 +87,7 @@ func Config() *wrtag.Config {
 	cfg.MusicBrainzClient.Limiter = rate.NewLimiter(rate.Every(1*time.Second), 1)
 	flag.Var(&rateLimitParser{cfg.MusicBrainzClient.Limiter}, "mb-rate-limit", "MusicBrainz rate limit duration")
 
-	cfg.MusicBrainzClient.HTTPClient = &http.Client{Timeout: 30 * time.Second}
+	cfg.MusicBrainzClient.HTTPClient = &http.Client{Timeout: 60 * time.Second}
 
 	flag.StringVar(&cfg.CoverArtArchiveClient.BaseURL, "caa-base-url", `https://coverartarchive.org/`, "CoverArtArchive base URL")
 
