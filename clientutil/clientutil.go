@@ -45,7 +45,7 @@ func WithRetry(maxAttempts int) Middleware {
 				if err != nil {
 					return nil, err
 				}
-				if resp.StatusCode != http.StatusTooManyRequests || attempt >= maxAttempts || r.Body != nil {
+				if (resp.StatusCode != http.StatusTooManyRequests && resp.StatusCode != http.StatusServiceUnavailable) || attempt >= maxAttempts || r.Body != nil {
 					return resp, nil
 				}
 
