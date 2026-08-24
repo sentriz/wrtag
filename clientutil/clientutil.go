@@ -5,6 +5,7 @@ package clientutil
 import (
 	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 	"time"
 )
@@ -16,8 +17,8 @@ func Chain(middlewares ...Middleware) Middleware {
 		return middlewares[0]
 	}
 	return func(final http.RoundTripper) http.RoundTripper {
-		for i := len(middlewares) - 1; i >= 0; i-- {
-			final = middlewares[i](final)
+		for _, middleware := range slices.Backward(middlewares) {
+			final = middleware(final)
 		}
 		return final
 	}
