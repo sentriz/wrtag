@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.34.0](https://github.com/sentriz/wrtag/compare/v0.33.0...v0.34.0) (2026-08-24)
+
+
+### ⚠ BREAKING CHANGES
+
+* **deps:** bump to go1.27
+
+### Features
+
+* **musicbrainz:** retry on 503, bump retry limit to 5 ([72aff32](https://github.com/sentriz/wrtag/commit/72aff32133ef8672a3ea4745a4a67d861b7b844e))
+* **wrtag:** add cover-max-size config option ([#240](https://github.com/sentriz/wrtag/issues/240)) ([678ebea](https://github.com/sentriz/wrtag/commit/678ebea4744753822520fcfbc8701c6d440e4eb4))
+* **wrtag:** add cover-source config option ([6916abe](https://github.com/sentriz/wrtag/commit/6916abea6f2bec4f0a4beec885dec5dbe12d542d)), closes [#239](https://github.com/sentriz/wrtag/issues/239)
+* **wrtag:** respect umask for directories as well ([#237](https://github.com/sentriz/wrtag/issues/237)) ([f409ecc](https://github.com/sentriz/wrtag/commit/f409ecc5c2fa0e4bb53679c9cd0787aab7bda743))
+
+
+### Bug Fixes
+
+* **musicbrainz:** bump client timeout to 60s ([5ec727f](https://github.com/sentriz/wrtag/commit/5ec727ffb630eb3f47014930237d5929c910e1cd))
+
+
+### Miscellaneous Chores
+
+* **deps:** bump to go1.27 ([d5cada5](https://github.com/sentriz/wrtag/commit/d5cada571b4850452e3b3dc946e5bb39ec6f3709))
+
 ## [0.33.0](https://github.com/sentriz/wrtag/compare/v0.32.0...v0.33.0) (2026-07-07)
 
 
