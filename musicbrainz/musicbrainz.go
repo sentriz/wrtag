@@ -33,7 +33,7 @@ type MBClient struct {
 func (c *MBClient) GetRelease(ctx context.Context, mbid string) (*Release, error) {
 	urlV := url.Values{}
 	urlV.Set("fmt", "json")
-	urlV.Set("inc", "recordings artist-credits labels release-groups genres aliases recording-level-rels artist-rels isrcs")
+	urlV.Set("inc", "aliases artist-credits artist-rels genres isrcs labels recording-level-rels recordings release-groups work-level-rels work-rels")
 
 	url, _ := url.Parse(joinPath(c.BaseURL, "release", mbid))
 	url.RawQuery = urlV.Encode()
