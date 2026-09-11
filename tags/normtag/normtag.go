@@ -90,6 +90,27 @@ const (
 
 	MusicBrainzArrangerID = "MUSICBRAINZ_ARRANGERID" //tag: alts "MUSICBRAINZ_ARRANGER_ID"
 
+	Engineer        = "ENGINEER" //tag: alts "MIXER"
+	Engineers       = "ENGINEERS"
+	EngineerCredit  = "ENGINEER_CREDIT"
+	EngineersCredit = "ENGINEERS_CREDIT"
+
+	MusicBrainzEngineerID = "MUSICBRAINZ_ENGINEERID" //tag: alts "MUSICBRAINZ_ENGINEER_ID"
+
+	Performer        = "PERFORMER"
+	Performers       = "PERFORMERS"
+	PerformerCredit  = "PERFORMER_CREDIT"
+	PerformersCredit = "PERFORMERS_CREDIT"
+
+	MusicBrainzPerformerID = "MUSICBRAINZ_PERFORMERID" //tag: alts "MUSICBRAINZ_PERFORMER_ID"
+
+	Writer        = "WRITER"
+	Writers       = "WRITERS"
+	WriterCredit  = "WRITER_CREDIT"
+	WritersCredit = "WRITERS_CREDIT"
+
+	MusicBrainzWriterID = "MUSICBRAINZ_WRITERID" //tag: alts "MUSICBRAINZ_WRITER_ID"
+
 	MusicBrainzRecordingID = "MUSICBRAINZ_TRACKID"        //tag: alts "MUSICBRAINZ_TRACK_ID" "MUSICBRAINZ_RECORDINGID" "MUSICBRAINZ_RECORDING_ID"
 	MusicBrainzTrackID     = "MUSICBRAINZ_RELEASETRACKID" //tag: alts "MUSICBRAINZ_RELEASETRACK_ID" "MUSICBRAINZ_RELEASE_TRACK_ID"
 	MusicBrainzArtistID    = "MUSICBRAINZ_ARTISTID"       //tag: alts "MUSICBRAINZ_ARTIST_ID"

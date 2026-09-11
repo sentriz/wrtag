@@ -492,6 +492,8 @@ func WriteRelease(
 	remixers, remixersCredit, remixerIDs := collectCredits(trk.Recording.Relations, "compiler", "mix-DJ", "remixer")
 	producers, producersCredit, producerIDs := collectCredits(trk.Recording.Relations, "producer")
 	conductors, conductorsCredit, conductorIDs := collectCredits(trk.Recording.Relations, "chorus master", "concertmaster", "conductor")
+	engineers, engineersCredit, engineerIDs := collectCredits(trk.Recording.Relations, "audio", "balance", "editor", "engineer", "field recordist", "mastering", "mix", "programming", "recording", "sound")
+	performers, performersCredit, performerIDs := collectCredits(trk.Recording.Relations, "chorus master", "concertmaster", "conductor", "instrument", "performer", "performing orchestra", "vocal")
 
 	var workRelations []musicbrainz.Relation
 	for _, r := range trk.Recording.Relations {
@@ -501,6 +503,7 @@ func WriteRelease(
 	composers, composersCredit, composerIDs := collectCredits(workRelations, "composer")
 	lyricists, lyricistsCredit, lyricistIDs := collectCredits(workRelations, "lyricist")
 	arrangers, arrangersCredit, arrangerIDs := collectCredits(slices.Concat(trk.Recording.Relations, workRelations), "arranger", "instrument arranger", "orchestrator", "vocal arranger")
+	writers, writersCredit, writerIDs := collectCredits(workRelations, "composer", "librettist", "lyricist", "translator", "writer")
 
 	// normtag.Set(t, x, trimZero(y)...) so that we clear out tags with no value from the map
 
@@ -573,6 +576,24 @@ func WriteRelease(
 	normtag.Set(t, normtag.ArrangerCredit, trimZero(strings.Join(arrangersCredit, ", "))...)
 	normtag.Set(t, normtag.ArrangersCredit, trimZero(arrangersCredit...)...)
 	normtag.Set(t, normtag.MusicBrainzArrangerID, trimZero(arrangerIDs...)...)
+
+	normtag.Set(t, normtag.Engineer, trimZero(strings.Join(engineers, ", "))...)
+	normtag.Set(t, normtag.Engineers, trimZero(engineers...)...)
+	normtag.Set(t, normtag.EngineerCredit, trimZero(strings.Join(engineersCredit, ", "))...)
+	normtag.Set(t, normtag.EngineersCredit, trimZero(engineersCredit...)...)
+	normtag.Set(t, normtag.MusicBrainzEngineerID, trimZero(engineerIDs...)...)
+
+	normtag.Set(t, normtag.Performer, trimZero(strings.Join(performers, ", "))...)
+	normtag.Set(t, normtag.Performers, trimZero(performers...)...)
+	normtag.Set(t, normtag.PerformerCredit, trimZero(strings.Join(performersCredit, ", "))...)
+	normtag.Set(t, normtag.PerformersCredit, trimZero(performersCredit...)...)
+	normtag.Set(t, normtag.MusicBrainzPerformerID, trimZero(performerIDs...)...)
+
+	normtag.Set(t, normtag.Writer, trimZero(strings.Join(writers, ", "))...)
+	normtag.Set(t, normtag.Writers, trimZero(writers...)...)
+	normtag.Set(t, normtag.WriterCredit, trimZero(strings.Join(writersCredit, ", "))...)
+	normtag.Set(t, normtag.WritersCredit, trimZero(writersCredit...)...)
+	normtag.Set(t, normtag.MusicBrainzWriterID, trimZero(writerIDs...)...)
 
 	normtag.Set(t, normtag.MusicBrainzRecordingID, trimZero(trk.Recording.ID)...)
 	normtag.Set(t, normtag.MusicBrainzTrackID, trimZero(trk.ID)...)
