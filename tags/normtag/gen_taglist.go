@@ -117,7 +117,7 @@ func mustEnv(k string) string {
 	if v := os.Getenv(k); v != "" {
 		return v
 	}
-	cerr(fmt.Errorf("please provde a %s", k))
+	cerr(fmt.Errorf("please provide a %s", k))
 	return ""
 }
 
