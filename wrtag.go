@@ -495,8 +495,14 @@ func WriteRelease(
 	engineers, engineersCredit, engineerIDs := collectCredits(trk.Recording.Relations, "audio", "balance", "editor", "engineer", "field recordist", "mastering", "mix", "programming", "recording", "sound")
 	performers, performersCredit, performerIDs := collectCredits(trk.Recording.Relations, "chorus master", "concertmaster", "conductor", "instrument", "performer", "performing orchestra", "vocal")
 
+	var workTitles, workIDs []string
 	var workRelations []musicbrainz.Relation
 	for _, r := range trk.Recording.Relations {
+		if r.Work.ID == "" {
+			continue
+		}
+		workTitles = append(workTitles, r.Work.Title)
+		workIDs = append(workIDs, r.Work.ID)
 		workRelations = append(workRelations, r.Work.Relations...)
 	}
 
@@ -594,6 +600,9 @@ func WriteRelease(
 	normtag.Set(t, normtag.WriterCredit, trimZero(strings.Join(writersCredit, ", "))...)
 	normtag.Set(t, normtag.WritersCredit, trimZero(writersCredit...)...)
 	normtag.Set(t, normtag.MusicBrainzWriterID, trimZero(writerIDs...)...)
+
+	normtag.Set(t, normtag.Work, trimZero(workTitles...)...)
+	normtag.Set(t, normtag.MusicBrainzWorkID, trimZero(workIDs...)...)
 
 	normtag.Set(t, normtag.MusicBrainzRecordingID, trimZero(trk.Recording.ID)...)
 	normtag.Set(t, normtag.MusicBrainzTrackID, trimZero(trk.ID)...)
