@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.35.0](https://github.com/sentriz/wrtag/compare/v0.34.0...v0.35.0) (2026-09-11)
+
+
+### Features
+
+* **normtag:** add more tag alternatives ([0eacd6d](https://github.com/sentriz/wrtag/commit/0eacd6d224d200f40f0389b448035c2e94f83db4))
+* **wrtag:** add engineer, performer, and writer tags ([2914b98](https://github.com/sentriz/wrtag/commit/2914b989e0822f5a421f0ec267a9dfe98fb19f43)), closes [#182](https://github.com/sentriz/wrtag/issues/182) [#225](https://github.com/sentriz/wrtag/issues/225)
+* **wrtag:** add work tags ([86f6d1a](https://github.com/sentriz/wrtag/commit/86f6d1a3fb01b7be993ad40a40a863473108d4c5))
+* **wrtag:** match credits on more specific relation types ([8d9c05e](https://github.com/sentriz/wrtag/commit/8d9c05e3e80682c8a9ae5997d57093951c7dbb61))
+
+
+### Bug Fixes
+
+* **musicbrainz:** request work relations ([3676113](https://github.com/sentriz/wrtag/commit/3676113dd833994222ac04e4341855da02f48894)), closes [#46](https://github.com/sentriz/wrtag/issues/46)
+
 ## [0.34.0](https://github.com/sentriz/wrtag/compare/v0.33.0...v0.34.0) (2026-08-24)
 
 
