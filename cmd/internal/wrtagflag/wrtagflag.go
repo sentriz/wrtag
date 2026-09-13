@@ -71,6 +71,7 @@ func Config() *wrtag.Config {
 	var cfg wrtag.Config
 
 	flag.Var(&pathFormatParser{&cfg.PathFormat}, "path-format", "Path to root music directory including path format rules (see [Path format](#path-format))")
+
 	flag.Var(&addonsParser{&cfg.Addons}, "addon", "Define an addon for extra metadata writing (see [Addons](#addons)) (stackable)")
 
 	cfg.KeepFiles = map[string]struct{}{}
@@ -78,6 +79,9 @@ func Config() *wrtag.Config {
 
 	cfg.DiffWeights = wrtag.DiffWeights{}
 	flag.Var(&diffWeightsParser{cfg.DiffWeights}, "diff-weight", "Adjust distance weighting for a tag (0 to ignore) (stackable)")
+
+	cfg.MinScore = 95
+	flag.Var(&percentageParser{&cfg.MinScore}, "score-min", "The minimum score required for a MusicBrainz match to be considered valid")
 
 	cfg.TagConfig = wrtag.TagConfig{}
 	flag.Var(&tagConfigParser{&cfg.TagConfig}, "tag-config", "Specify tag keep and drop rules when writing new tag revisions (see [Tagging](#tagging)) (stackable)")
@@ -255,6 +259,28 @@ func (tw diffWeightsParser) String() string {
 		parts = append(parts, fmt.Sprintf("%s: %.2f", a, b))
 	}
 	return strings.Join(parts, ", ")
+}
+
+type percentageParser struct{ *float64 }
+
+func (p percentageParser) Set(value string) error {
+	value = strings.TrimSpace(value)
+	before, found := strings.CutSuffix(value, "%")
+	if found {
+		n, err := strconv.ParseFloat(strings.TrimSpace(before), 64)
+		if err != nil || n < 0 || n > 100 {
+			return errors.New("must be a floating-point number between 0 and 100 (inclusive)")
+		}
+		*p.float64 = n
+		return nil
+	}
+	return errors.New("no valid percentage found")
+}
+func (p percentageParser) String() string {
+	if p.float64 == nil {
+		return ""
+	}
+	return fmt.Sprintf("%.2f%%", *p.float64)
 }
 
 type tagConfigParser struct{ *wrtag.TagConfig }
