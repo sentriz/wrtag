@@ -275,7 +275,7 @@ func main() {
 		if matches, err := filepath.Glob(path + "*"); err == nil {
 			var dirs []string
 			for _, match := range matches {
-				if stat, err := os.Stat(match); err == nil && stat.IsDir() {
+				if stat, err := os.Stat(match); err == nil && stat.IsDir() { //nolint:gosec // dir picker browses the filesystem by design
 					dirs = append(dirs, match)
 				}
 			}
