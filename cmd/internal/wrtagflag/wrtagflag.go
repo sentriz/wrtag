@@ -74,7 +74,7 @@ func Config() *wrtag.Config {
 	flag.Var(&addonsParser{&cfg.Addons}, "addon", "Define an addon for extra metadata writing (see [Addons](#addons)) (stackable)")
 
 	cfg.KeepFiles = map[string]struct{}{}
-	flag.Var(&keepFileParser{cfg.KeepFiles}, "keep-file", "Define an extra file path to keep when moving/copying to root dir (stackable)")
+	flag.Var(&keepFileParser{cfg.KeepFiles}, "keep-file", "Define an extra file path or glob pattern to keep when moving/copying to root dir (stackable)")
 
 	cfg.DiffWeights = wrtag.DiffWeights{}
 	flag.Var(&diffWeightsParser{cfg.DiffWeights}, "diff-weight", "Adjust distance weighting for a tag (0 to ignore) (stackable)")
@@ -292,6 +292,9 @@ func (tw tagConfigParser) String() string {
 type keepFileParser struct{ m map[string]struct{} }
 
 func (kf keepFileParser) Set(value string) error {
+	if _, err := filepath.Match(value, ""); err != nil {
+		return fmt.Errorf("invalid keep file pattern %q: %w", value, err)
+	}
 	kf.m[value] = struct{}{}
 	return nil
 }

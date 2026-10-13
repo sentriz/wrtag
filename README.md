@@ -436,7 +436,7 @@ Global configuration is used by all tools. Any option can be provided with a CLI
 | -cover-upgrade    | WRTAG_COVER_UPGRADE    | cover-upgrade    | Fetch new cover art even if it exists locally                                                                              |
 | -diff-weight      | WRTAG_DIFF_WEIGHT      | diff-weight      | Adjust distance weighting for a tag (0 to ignore) (stackable)                                                              |
 | -file-mode        | WRTAG_FILE_MODE        | file-mode        | File mode for destinations files (on Unix-like systems, the default respects current umask) (default 0644)                 |
-| -keep-file        | WRTAG_KEEP_FILE        | keep-file        | Define an extra file path to keep when moving/copying to root dir (stackable)                                              |
+| -keep-file        | WRTAG_KEEP_FILE        | keep-file        | Define an extra file path or glob pattern to keep when moving/copying to root dir (stackable)                              |
 | -log-level        | WRTAG_LOG_LEVEL        | log-level        | Set the logging level (default INFO)                                                                                       |
 | -mb-base-url      | WRTAG_MB_BASE_URL      | mb-base-url      | MusicBrainz base URL (default "<https://musicbrainz.org/ws/2/>")                                                           |
 | -mb-rate-limit    | WRTAG_MB_RATE_LIMIT    | mb-rate-limit    | MusicBrainz rate limit duration (default 1s)                                                                               |
