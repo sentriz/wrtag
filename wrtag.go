@@ -284,20 +284,22 @@ func ProcessDir(
 	}
 
 	for kf := range cfg.KeepFiles {
-		// prefer an exact match so that existing names with glob chars still work
-		matches := []string{filepath.Join(srcDir, kf)}
-		if _, err := os.Lstat(matches[0]); err != nil {
-			if matches, err = fileutil.GlobDir(srcDir, kf); err != nil {
-				return nil, fmt.Errorf("glob keep file %q: %w", kf, err)
-			}
+		matches, err := fileutil.GlobDir(srcDir, kf)
+		if err != nil {
+			return nil, fmt.Errorf("glob keep file %q: %w", kf, err)
 		}
 		for _, src := range matches {
+			// only keep regular files, so a pattern like "*" can't pick up disc dirs. patterns
+			// can still descend into dirs though, like "disc*/*.log"
+			if info, err := os.Stat(src); err != nil || !info.Mode().IsRegular() {
+				continue
+			}
 			// don't let a broad pattern overwrite the tracks or cover we've already placed
 			if src == cover || slices.ContainsFunc(pathTags, func(pt PathTags) bool { return pt.Path == src }) {
 				continue
 			}
 			rel, _ := filepath.Rel(srcDir, src) // both are absolute, so can't fail
-			if err := op.ProcessPath(ctx, dc, src, filepath.Join(destDir, rel), cfg.FileMode); err != nil && !errors.Is(err, os.ErrNotExist) {
+			if err := op.ProcessPath(ctx, dc, src, filepath.Join(destDir, rel), cfg.FileMode); err != nil {
 				return nil, fmt.Errorf("process keep file %q: %w", rel, err)
 			}
 		}
