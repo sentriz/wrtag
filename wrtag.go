@@ -94,13 +94,18 @@ type Config struct {
 	FileMode              os.FileMode
 }
 
+// ForceSearch can be passed as the useMBID to ProcessDir to ignore the release ID in the
+// tags and search MusicBrainz as if there were none.
+const ForceSearch = "search"
+
 // ProcessDir processes a music directory by looking up metadata on MusicBrainz and
 // either moving, copying, or reflinking the files to a new location with proper tags.
 // It returns a SearchResult containing information about the match and operation.
 //
 // The srcDir must be an absolute path.
 // The cond parameter determines the conditions under which the import will proceed.
-// The useMBID parameter can be used to force a specific MusicBrainz release ID.
+// The useMBID parameter can be used to force a specific MusicBrainz release ID, or
+// ForceSearch to ignore the release ID in the tags and search instead.
 func ProcessDir(
 	ctx context.Context, cfg *Config,
 	op FileSystemOperation, srcDir string, cond ImportCondition, useMBID string,
@@ -128,7 +133,10 @@ func ProcessDir(
 	searchTags := pathTags[0].Tags
 
 	var mbid = normtag.Get(searchTags, normtag.MusicBrainzReleaseID)
-	if useMBID != "" {
+	switch {
+	case useMBID == ForceSearch:
+		mbid = ""
+	case useMBID != "":
 		mbid = useMBID
 	}
 

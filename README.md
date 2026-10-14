@@ -95,6 +95,7 @@ $ wrtag move "Example"                  # tags and moves `Example` into the libr
 $ wrtag move -dry-run "Example"         # shows move and tag operations without applying them
 $ wrtag move -yes "Example"             # use anyway even if low match
 $ wrtag move -mbid "abc" -yes "Example" # overwrite matched MusicBrainz release UUID
+$ wrtag move -mbid search "Example"     # ignore the release UUID in the tags and search instead
 ```
 
 #### Copying from source
@@ -170,6 +171,8 @@ flowchart LR
 
 Jobs are added to the queue with an HTTP request like `POST <wrtag.host>/op/<copy|move|reflink>` with form value `path=<absolute path to directory>`. Optional form value `mbid=<musicbrainz release URL>` can be supplied if you know your release as well as `confirm` if you really know your release. All of the form values can be sent in the HTML form body along with the `Content-Type` set to `application/x-www-form-urlencoded`, or as URL query parameters.
 
+If a release already has a `MUSICBRAINZ_ALBUMID` tag, that release is used without searching. Pass `mbid=search` to ignore it and search as if there were none, for example to re-check a possible bad match from a previous import.
+
 The external API requires HTTP Basic authentication with `-web-api-key` as the password (no username). The web UI authentication is controlled by `-web-auth`: either `disabled`, or `basic-auth-from-api-key` (the default) which uses the same API key.
 
 > [!WARNING]
@@ -200,6 +203,13 @@ curl \
     --request POST \
     --data-urlencode "path=/path/to/the/release" \
     --data-urlencode "mbid=https://musicbrainz.org/release/d800f372-9673-4edf-8046-8baf79134257" \
+    "https://:my-api-key@wrtag.hostname/op/move"
+
+# Move release from path, ignoring the MBID in its tags and searching for it again.
+curl \
+    --request POST \
+    --data-urlencode "path=/path/to/the/release" \
+    --data-urlencode "mbid=search" \
     "https://:my-api-key@wrtag.hostname/op/move"
 
 # Copy release from path and force-tag with the supplied MBID.
