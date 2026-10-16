@@ -57,7 +57,7 @@ __complete_prefer_oldstyle -c wrtag -n "not __fish_seen_subcommand_from $command
     -o h -o help -d "print help"
 
 __complete_prefer_oldstyle -c wrtag -n "not __fish_seen_subcommand_from $commands" \
-    -o keep-file -x -d "Define an extra file path to keep when moving/copying to root dir"
+    -o keep-file -x -d "Define an extra file path or glob pattern to keep when moving/copying to root dir"
 
 __complete_prefer_oldstyle -c wrtag -n "not __fish_seen_subcommand_from $commands" \
     -o log-level -x -d "Set the logging level (default INFO)" \

@@ -284,8 +284,23 @@ func ProcessDir(
 	}
 
 	for kf := range cfg.KeepFiles {
-		if err := op.ProcessPath(ctx, dc, filepath.Join(srcDir, kf), filepath.Join(destDir, kf), cfg.FileMode); err != nil && !errors.Is(err, os.ErrNotExist) {
-			return nil, fmt.Errorf("process keep file %q: %w", kf, err)
+		matches, err := fileutil.GlobDir(srcDir, kf)
+		if err != nil {
+			return nil, fmt.Errorf("glob keep file %q: %w", kf, err)
+		}
+		for _, src := range matches {
+			// only keep regular files, so a pattern like "*" can't pick up disc dirs
+			if info, err := os.Stat(src); err != nil || !info.Mode().IsRegular() {
+				continue
+			}
+			// don't let a broad pattern overwrite the tracks or cover we've already placed
+			if src == cover || slices.ContainsFunc(pathTags, func(pt PathTags) bool { return pt.Path == src }) {
+				continue
+			}
+			name := filepath.Base(src)
+			if err := op.ProcessPath(ctx, dc, src, filepath.Join(destDir, name), cfg.FileMode); err != nil {
+				return nil, fmt.Errorf("process keep file %q: %w", name, err)
+			}
 		}
 	}
 

@@ -46,6 +46,9 @@
 
 #keep-file origin.yaml
 #keep-file log.cue
+# glob patterns are supported too, for example to keep CD rip logs and CUE sheets
+#keep-file *.log
+#keep-file *.cue
 
 # custom tag diff weights can be provided to customise how the scoring algorithm weights certain tags when diffing. the default weight of any
 # tag is 1, so provide a float <1 for less weight, and >1 for more weight. a weight of 0 means ignore the tag completely.
