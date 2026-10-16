@@ -8,17 +8,14 @@ exec tag write kat_moda/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82
 mv kat_moda 'kat_moda [2020]'
 
 env WRTAG_PATH_FORMAT='albums/{{ .Release.Title | safepath }}/{{ .Track.Position }}{{ .Ext }}'
-env WRTAG_KEEP_FILE='*.log,extras/*.txt,disc*,disc*/*.log,*.flac'
+env WRTAG_KEEP_FILE='*.log,disc*,*.flac'
 
-# globs match arbitrary names and in sub dirs, patterns matching dirs don't keep the
-# whole dir, and a pattern matching tracks doesn't duplicate them
+# globs match arbitrary names, patterns matching dirs don't keep the whole dir, and a
+# pattern matching tracks doesn't duplicate them
 exec wrtag copy -yes 'kat_moda [2020]/'
 exec find albums
 stdout '^albums/Kat Moda/Jeff Mills - Kat Moda.log$'
-stdout '^albums/Kat Moda/extras/notes.txt$'
-stdout '^albums/Kat Moda/disc1/rip.log$'
-stdout '^albums/Kat Moda/disc2/rip.log$'
-! stdout 'scans'
+! stdout 'disc'
 ! stdout 'not-kept'
 ! stdout '01.flac'
 
@@ -27,10 +24,7 @@ exec rm -r albums
 exec wrtag move -yes 'kat_moda [2020]/'
 exec find albums
 stdout '^albums/Kat Moda/Jeff Mills - Kat Moda.log$'
-stdout '^albums/Kat Moda/extras/notes.txt$'
-stdout '^albums/Kat Moda/disc1/rip.log$'
-stdout '^albums/Kat Moda/disc2/rip.log$'
-! stdout 'scans'
+! stdout 'disc'
 ! stdout 'not-kept'
 ! stdout '01.flac'
 
@@ -39,15 +33,14 @@ env WRTAG_KEEP_FILE='[bad'
 ! exec wrtag copy -yes albums/
 stderr 'invalid keep file pattern'
 
+# as are paths into sub dirs, since wrtag shouldn't create nested dirs in an album
+env WRTAG_KEEP_FILE='disc*/*.log'
+! exec wrtag copy -yes albums/
+stderr 'must not contain a path separator'
+
 -- kat_moda/Jeff Mills - Kat Moda.log --
 rip log
--- kat_moda/extras/notes.txt --
-some notes
 -- kat_moda/disc1/rip.log --
 disc 1 rip log
--- kat_moda/disc2/rip.log --
-disc 2 rip log
--- kat_moda/disc2/scans.txt --
-please delete me
 -- kat_moda/not-kept.txt --
 please delete me

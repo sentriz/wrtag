@@ -11,6 +11,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -292,6 +293,11 @@ func (tw tagConfigParser) String() string {
 type keepFileParser struct{ m map[string]struct{} }
 
 func (kf keepFileParser) Set(value string) error {
+	// keep files must be directly in the release dir. nested dirs in an album would break sync,
+	// which treats leaf dirs as albums
+	if slices.ContainsFunc([]byte(value), os.IsPathSeparator) {
+		return fmt.Errorf("invalid keep file %q: must not contain a path separator", value)
+	}
 	if _, err := filepath.Match(value, ""); err != nil {
 		return fmt.Errorf("invalid keep file pattern %q: %w", value, err)
 	}

@@ -289,8 +289,7 @@ func ProcessDir(
 			return nil, fmt.Errorf("glob keep file %q: %w", kf, err)
 		}
 		for _, src := range matches {
-			// only keep regular files, so a pattern like "*" can't pick up disc dirs. patterns
-			// can still descend into dirs though, like "disc*/*.log"
+			// only keep regular files, so a pattern like "*" can't pick up disc dirs
 			if info, err := os.Stat(src); err != nil || !info.Mode().IsRegular() {
 				continue
 			}
@@ -298,9 +297,9 @@ func ProcessDir(
 			if src == cover || slices.ContainsFunc(pathTags, func(pt PathTags) bool { return pt.Path == src }) {
 				continue
 			}
-			rel, _ := filepath.Rel(srcDir, src) // both are absolute, so can't fail
-			if err := op.ProcessPath(ctx, dc, src, filepath.Join(destDir, rel), cfg.FileMode); err != nil {
-				return nil, fmt.Errorf("process keep file %q: %w", rel, err)
+			name := filepath.Base(src)
+			if err := op.ProcessPath(ctx, dc, src, filepath.Join(destDir, name), cfg.FileMode); err != nil {
+				return nil, fmt.Errorf("process keep file %q: %w", name, err)
 			}
 		}
 	}
