@@ -168,7 +168,7 @@ flowchart LR
 
 ### API
 
-Jobs are added to the queue with an HTTP request like `POST <wrtag.host>/op/<copy|move|reflink>` with form value `path=<absolute path to directory>`. Optional form value `mbid=<musicbrainz release URL>` can be supplied if you know your release as well as `confirm` if you really know your release. All of the form values can be sent in the HTML form body along with the `Content-Type` set to `application/x-www-form-urlencoded`, or as URL query parameters.
+Jobs are added to the queue with an HTTP request like `POST <wrtag.host>/op/<copy|move|reflink>` with form value `path=<absolute path to directory>`. Optional form value `mbid=<musicbrainz release URL>` can be supplied if you know your release. Optional form value `confirm` sets what happens once a match is found: `score` (the default) imports only if the match score is high enough and otherwise requires manual confirmation through the web UI, `accept` imports the best match regardless of score (`true` is also accepted), and `manual` always requires manual confirmation. All of the form values can be sent in the HTML form body along with the `Content-Type` set to `application/x-www-form-urlencoded`, or as URL query parameters.
 
 The external API requires HTTP Basic authentication with `-web-api-key` as the password (no username). The web UI authentication is controlled by `-web-auth`: either `disabled`, or `basic-auth-from-api-key` (the default) which uses the same API key.
 
@@ -191,7 +191,7 @@ curl \
 curl \
     --request POST \
     --data-urlencode "path=/path/to/the/release" \
-    --data-urlencode "confirm=true" \
+    --data-urlencode "confirm=accept" \
     "https://:my-api-key@wrtag.hostname/op/reflink"
 
 # Move release from path using a specific MBID.
@@ -207,7 +207,15 @@ curl \
     --request POST \
     --data-urlencode "path=/path/to/the/release" \
     --data-urlencode "mbid=https://musicbrainz.org/release/d800f372-9673-4edf-8046-8baf79134257" \
-    --data-urlencode "confirm=true" \
+    --data-urlencode "confirm=accept" \
+    "https://:my-api-key@wrtag.hostname/op/copy"
+
+# Copy release from path, attempt to match, but don't tag it yet.
+# Always requires manual confirmation through the web UI, even if the match score is high.
+curl \
+    --request POST \
+    --data-urlencode "path=/path/to/the/release" \
+    --data-urlencode "confirm=manual" \
     "https://:my-api-key@wrtag.hostname/op/copy"
 ```
 

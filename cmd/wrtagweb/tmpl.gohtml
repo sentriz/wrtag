@@ -29,7 +29,7 @@
       {{ end }}
     {{ end }}
     {{ if eq .Status "needs-input" }}
-      <p><span class="text-red-500">low/no match</span> <button hx-put="/jobs/{{ .ID }}?confirm=1">[use anyway]</button></p>
+      <p><span class="text-red-500">{{ .Error }}</span> <button hx-put="/jobs/{{ .ID }}?confirm=accept">[use anyway]</button></p>
       <p>use custom release <input type="text" name="mbid" class="px-2" placeholder="mbid/url" value="{{ .UseMBID }}"></p>
       <button>[retry]</button>
     {{ else if eq .Status "error" }}
@@ -183,6 +183,14 @@ origin file info
             <input type="radio" name="operation" value="reflink" {{ if eq .Operation "reflink" }}checked{{ end }} />
             <label>reflink</label>
           </fieldset>
+        </span>
+        <span class="text-gray-600">
+          on match
+          <select name="confirm" class="border">
+            <option value="accept" {{ if eq .Confirm "accept" }}selected{{ end }}>accept best</option>
+            <option value="score" {{ if eq .Confirm "score" }}selected{{ end }}>ask below {{ minScore }}%</option>
+            <option value="manual" {{ if eq .Confirm "manual" }}selected{{ end }}>always ask</option>
+          </select>
         </span>
         <input name="path" list="path-dirs" placeholder="/mnt/media/music/The Fall - Dragnet" class="flex-1 min-w-0 max-w-[500px] border px-3 py-1 shadow-sm"
           hx-get="/dirs"

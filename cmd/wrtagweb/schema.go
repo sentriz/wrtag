@@ -24,6 +24,15 @@ const (
 	StatusComplete   JobStatus = "complete"
 )
 
+// ConfirmMode is how a job decides whether to import its match.
+type ConfirmMode string
+
+const (
+	ConfirmScore  ConfirmMode = "score"  // import only if the match score is high enough
+	ConfirmAccept ConfirmMode = "accept" // import regardless of score
+	ConfirmManual ConfirmMode = "manual" // always wait for manual confirmation
+)
+
 const (
 	OperationCopy    = "copy"
 	OperationMove    = "move"
@@ -43,7 +52,7 @@ type Job struct {
 	DestPath      string
 	SearchResult  sqlb.JSON[*wrtag.SearchResult]
 	ResearchLinks sqlb.JSON[[]researchlink.SearchResult]
-	Confirm       bool
+	Confirm       ConfirmMode
 }
 
 //go:embed schema.sql
