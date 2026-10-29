@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"strings"
 	"time"
 
@@ -21,16 +22,16 @@ type Source interface {
 const browserUA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36"
 
 func NewSource(name string) (Source, error) {
-	client := clientutil.Wrap(nil,
+	browserClient := clientutil.Wrap(nil,
 		clientutil.WithUserAgent(browserUA),
 	)
 	switch name {
 	case "genius":
-		return &Genius{client, rate.NewLimiter(rate.Every(500*time.Millisecond), 1)}, nil
+		return &Genius{browserClient, rate.NewLimiter(rate.Every(500*time.Millisecond), 1)}, nil
 	case "musixmatch":
-		return &Musixmatch{client, rate.NewLimiter(rate.Every(500*time.Millisecond), 1)}, nil
+		return &Musixmatch{browserClient, rate.NewLimiter(rate.Every(500*time.Millisecond), 1)}, nil
 	case "lrclib":
-		return &LRCLib{client, rate.NewLimiter(rate.Every(250*time.Millisecond), 1)}, nil
+		return &LRCLib{&http.Client{}, rate.NewLimiter(rate.Every(time.Minute/180), 1)}, nil
 	default:
 		return nil, errors.New("unknown source")
 	}

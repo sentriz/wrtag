@@ -13,6 +13,11 @@ import (
 
 var lrclibBaseURL = `https://lrclib.net/api/get`
 
+// public client-side app id, not a secret
+// https://lrclib.net/docs#implementation-requirements-client-identification
+// https://lrclib.net/developers/authorizations/i9MlkzOG0ymkTK1HdWKfiaRv6P-Pd4LAK1f38ThSlH0
+const lrclibAppID = "i9MlkzOG0ymkTK1HdWKfiaRv6P-Pd4LAK1f38ThSlH0"
+
 type LRCLib struct {
 	HTTPClient *http.Client
 	Limiter    *rate.Limiter
@@ -33,6 +38,8 @@ func (l *LRCLib) Search(ctx context.Context, artist, song string, duration time.
 	u.RawQuery = q.Encode()
 
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	req.Header.Set("Lrclib-App-Id", lrclibAppID)
+
 	resp, err := l.HTTPClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("req page: %w", err)
