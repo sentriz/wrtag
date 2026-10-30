@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 
 	"golang.org/x/time/rate"
 )
@@ -51,6 +52,11 @@ func (c *CAAClient) GetCoverURL(ctx context.Context, release *Release, sources .
 			return "", fmt.Errorf("make caa release request: %w", err)
 		}
 
+		for _, img := range caa.Images {
+			if slices.Equal(img.Types, []string{"Front"}) {
+				return img.Image, nil
+			}
+		}
 		for _, img := range caa.Images {
 			if img.Front {
 				return img.Image, nil
