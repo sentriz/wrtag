@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.35.0](https://github.com/sentriz/wrtag/compare/v0.34.0...v0.35.0) (2026-10-30)
+
+
+### Features
+
+* **lyrics:** identify wrtag to lrclib for higher rate limits ([84e3a45](https://github.com/sentriz/wrtag/commit/84e3a459f68f135b276efeb28fef2d308dfd9f61)), closes [#252](https://github.com/sentriz/wrtag/issues/252)
+* **musicbrainz:** prefer front only cover art ([a5e5184](https://github.com/sentriz/wrtag/commit/a5e5184d2d61d69480c5c1a65bf059b079acb515)), closes [#253](https://github.com/sentriz/wrtag/issues/253)
+* **normtag:** add more tag alternatives ([0eacd6d](https://github.com/sentriz/wrtag/commit/0eacd6d224d200f40f0389b448035c2e94f83db4))
+* **wrtag:** add engineer, performer, and writer tags ([2914b98](https://github.com/sentriz/wrtag/commit/2914b989e0822f5a421f0ec267a9dfe98fb19f43)), closes [#182](https://github.com/sentriz/wrtag/issues/182) [#225](https://github.com/sentriz/wrtag/issues/225)
+* **wrtag:** add work tags ([86f6d1a](https://github.com/sentriz/wrtag/commit/86f6d1a3fb01b7be993ad40a40a863473108d4c5))
+* **wrtag:** match credits on more specific relation types ([8d9c05e](https://github.com/sentriz/wrtag/commit/8d9c05e3e80682c8a9ae5997d57093951c7dbb61))
+* **wrtag:** support glob patterns in `keep-file` ([#248](https://github.com/sentriz/wrtag/issues/248)) ([84ebec6](https://github.com/sentriz/wrtag/commit/84ebec69b4220c8f5422bc7f5aee67cef6eb4f2c))
+
+
+### Bug Fixes
+
+* **musicbrainz:** request work relations ([3676113](https://github.com/sentriz/wrtag/commit/3676113dd833994222ac04e4341855da02f48894)), closes [#46](https://github.com/sentriz/wrtag/issues/46)
+* **wrtagweb:** update lint ([c397df3](https://github.com/sentriz/wrtag/commit/c397df32ed18542eecada39e361e802993da8da8))
+
 ## [0.34.0](https://github.com/sentriz/wrtag/compare/v0.33.0...v0.34.0) (2026-08-24)
 
 
