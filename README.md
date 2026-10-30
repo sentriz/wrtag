@@ -443,6 +443,7 @@ Global configuration is used by all tools. Any option can be provided with a CLI
 | -notification-uri | WRTAG_NOTIFICATION_URI | notification-uri | Add a shoutrrr notification URI for an event (see [Notifications](#notifications)) (stackable)                             |
 | -path-format      | WRTAG_PATH_FORMAT      | path-format      | Path to root music directory including path format rules (see [Path format](#path-format))                                 |
 | -research-link    | WRTAG_RESEARCH_LINK    | research-link    | Define a helper URL to help find information about an unmatched release (stackable)                                        |
+| -score-min        | WRTAG_SCORE_MIN        | score-min        | The minimum score required for a MusicBrainz match to be considered valid (default 95.00%)                                 |
 | -tag-config       | WRTAG_TAG_CONFIG       | tag-config       | Specify tag keep and drop rules when writing new tag revisions (see [Tagging](#tagging)) (stackable)                       |
 | -version          | WRTAG_VERSION          | version          | Print the version and exit                                                                                                 |
 
