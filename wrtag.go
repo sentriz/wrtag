@@ -40,6 +40,7 @@ import (
 
 var (
 	ErrScoreTooLow        = errors.New("score too low")
+	ErrNeedsConfirm       = errors.New("needs confirmation")
 	ErrTrackCountMismatch = errors.New("track count mismatch")
 	ErrNoTracks           = errors.New("no tracks in dir")
 	ErrNotSortable        = errors.New("tracks in dir can't be sorted")
@@ -47,11 +48,11 @@ var (
 )
 
 func IsNonFatalError(err error) bool {
-	return errors.Is(err, ErrScoreTooLow) || errors.Is(err, ErrTrackCountMismatch)
+	return errors.Is(err, ErrScoreTooLow) || errors.Is(err, ErrNeedsConfirm) || errors.Is(err, ErrTrackCountMismatch)
 }
 
-// The minimum score required for a MusicBrainz match to be considered valid.
-const minScore = 95
+// MinScore is the minimum score required for a MusicBrainz match to be considered valid.
+const MinScore = 95
 
 const numTrackGenres = 6
 
@@ -77,6 +78,7 @@ const (
 	HighScore ImportCondition = iota
 	HighScoreOrMBID
 	Always
+	Never
 )
 
 // Config contains configuration options for processing music directories.
@@ -181,11 +183,13 @@ func ProcessDir(
 	var shouldImport bool
 	switch cond {
 	case HighScoreOrMBID:
-		shouldImport = score >= minScore || mbid != ""
+		shouldImport = score >= MinScore || mbid != ""
 	case HighScore:
-		shouldImport = score >= minScore
+		shouldImport = score >= MinScore
 	case Always:
 		shouldImport = true
+	case Never:
+		return &SearchResult{release, query, score, "", diff, originFile}, ErrNeedsConfirm
 	}
 
 	if !shouldImport {

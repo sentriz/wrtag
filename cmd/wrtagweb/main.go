@@ -172,9 +172,10 @@ func main() {
 	mux.HandleFunc("POST /jobs", func(w http.ResponseWriter, r *http.Request) {
 		operationStr := r.FormValue("operation")
 		path := r.FormValue("path")
+		confirm := parseConfirm(r.FormValue("confirm"))
 
 		respErr := func(code int, msg string) {
-			respTmpl(w, code, "job-import", struct{ Operation, Error string }{operationStr, msg})
+			respTmpl(w, code, "job-import", struct{ Operation, Confirm, Error string }{operationStr, string(confirm), msg})
 		}
 
 		if _, err := wrtagflag.OperationByName(operationStr, false); err != nil {
@@ -194,12 +195,12 @@ func main() {
 		ctx := r.Context()
 
 		var job Job
-		if err := sqlb.QueryRow(ctx, db, &job, "insert into jobs (source_path, operation, time) values (?, ?, ?) returning *", path, operationStr, time.Now()); err != nil {
+		if err := sqlb.QueryRow(ctx, db, &job, "insert into jobs (source_path, operation, confirm, time) values (?, ?, ?, ?) returning *", path, operationStr, confirm, time.Now()); err != nil {
 			respErr(http.StatusInternalServerError, fmt.Sprintf("error saving job: %v", err))
 			return
 		}
 
-		respTmpl(w, http.StatusOK, "job-import", struct{ Operation, Error string }{Operation: operationStr})
+		respTmpl(w, http.StatusOK, "job-import", struct{ Operation, Confirm, Error string }{Operation: operationStr, Confirm: string(confirm)})
 
 		jobSSENew()
 	})
@@ -220,7 +221,7 @@ func main() {
 	mux.HandleFunc("PUT /jobs/{id}", func(w http.ResponseWriter, r *http.Request) {
 		id, _ := strconv.Atoi(r.PathValue("id"))
 
-		confirm, _ := strconv.ParseBool(r.FormValue("confirm"))
+		confirm := parseConfirm(r.FormValue("confirm"))
 
 		useMBID := r.FormValue("mbid")
 		if strings.Contains(useMBID, "/") {
@@ -295,8 +296,9 @@ func main() {
 		respTmpl(w, http.StatusOK, "index", struct {
 			jobsListing
 			Operation string
+			Confirm   string
 			Error     string
-		}{jl, OperationCopy, ""})
+		}{jl, OperationCopy, string(ConfirmScore), ""})
 	})
 
 	mux.Handle("/", http.FileServer(http.FS(ui)))
@@ -331,7 +333,7 @@ func main() {
 		if strings.Contains(useMBID, "/") {
 			useMBID = path.Base(useMBID) // accept release URL
 		}
-		confirm, _ := strconv.ParseBool(r.FormValue("confirm"))
+		confirm := parseConfirm(r.FormValue("confirm"))
 
 		ctx := r.Context()
 
@@ -440,8 +442,11 @@ func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.No
 	}
 
 	var ic wrtag.ImportCondition
-	if job.Confirm {
+	switch job.Confirm {
+	case ConfirmAccept:
 		ic = wrtag.Always
+	case ConfirmManual:
+		ic = wrtag.Never
 	}
 
 	searchResult, processErr := wrtag.ProcessDir(ctx, cfg, op, job.SourcePath, ic, job.UseMBID)
@@ -465,12 +470,12 @@ func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.No
 	if searchResult != nil {
 		job.SearchResult = sqlb.NewJSON(searchResult)
 	}
-	job.Confirm = false
+	job.Confirm = ConfirmScore
 
 	if processErr != nil {
 		job.Status = StatusError
 		job.Error = processErr.Error()
-		if errors.Is(processErr, wrtag.ErrScoreTooLow) {
+		if errors.Is(processErr, wrtag.ErrScoreTooLow) || errors.Is(processErr, wrtag.ErrNeedsConfirm) {
 			job.Status = StatusNeedsInput
 		}
 	} else {
@@ -582,6 +587,19 @@ func jobNotificationMessage(publicURL string, job Job) string {
 		job.Operation, status, job.SourcePath, url)
 }
 
+// parseConfirm parses the confirm parameter into a ConfirmMode. Bool values are also accepted:
+// true means accept, and false or anything unknown means score.
+func parseConfirm(v string) ConfirmMode {
+	switch mode := ConfirmMode(v); mode {
+	case ConfirmScore, ConfirmAccept, ConfirmManual:
+		return mode
+	}
+	if accept, _ := strconv.ParseBool(v); accept {
+		return ConfirmAccept
+	}
+	return ConfirmScore
+}
+
 //go:embed *.gohtml dist/*
 var ui embed.FS
 var uiTmpl = htmltemplate.Must(
@@ -606,7 +624,8 @@ var funcMap = htmltemplate.FuncMap{
 		}
 		return r
 	},
-	"panic": func(msg string) string { panic(msg) },
+	"panic":    func(msg string) string { panic(msg) },
+	"minScore": func() int { return wrtag.MinScore },
 }
 
 func logJob(jobName string, args ...any) func() {

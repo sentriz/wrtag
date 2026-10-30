@@ -30,3 +30,17 @@ alter table jobs
 -- 2025.09.14 add updated_time timestamp --
 alter table jobs
     add column updated_time timestamp;
+
+-- 2026.10.16 confirm bool to text mode --
+alter table jobs
+    add column confirm_mode text not null default "score";
+
+update jobs
+    set confirm_mode = 'accept'
+    where confirm;
+
+alter table jobs
+    drop column confirm;
+
+alter table jobs
+    rename column confirm_mode to confirm;
