@@ -107,7 +107,7 @@ __complete_prefer_oldstyle -c wrtag -n "__fish_seen_subcommand_from $operations"
     -o mbid -x -d "Overwrite matched MusicBrainz release UUID"
 
 __complete_prefer_oldstyle -c wrtag -n "__fish_seen_subcommand_from $operations" \
-    -o yes -d "Use the found release anyway despite a low score"
+    -o yes -d "Use the found release anyway despite a low score or a partial release"
 
 # sync
 __complete_prefer_oldstyle -c wrtag -n "__fish_seen_subcommand_from sync" \
