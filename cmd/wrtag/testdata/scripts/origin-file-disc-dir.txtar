@@ -1,0 +1,49 @@
+# all the tracks in one disc dir looks like an artist dir, but the origin file says it's a release
+exec tag write kat_moda/CD1/01.flac title 'trk 1'
+exec tag write kat_moda/CD1/02.flac title 'trk 2'
+exec tag write kat_moda/CD1/03.flac title 'trk 3'
+
+env WRTAG_LOG_LEVEL=debug
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title | safepath }}/{{ .Track.Position }}{{ .Ext }}'
+env WRTAG_KEEP_FILE=origin.yaml
+
+exec wrtag copy -yes kat_moda/
+stderr 'using origin file'
+
+exec find albums
+cmp stdout exp-layout
+
+# without one it's still refused
+rm albums
+rm kat_moda/origin.yaml
+
+! exec wrtag copy -yes kat_moda/
+stderr 'validate tree'
+! exists albums
+
+-- exp-layout --
+albums
+albums/Kat Moda
+albums/Kat Moda/1.flac
+albums/Kat Moda/2.flac
+albums/Kat Moda/3.flac
+albums/Kat Moda/cover.jpg
+albums/Kat Moda/origin.yaml
+-- kat_moda/origin.yaml --
+Artist:         Jeff Mills
+Name:           Kat Moda EP
+Edition:        ~
+Edition year:   2009
+Media:          WEB
+Catalog number: PMD-002
+Record label:   Purpose Maker
+Original year:  1997
+Format:         FLAC
+Encoding:       Lossless
+Log:            ~
+Directory:      Jeff Mills - Kat Moda - Digital (1997) [FLAC]
+Size:           118087854
+File count:     4
+Info hash:
+Uploaded:       2018-04-04 20:00:17
+Permalink:      https://example.com

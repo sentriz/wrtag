@@ -412,13 +412,16 @@ func ReadReleaseDir(dirPath string) (string, []PathTags, error) {
 
 	{
 		// validate we aren't accidentally importing something like an artist folder, which may look
-		// like a multi disc album to us, but will have all its tracks in one subdirectory
+		// like a multi disc album to us, but will have all its tracks in one subdirectory. an origin
+		// file means it's a release though, with only one of its disc dirs
 		discDirs := map[string]struct{}{}
 		for _, pt := range pathTags {
 			discDirs[filepath.Dir(pt.Path)] = struct{}{}
 		}
 		if len(discDirs) == 1 && filepath.Dir(pathTags[0].Path) != filepath.Clean(dirPath) {
-			return "", nil, fmt.Errorf("validate tree: %w", ErrNoTracks)
+			if origin, err := originfile.Find(dirPath); err != nil || origin == nil {
+				return "", nil, fmt.Errorf("validate tree: %w", ErrNoTracks)
+			}
 		}
 	}
 
