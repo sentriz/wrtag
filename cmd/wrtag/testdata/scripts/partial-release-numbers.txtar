@@ -1,0 +1,118 @@
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title | safepath }}/{{ .Media.Position }}.{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
+
+# the first disc of a two disc release without its pregap, and no musicbrainz tags
+exec tag write reise/01.flac discnumber 1 , disctotal 2 , tracknumber 01 , tracktotal 3 , title 'Reise, Reise'
+exec tag write reise/02.flac discnumber 1 , disctotal 2 , tracknumber 02 , tracktotal 3 , title 'Mein Teil'
+exec tag write reise/03.flac discnumber 1 , disctotal 2 , tracknumber 03 , tracktotal 3 , title 'Dalai Lama'
+exec tag write reise/*.flac album 'Reise, Reise' , albumartist 'Rammstein' , artist 'Rammstein'
+
+# given the release, they're placed by their disc and track numbers, but that still needs -yes
+! exec wrtag copy -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' reise
+stderr 'score=100.00%'
+stderr 'partial release: 8 remote / 3 local'
+! exists albums
+
+exec wrtag copy -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes reise
+exec find albums
+cmp stdout exp-disc-1
+
+exec tag check 'albums/Reise, Reise/1.01 Reise, Reise.flac' discnumber 1 , tracknumber 1 , musicbrainz_releasetrackid 'c6cf3cfb-46e2-350d-9c38-f589ed63c37f'
+
+# now they have their release track ids, a sync doesn't need the release given
+exec wrtag sync
+stderr 'saw=1 processed=1 errors=0'
+
+# without the release given, track numbers aren't enough, even with -yes
+exec tag write reise/*.flac musicbrainz_albumid 'bdc01183-d1c9-378f-a209-a6145fa596c9'
+! exec wrtag copy -yes reise
+stderr 'track count mismatch: 8 remote / 3 local'
+
+# a weak match is refused for its score as usual, but says it's a partial release too
+exec tag write low/1.flac discnumber 1 , tracknumber 1 , title 'Track One'
+exec tag write low/2.flac discnumber 1 , tracknumber 2 , title 'Track Two'
+exec tag write low/3.flac discnumber 1 , tracknumber 3 , title 'Track Three'
+
+! exec wrtag copy -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' low
+stderr 'score too low, partial release: 8 remote / 3 local'
+
+rm albums
+
+# without disc numbers they could be from either disc, so they go on the one their titles clearly match
+exec tag write keine/1.flac tracknumber 1/3 , title 'Keine Lust'
+exec tag write keine/2.flac tracknumber 2/3 , title 'Los'
+exec tag write keine/3.flac tracknumber 3/3 , title 'Amerika'
+exec tag write keine/*.flac artist 'Rammstein'
+
+exec wrtag move -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes keine
+exec find albums
+cmp stdout exp-disc-2
+
+rm albums
+
+exec tag write dalai/1.flac tracknumber 1 , title 'Reise, Reise'
+exec tag write dalai/2.flac tracknumber 2 , title 'Mein Teil'
+exec tag write dalai/3.flac tracknumber 3 , title 'Dalai Lama'
+exec tag write dalai/*.flac artist 'Rammstein'
+
+exec wrtag move -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes dalai
+exec find albums
+cmp stdout exp-disc-1
+
+rm albums
+
+# or they could be numbered straight through the release, not counting pregaps
+exec tag write through/4.flac tracknumber 4 , title 'Keine Lust'
+exec tag write through/5.flac tracknumber 5 , title 'Los'
+exec tag write through/6.flac tracknumber 6 , title 'Amerika'
+
+exec wrtag move -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes through
+exec find albums
+cmp stdout exp-disc-2
+
+rm albums
+
+# but without titles to tell the discs apart, we can't say which tracks they are
+exec tag write untitled/1.flac tracknumber 1
+exec tag write untitled/2.flac tracknumber 2
+exec tag write untitled/3.flac tracknumber 3
+exec tag write untitled/*.flac artist 'Rammstein'
+
+! exec wrtag move -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes untitled
+stderr 'track count mismatch: 8 remote / 3 local'
+
+# not even when the rest of their tags match the release
+exec tag write tagged/2.flac tracknumber 2 , artist 'Rammstein' , album 'Reise, Reise' , albumartist 'Rammstein' , label 'Universal Music' , catalognumber '9868149' , barcode '0602498681497' , media 'CD'
+! exec wrtag move -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes tagged
+stderr 'track count mismatch: 8 remote / 1 local'
+
+# unless one has its release track id
+exec tag write untitled/1.flac musicbrainz_releasetrackid 'c6cf3cfb-46e2-350d-9c38-f589ed63c37f'
+
+exec wrtag move -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes untitled
+exec find albums
+cmp stdout exp-disc-1
+
+# a number twice, or one that isn't on the release, doesn't place them
+exec tag write bad/1.flac tracknumber 1 , title 'Keine Lust'
+exec tag write bad/2.flac tracknumber 2 , title 'Los'
+exec tag write bad/3.flac tracknumber 2 , title 'Amerika'
+
+! exec wrtag move -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes bad
+stderr 'track count mismatch: 8 remote / 3 local'
+
+exec tag write bad/3.flac tracknumber 9
+! exec wrtag move -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes bad
+stderr 'track count mismatch: 8 remote / 3 local'
+
+-- exp-disc-1 --
+albums
+albums/Reise, Reise
+albums/Reise, Reise/1.01 Reise, Reise.flac
+albums/Reise, Reise/1.02 Mein Teil.flac
+albums/Reise, Reise/1.03 Dalai Lama.flac
+-- exp-disc-2 --
+albums
+albums/Reise, Reise
+albums/Reise, Reise/2.01 Keine Lust.flac
+albums/Reise, Reise/2.02 Los.flac
+albums/Reise, Reise/2.03 Amerika.flac

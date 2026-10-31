@@ -23,6 +23,15 @@ exec wrtag move -yes reise
 exec find albums
 cmp stdout 'exp layout'
 
+# both pregaps have the same release track id, so without disc 1 we can't tell which one is left
+rm 'albums/Reise, Reise/1.00 [ohne Titel].flac'
+rm 'albums/Reise, Reise/1.01 Reise, Reise.flac'
+rm 'albums/Reise, Reise/1.02 Mein Teil.flac'
+rm 'albums/Reise, Reise/1.03 Dalai Lama.flac'
+
+! exec wrtag sync
+stderr 'track count mismatch: 8 remote / 4 local'
+
 -- exp layout --
 albums
 albums/Reise, Reise

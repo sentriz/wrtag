@@ -12,6 +12,7 @@ import (
 	"io"
 	"io/fs"
 	"log/slog"
+	"math"
 	"net/http"
 	"os"
 	"path"
@@ -41,13 +42,14 @@ import (
 var (
 	ErrScoreTooLow        = errors.New("score too low")
 	ErrTrackCountMismatch = errors.New("track count mismatch")
+	ErrPartialRelease     = errors.New("partial release")
 	ErrNoTracks           = errors.New("no tracks in dir")
 	ErrNotSortable        = errors.New("tracks in dir can't be sorted")
 	ErrSelfCopy           = errors.New("can't copy self to self")
 )
 
 func IsNonFatalError(err error) bool {
-	return errors.Is(err, ErrScoreTooLow) || errors.Is(err, ErrTrackCountMismatch)
+	return errors.Is(err, ErrScoreTooLow) || errors.Is(err, ErrTrackCountMismatch) || errors.Is(err, ErrPartialRelease)
 }
 
 // The minimum score required for a MusicBrainz match to be considered valid.
@@ -164,11 +166,29 @@ func ProcessDir(
 	}
 
 	releaseTracks := releaseTracks(release.Media)
+	tagsOnly := mapFunc(pathTags, func(_ int, pt PathTags) map[string][]string { return pt.Tags })
+
+	// a partial release can't be paired by position, but can by its release track ids. track numbers and titles
+	// could fit another release too, so they're only used when the release is given
+	var partialErr error
+	if len(pathTags) < len(releaseTracks) {
+		matched := matchTracksByID(releaseTracks, tagsOnly)
+		if matched == nil && strings.EqualFold(release.ID, useMBID) {
+			if slices.ContainsFunc(tagsOnly, hasTrackNumber) {
+				matched = matchTracksByNumber(release, releaseTracks, tagsOnly)
+			} else {
+				matched = matchTracksByTitle(cfg.DiffWeights, release, releaseTracks, pathTags, tagsOnly)
+			}
+		}
+		if matched != nil {
+			partialErr = fmt.Errorf("%w: %d remote / %d local", ErrPartialRelease, len(releaseTracks), len(pathTags))
+			releaseTracks = matched
+		}
+	}
 
 	var score float64
 	var diff []Diff
 	{
-		tagsOnly := mapFunc(pathTags, func(_ int, pt PathTags) map[string][]string { return pt.Tags })
 		tracksOnly := mapFunc(releaseTracks, func(_ int, tm releaseTrack) musicbrainz.Track { return tm.track })
 
 		score, diff = DiffRelease(cfg.DiffWeights, release, tracksOnly, tagsOnly)
@@ -189,7 +209,11 @@ func ProcessDir(
 	}
 
 	if !shouldImport {
-		return &SearchResult{release, query, score, "", diff, originFile}, ErrScoreTooLow
+		err := ErrScoreTooLow
+		if partialErr != nil {
+			err = fmt.Errorf("%w, %w", ErrScoreTooLow, partialErr)
+		}
+		return &SearchResult{release, query, score, "", diff, originFile}, err
 	}
 
 	destDir, err := DestDir(&cfg.PathFormat, release)
@@ -200,6 +224,17 @@ func ProcessDir(
 	origDestDir := destDir
 	if dir, err := filepath.EvalSymlinks(destDir); err == nil {
 		destDir = dir
+	}
+
+	// an incomplete download looks just like a partial release, so bringing one into place needs confirming
+	if partialErr != nil && srcDir != destDir {
+		if cond != Always {
+			return &SearchResult{release, query, score, "", diff, originFile}, partialErr
+		}
+		// lockPaths would deadlock on a src dir inside its dest dir
+		if fileutil.HasPrefix(srcDir, destDir) {
+			return nil, fmt.Errorf("can't import a partial release from inside its dest dir %q", destDir)
+		}
 	}
 
 	labelInfo := musicbrainz.AnyLabelInfo(release)
@@ -220,6 +255,14 @@ func ProcessDir(
 		destPaths = append(destPaths, destPath)
 	}
 
+	// tracks are moved one at a time, so one can't take the path of another that hasn't moved yet. paths are
+	// compared ignoring case since the dest extension is always lower case
+	for i, destPath := range destPaths {
+		if slices.ContainsFunc(pathTags[i+1:], func(pt PathTags) bool { return strings.EqualFold(pt.Path, destPath) }) {
+			return nil, fmt.Errorf("track %q would overwrite another", pathTags[i].Path)
+		}
+	}
+
 	var coverTmp string
 	if op.CanModifyDest() && (cover == "" || cfg.UpgradeCover) {
 		var err error
@@ -237,6 +280,19 @@ func ProcessDir(
 		srcDir,
 		destDir,
 	)
+
+	// trimming the dest dir would delete any other tracks there, like another disc of the same release
+	if partialErr != nil && srcDir != destDir {
+		existing, err := fileutil.GlobDir(destDir, "*")
+		if err != nil {
+			unlock()
+			return nil, fmt.Errorf("glob dest dir: %w", err)
+		}
+		if slices.ContainsFunc(existing, func(p string) bool { return tags.CanRead(p) && !slices.Contains(destPaths, p) }) {
+			unlock()
+			return nil, fmt.Errorf("dest dir %q already has other tracks", destDir)
+		}
+	}
 
 	dc := NewDirContext()
 
@@ -359,6 +415,185 @@ func releaseTracks(media []musicbrainz.Media) []releaseTrack {
 		}
 	}
 	return tracks
+}
+
+func matchTracksByID(releaseTracks []releaseTrack, tagFiles []map[string][]string) []releaseTrack {
+	matched := make([]releaseTrack, 0, len(tagFiles))
+	for _, tf := range tagFiles {
+		id := normtag.Get(tf, normtag.MusicBrainzTrackID)
+		hasID := func(rt releaseTrack) bool { return rt.track.ID == id }
+
+		i := slices.IndexFunc(releaseTracks, hasID)
+		// some releases have the same id on more than one track, like on their pregaps
+		if id == "" || i < 0 || slices.ContainsFunc(releaseTracks[i+1:], hasID) || slices.ContainsFunc(matched, hasID) {
+			return nil
+		}
+		matched = append(matched, releaseTracks[i])
+	}
+	return matched
+}
+
+func matchTracksByNumber(release *musicbrainz.Release, releaseTracks []releaseTrack, tagFiles []map[string][]string) []releaseTrack {
+	var discNums, trackNums []int
+	haveDiscs := true
+	for _, tf := range tagFiles {
+		trackNum, ok := parseNumber(normtag.Get(tf, normtag.TrackNumber))
+		if !ok {
+			return nil
+		}
+		discNum, ok := parseNumber(normtag.Get(tf, normtag.DiscNumber))
+		discNums = append(discNums, discNum)
+		trackNums = append(trackNums, trackNum)
+		haveDiscs = haveDiscs && ok
+	}
+
+	indexAt := func(disc, track int) int {
+		return slices.IndexFunc(releaseTracks, func(rt releaseTrack) bool { return rt.media.Position == disc && rt.track.Position == track })
+	}
+
+	var placements [][]int
+	place := func(index func(i int) int) {
+		var placement []int
+		for i, tf := range tagFiles {
+			j := index(i)
+			if j < 0 || slices.Contains(placement, j) || !fitsTrackID(releaseTracks, j, tf) {
+				return
+			}
+			placement = append(placement, j)
+		}
+		// on a single disc, numbering through the release places them the same way
+		if !slices.ContainsFunc(placements, func(p []int) bool { return slices.Equal(p, placement) }) {
+			placements = append(placements, placement)
+		}
+	}
+
+	if haveDiscs {
+		place(func(i int) int { return indexAt(discNums[i], trackNums[i]) })
+	} else {
+		for _, media := range release.Media {
+			place(func(i int) int { return indexAt(media.Position, trackNums[i]) })
+		}
+
+		var numbered []int // pregaps aren't counted when numbering through the release
+		for j, rt := range releaseTracks {
+			if rt.track.Position > 0 {
+				numbered = append(numbered, j)
+			}
+		}
+		place(func(i int) int {
+			if n := trackNums[i]; n > 0 && n <= len(numbered) {
+				return numbered[n-1]
+			}
+			return -1
+		})
+	}
+
+	if len(placements) == 0 {
+		return nil
+	}
+
+	// if they fit more than one way, only a clear match of their titles can say which
+	scores := mapFunc(placements, func(_ int, placement []int) float64 {
+		var score float64
+		diff := Differ(&score)
+		for i, j := range placement {
+			diff(1, "", normtag.Get(tagFiles[i], normtag.Title), releaseTracks[j].track.Title)
+		}
+		return score
+	})
+	best := slices.Index(scores, slices.Max(scores))
+	if len(placements) > 1 && (scores[best] < minScore || slices.Contains(scores[best+1:], scores[best])) {
+		return nil
+	}
+	return mapFunc(placements[best], func(_, j int) releaseTrack { return releaseTracks[j] })
+}
+
+func matchTracksByTitle(weights DiffWeights, release *musicbrainz.Release, releaseTracks []releaseTrack, pathTags []PathTags, tagFiles []map[string][]string) []releaseTrack {
+	type distance struct {
+		title  int
+		length time.Duration // -1 if either length isn't known
+	}
+	compare := func(a, b distance) int {
+		// an unknown length can't tell apart tracks of the same title
+		if a.length < 0 || b.length < 0 {
+			return cmp.Compare(a.title, b.title)
+		}
+		return cmp.Or(cmp.Compare(a.title, b.title), cmp.Compare(a.length, b.length))
+	}
+
+	dists := make([][]distance, 0, len(pathTags))
+	for _, pt := range pathTags {
+		title := diffNormText(normtag.Get(pt.Tags, normtag.Title))
+		if title == "" {
+			return nil
+		}
+		props, _ := tags.ReadProperties(pt.Path)
+		dists = append(dists, mapFunc(releaseTracks, func(j int, rt releaseTrack) distance {
+			if !fitsTrackID(releaseTracks, j, pt.Tags) {
+				return distance{title: math.MaxInt}
+			}
+			length := time.Duration(-1)
+			if props.Length > 0 && rt.track.Length > 0 {
+				length = (props.Length - time.Duration(rt.track.Length)*time.Millisecond).Abs()
+			}
+			return distance{
+				title:  dm.DiffLevenshtein(dm.DiffMain(title, diffNormText(rt.track.Title), false)),
+				length: length,
+			}
+		}))
+	}
+
+	closest := func(n int, dist func(k int) distance) int {
+		best := 0
+		for k := 1; k < n; k++ {
+			if compare(dist(k), dist(best)) < 0 {
+				best = k
+			}
+		}
+		for k := range n {
+			if k != best && compare(dist(k), dist(best)) == 0 {
+				return -1
+			}
+		}
+		return best
+	}
+
+	matched := make([]releaseTrack, 0, len(pathTags))
+	for i := range pathTags {
+		j := closest(len(releaseTracks), func(k int) distance { return dists[i][k] })
+		// the track has to be closest to this file too, or it might suit another file better
+		if j < 0 || closest(len(pathTags), func(k int) distance { return dists[k][j] }) != i {
+			return nil
+		}
+		matched = append(matched, releaseTracks[j])
+	}
+
+	// even the closest titles can be far off, so it takes a clear match to place them
+	tracks := mapFunc(matched, func(_ int, rt releaseTrack) musicbrainz.Track { return rt.track })
+	if score, _ := DiffRelease(weights, release, tracks, tagFiles); score < minScore {
+		return nil
+	}
+	return matched
+}
+
+// fitsTrackID reports whether a file can go on releaseTracks[j], since a file with a release track id from
+// this release can only go on that track.
+func fitsTrackID(releaseTracks []releaseTrack, j int, tf map[string][]string) bool {
+	id := normtag.Get(tf, normtag.MusicBrainzTrackID)
+	hasID := func(rt releaseTrack) bool { return rt.track.ID == id }
+	return hasID(releaseTracks[j]) || !slices.ContainsFunc(releaseTracks, hasID)
+}
+
+func hasTrackNumber(tf map[string][]string) bool {
+	_, ok := parseNumber(normtag.Get(tf, normtag.TrackNumber))
+	return ok
+}
+
+// parseNumber parses a track or disc number like "3" or "3/7".
+func parseNumber(s string) (int, bool) {
+	s, _, _ = strings.Cut(s, "/")
+	n, err := strconv.Atoi(s)
+	return n, err == nil
 }
 
 // PathTags associates a file path with its tags.
