@@ -1,10 +1,22 @@
 package wrtag
 
 import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strconv"
+	"sync/atomic"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/time/rate"
+
+	"go.senan.xyz/wrtag/musicbrainz"
+	"go.senan.xyz/wrtag/tags"
+	"go.senan.xyz/wrtag/tags/normtag"
 )
 
 // ⚠️ Note, core wrtag functionality is tested from ./cmd/wrtag/
@@ -170,4 +182,54 @@ func TestReflinkCanModifyDest(t *testing.T) {
 
 	dryRunReflink := NewReflink(true)
 	assert.False(t, dryRunReflink.CanModifyDest())
+}
+
+func TestForceSearchIgnoresTaggedRelease(t *testing.T) {
+	t.Parallel()
+
+	const (
+		taggedMBID   = "21a03203-91a4-4948-ae1e-2d0977f1bdbc" // Ship-Scope
+		searchedMBID = "e47d04a4-7460-427d-a731-cc82386d85f1" // Kat Moda
+	)
+
+	var searches atomic.Int32
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /release", func(w http.ResponseWriter, r *http.Request) {
+		searches.Add(1)
+		_, _ = fmt.Fprintf(w, `{"releases":[{"id":%q,"score":100}]}`, searchedMBID)
+	})
+	mux.HandleFunc("GET /release/{mbid}", func(w http.ResponseWriter, r *http.Request) {
+		if mbid := r.PathValue("mbid"); mbid != searchedMBID {
+			t.Errorf("unexpected release fetch %q", mbid)
+			http.NotFound(w, r)
+			return
+		}
+		http.ServeFile(w, r, filepath.Join("cmd", "wrtag", "testdata", "responses", "musicbrainz", "ws", "2", "release", searchedMBID))
+	})
+	srv := httptest.NewServer(mux)
+	t.Cleanup(srv.Close)
+
+	emptyFLAC, err := os.ReadFile(filepath.Join("cmd", "wrtag", "testdata", "empty.flac"))
+	require.NoError(t, err)
+
+	srcDir := t.TempDir()
+	for i := range 3 {
+		p := filepath.Join(srcDir, fmt.Sprintf("%02d.flac", i+1))
+		require.NoError(t, os.WriteFile(p, emptyFLAC, 0o644))
+
+		tg := map[string][]string{}
+		normtag.Set(tg, normtag.MusicBrainzReleaseID, taggedMBID)
+		normtag.Set(tg, normtag.Album, "Kat Moda")
+		normtag.Set(tg, normtag.TrackNumber, strconv.Itoa(i+1))
+		require.NoError(t, tags.WriteTags(p, tg, 0))
+	}
+
+	var cfg Config
+	cfg.MusicBrainzClient = musicbrainz.MBClient{BaseURL: srv.URL + "/", HTTPClient: srv.Client(), Limiter: rate.NewLimiter(rate.Inf, 1)}
+	require.NoError(t, cfg.PathFormat.Parse(filepath.Join(t.TempDir(), "{{ .Release.Title | safepath }}/{{ .Track.Position }}{{ .Ext }}")))
+
+	res, err := ProcessDir(t.Context(), &cfg, NewCopy(true), srcDir, HighScore, ForceSearch)
+	require.NoError(t, err)
+	assert.Equal(t, int32(1), searches.Load())
+	assert.Equal(t, searchedMBID, res.Release.ID)
 }
