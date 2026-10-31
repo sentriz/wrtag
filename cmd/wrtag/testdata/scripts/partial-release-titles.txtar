@@ -1,0 +1,103 @@
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title | safepath }}/{{ .Media.Position }}.{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
+
+# the end of the second disc, with no track numbers or musicbrainz tags
+exec tag write reise/1.flac title 'Los'
+exec tag write reise/2.flac title 'Amerika'
+exec tag write reise/*.flac artist 'Rammstein'
+
+# given the release, they're placed by their titles, but that still needs -yes
+! exec wrtag copy -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' reise
+stderr 'score=100.00%'
+stderr 'partial release: 8 remote / 2 local'
+! exists albums
+
+exec wrtag copy -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes reise
+exec find albums
+cmp stdout exp-reise
+
+exec tag check 'albums/Reise, Reise/2.02 Los.flac' discnumber 2 , tracknumber 2 , musicbrainz_releasetrackid '91492c17-dd96-371a-bd58-7c7bf897fd0e'
+
+# now they have their release track ids, a sync doesn't need the release given
+exec wrtag sync
+stderr 'saw=1 processed=1 errors=0'
+
+# without the release given, titles aren't enough, even with -yes
+exec tag write reise/*.flac musicbrainz_albumid 'bdc01183-d1c9-378f-a209-a6145fa596c9'
+! exec wrtag copy -yes reise
+stderr 'track count mismatch: 8 remote / 2 local'
+
+# two files can't both be the same track
+exec tag write twice/1.flac title 'Los'
+exec tag write twice/2.flac title 'Los'
+
+! exec wrtag move -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes twice
+stderr 'track count mismatch: 8 remote / 2 local'
+
+# a title that isn't on the release, or no title at all, doesn't place them
+exec tag write other/1.flac title 'Du Hast' , artist 'Rammstein'
+
+! exec wrtag move -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes other
+stderr 'track count mismatch: 8 remote / 1 local'
+
+exec tag write untitled/1.flac title 'Reise, Reise'
+exec tag write untitled/2.flac title 'Mein Teil'
+exec tag write untitled/3.flac title 'Dalai Lama'
+exec tag write untitled/4.flac title 'Amerika'
+exec tag write untitled/5.flac title ''
+exec tag write untitled/*.flac artist 'Rammstein'
+
+! exec wrtag move -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes untitled
+stderr 'track count mismatch: 8 remote / 5 local'
+
+# a release track id from this release wins over the title, so a file with the wrong one isn't placed
+exec tag write ids/1.flac title 'Amerika' , musicbrainz_releasetrackid '91492c17-dd96-371a-bd58-7c7bf897fd0e'
+exec tag write ids/2.flac title 'Keine Lust'
+exec tag write ids/*.flac artist 'Rammstein'
+
+! exec wrtag move -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes ids
+stderr 'track count mismatch: 8 remote / 2 local'
+
+# if some of them are numbered, they're placed by their numbers, which needs all of them numbered
+exec tag write mixed/1.flac tracknumber 2 , title 'Los'
+exec tag write mixed/2.flac title 'Amerika'
+exec tag write mixed/*.flac artist 'Rammstein'
+
+! exec wrtag move -mbid 'bdc01183-d1c9-378f-a209-a6145fa596c9' -yes mixed
+stderr 'track count mismatch: 8 remote / 2 local'
+
+rm albums
+
+# every track here has the same title, so that alone can't place them
+exec tag write drei/1.flac title '[untitled]' , artist 'Sascha Funke' , comment '6:05'
+exec tag write drei/2.flac title '[untitled]' , artist 'Sascha Funke' , comment '6:38'
+
+! exec wrtag move -mbid '16d5bc3f-250e-45ab-9a25-faf13643db8d' -yes drei
+stderr 'track count mismatch: 3 remote / 2 local'
+
+# and a file without a length could be any of them
+exec tag write nolength/1.flac title '[untitled]' , artist 'Sascha Funke'
+
+! exec wrtag move -mbid '16d5bc3f-250e-45ab-9a25-faf13643db8d' -yes nolength
+stderr 'track count mismatch: 3 remote / 1 local'
+
+# but their lengths can
+exec length drei/1.flac 6m5s
+exec length drei/2.flac 6m38s
+
+exec wrtag move -mbid '16d5bc3f-250e-45ab-9a25-faf13643db8d' -yes drei
+exec find albums
+cmp stdout exp-drei
+
+exec tag check 'albums/Drei Auf Drei/1.01 *.flac' comment '6:38'
+exec tag check 'albums/Drei Auf Drei/1.03 *.flac' comment '6:05'
+
+-- exp-reise --
+albums
+albums/Reise, Reise
+albums/Reise, Reise/2.02 Los.flac
+albums/Reise, Reise/2.03 Amerika.flac
+-- exp-drei --
+albums
+albums/Drei Auf Drei
+albums/Drei Auf Drei/1.01 [untitled].flac
+albums/Drei Auf Drei/1.03 [untitled].flac

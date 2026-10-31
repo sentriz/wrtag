@@ -121,6 +121,8 @@ Files without that tag can still be placed by their disc and track numbers when 
 $ wrtag move -mbid "abc" -yes "Example" # imports the 7 tracks by their track numbers
 ```
 
+Files with no track numbers are placed by their titles instead, using their lengths to tell apart tracks with the same title.
+
 Since `-yes` then imports whatever tracks are there, a script passing both can import an incomplete download.
 
 Once a partial release is in place, re-tagging it with `move` or `sync` doesn't ask again, but moving it, like after a [path-format](#path-format) change, does, so `sync` leaves it where it is until it's moved with `wrtag move -yes`. This also means an album in the library that has lost some tracks is re-tagged rather than reported, since it looks the same. A partial release is never imported into a folder that already has other tracks, like another disc of the same release.
@@ -222,7 +224,7 @@ curl \
     "https://:my-api-key@wrtag.hostname/op/move"
 
 # Copy release from path and force-tag with the supplied MBID.
-# Also imports a partial release placed by its track numbers, which could be an incomplete download.
+# Also imports a partial release placed by its track numbers or titles, which could be an incomplete download.
 curl \
     --request POST \
     --data-urlencode "path=/path/to/the/release" \
