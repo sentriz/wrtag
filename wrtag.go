@@ -167,10 +167,15 @@ func ProcessDir(
 	releaseTracks := releaseTracks(release.Media)
 	tagsOnly := mapFunc(pathTags, func(_ int, pt PathTags) map[string][]string { return pt.Tags })
 
-	// a partial release can't be paired by position, but can by its release track ids
+	// a partial release can't be paired by position, but can by its release track ids. track numbers could fit
+	// another release too, so they're only used when the release is given
 	var partialErr error
 	if len(pathTags) < len(releaseTracks) {
-		if matched := matchTracksByID(releaseTracks, tagsOnly); matched != nil {
+		matched := matchTracksByID(releaseTracks, tagsOnly)
+		if matched == nil && strings.EqualFold(release.ID, useMBID) {
+			matched = matchTracksByNumber(release, releaseTracks, tagsOnly)
+		}
+		if matched != nil {
 			partialErr = fmt.Errorf("%w: %d remote / %d local", ErrPartialRelease, len(releaseTracks), len(pathTags))
 			releaseTracks = matched
 		}
@@ -421,6 +426,96 @@ func matchTracksByID(releaseTracks []releaseTrack, tagFiles []map[string][]strin
 		matched = append(matched, releaseTracks[i])
 	}
 	return matched
+}
+
+func matchTracksByNumber(release *musicbrainz.Release, releaseTracks []releaseTrack, tagFiles []map[string][]string) []releaseTrack {
+	var discNums, trackNums []int
+	haveDiscs := true
+	for _, tf := range tagFiles {
+		trackNum, ok := parseNumber(normtag.Get(tf, normtag.TrackNumber))
+		if !ok {
+			return nil
+		}
+		discNum, ok := parseNumber(normtag.Get(tf, normtag.DiscNumber))
+		discNums = append(discNums, discNum)
+		trackNums = append(trackNums, trackNum)
+		haveDiscs = haveDiscs && ok
+	}
+
+	indexAt := func(disc, track int) int {
+		return slices.IndexFunc(releaseTracks, func(rt releaseTrack) bool { return rt.media.Position == disc && rt.track.Position == track })
+	}
+
+	var placements [][]int
+	place := func(index func(i int) int) {
+		var placement []int
+		for i, tf := range tagFiles {
+			j := index(i)
+			if j < 0 || slices.Contains(placement, j) || !fitsTrackID(releaseTracks, j, tf) {
+				return
+			}
+			placement = append(placement, j)
+		}
+		// on a single disc, numbering through the release places them the same way
+		if !slices.ContainsFunc(placements, func(p []int) bool { return slices.Equal(p, placement) }) {
+			placements = append(placements, placement)
+		}
+	}
+
+	if haveDiscs {
+		place(func(i int) int { return indexAt(discNums[i], trackNums[i]) })
+	} else {
+		for _, media := range release.Media {
+			place(func(i int) int { return indexAt(media.Position, trackNums[i]) })
+		}
+
+		var numbered []int // pregaps aren't counted when numbering through the release
+		for j, rt := range releaseTracks {
+			if rt.track.Position > 0 {
+				numbered = append(numbered, j)
+			}
+		}
+		place(func(i int) int {
+			if n := trackNums[i]; n > 0 && n <= len(numbered) {
+				return numbered[n-1]
+			}
+			return -1
+		})
+	}
+
+	if len(placements) == 0 {
+		return nil
+	}
+
+	// if they fit more than one way, only a clear match of their titles can say which
+	scores := mapFunc(placements, func(_ int, placement []int) float64 {
+		var score float64
+		diff := Differ(&score)
+		for i, j := range placement {
+			diff(1, "", normtag.Get(tagFiles[i], normtag.Title), releaseTracks[j].track.Title)
+		}
+		return score
+	})
+	best := slices.Index(scores, slices.Max(scores))
+	if len(placements) > 1 && (scores[best] < minScore || slices.Contains(scores[best+1:], scores[best])) {
+		return nil
+	}
+	return mapFunc(placements[best], func(_, j int) releaseTrack { return releaseTracks[j] })
+}
+
+// fitsTrackID reports whether a file can go on releaseTracks[j], since a file with a release track id from
+// this release can only go on that track.
+func fitsTrackID(releaseTracks []releaseTrack, j int, tf map[string][]string) bool {
+	id := normtag.Get(tf, normtag.MusicBrainzTrackID)
+	hasID := func(rt releaseTrack) bool { return rt.track.ID == id }
+	return hasID(releaseTracks[j]) || !slices.ContainsFunc(releaseTracks, hasID)
+}
+
+// parseNumber parses a track or disc number like "3" or "3/7".
+func parseNumber(s string) (int, bool) {
+	s, _, _ = strings.Cut(s, "/")
+	n, err := strconv.Atoi(s)
+	return n, err == nil
 }
 
 // PathTags associates a file path with its tags.
