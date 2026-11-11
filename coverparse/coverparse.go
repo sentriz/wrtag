@@ -25,7 +25,7 @@ func IsCover(p string) bool {
 // Compare ranks two potential cover paths, suitable for [slices.SortFunc].
 func Compare(a, b string) int {
 	return cmp.Or(
-		slices.Compare(posArtTypes(a), posArtTypes(b)),
+		compareArtTypes(posArtTypes(a), posArtTypes(b)),
 		slices.Compare(posNumbers(a), posNumbers(b)),
 		cmp.Compare(posFiletype(a), posFiletype(b)),
 	)
@@ -82,6 +82,26 @@ func posArtTypes(path string) []int {
 		}
 	}
 	return r
+}
+
+// compareArtTypes compares like [slices.Compare], but treats missing trailing
+// entries as neutral rather than ranking the shorter slice first.
+// Otherwise a keyword shared by all candidates (e.g. "cover" in "Discovery")
+// would let "Back" outrank "Front", which has one more match.
+func compareArtTypes(a, b []int) int {
+	for i := range max(len(a), len(b)) {
+		var x, y int
+		if i < len(a) {
+			x = a[i]
+		}
+		if i < len(b) {
+			y = b[i]
+		}
+		if c := cmp.Compare(x, y); c != 0 {
+			return c
+		}
+	}
+	return 0
 }
 
 var numbersExpr = regexp.MustCompile(`\d+`)
