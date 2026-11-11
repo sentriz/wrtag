@@ -25,7 +25,7 @@ func IsCover(p string) bool {
 // Compare ranks two potential cover paths, suitable for [slices.SortFunc].
 func Compare(a, b string) int {
 	return cmp.Or(
-		compareArtTypes(posArtTypes(a), posArtTypes(b)),
+		slices.Compare(posArtTypes(a), posArtTypes(b)),
 		slices.Compare(posNumbers(a), posNumbers(b)),
 		cmp.Compare(posFiletype(a), posFiletype(b)),
 	)
@@ -66,42 +66,24 @@ func init() {
 		)
 	})
 	quoteExpr := strings.Join(quoted, "|")
-	artTypeExpr = regexp.MustCompile(quoteExpr)
+	// keywords must start a word so that eg. "discovery" doesn't match "cover",
+	// but may end mid-word so that eg. "frontcover" still matches "front"
+	artTypeExpr = regexp.MustCompile(`(?:^|[^a-z])(` + quoteExpr + `)`)
 }
 
 func posArtTypes(path string) []int {
 	path = strings.ToLower(path)
-	matches := artTypeExpr.FindAllString(path, -1)
+	matches := artTypeExpr.FindAllStringSubmatch(path, -1)
 	if len(matches) == 0 {
 		return []int{0}
 	}
 	r := make([]int, 0, len(matches))
 	for _, m := range matches {
-		if pos, ok := artTypePriorities[m]; ok {
+		if pos, ok := artTypePriorities[m[1]]; ok {
 			r = append(r, pos)
 		}
 	}
 	return r
-}
-
-// compareArtTypes compares like [slices.Compare], but treats missing trailing
-// entries as neutral rather than ranking the shorter slice first.
-// Otherwise a keyword shared by all candidates (e.g. "cover" in "Discovery")
-// would let "Back" outrank "Front", which has one more match.
-func compareArtTypes(a, b []int) int {
-	for i := range max(len(a), len(b)) {
-		var x, y int
-		if i < len(a) {
-			x = a[i]
-		}
-		if i < len(b) {
-			y = b[i]
-		}
-		if c := cmp.Compare(x, y); c != 0 {
-			return c
-		}
-	}
-	return 0
 }
 
 var numbersExpr = regexp.MustCompile(`\d+`)

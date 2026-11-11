@@ -126,6 +126,14 @@ func TestSelection(t *testing.T) {
 			},
 			expected: "Pink Floyd_-_Wish You Were Here [Discovery #09]_-_00_-_Artwork-Front.jpg",
 		},
+		{
+			name: "scan vs back with keyword in album name",
+			covers: []string{
+				"Back - Discovery.jpg",
+				"Scan - Discovery.jpg",
+			},
+			expected: "Scan - Discovery.jpg",
+		},
 	}
 
 	for _, test := range cases {
