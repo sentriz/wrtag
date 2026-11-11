@@ -66,18 +66,20 @@ func init() {
 		)
 	})
 	quoteExpr := strings.Join(quoted, "|")
-	artTypeExpr = regexp.MustCompile(quoteExpr)
+	// keywords must start a word so that eg. "discovery" doesn't match "cover",
+	// but may end mid-word so that eg. "frontcover" still matches "front"
+	artTypeExpr = regexp.MustCompile(`(?:^|[^a-z])(` + quoteExpr + `)`)
 }
 
 func posArtTypes(path string) []int {
 	path = strings.ToLower(path)
-	matches := artTypeExpr.FindAllString(path, -1)
+	matches := artTypeExpr.FindAllStringSubmatch(path, -1)
 	if len(matches) == 0 {
 		return []int{0}
 	}
 	r := make([]int, 0, len(matches))
 	for _, m := range matches {
-		if pos, ok := artTypePriorities[m]; ok {
+		if pos, ok := artTypePriorities[m[1]]; ok {
 			r = append(r, pos)
 		}
 	}

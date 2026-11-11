@@ -113,6 +113,27 @@ func TestSelection(t *testing.T) {
 			},
 			expected: "Artist - Album. 2CD (2025).jpg",
 		},
+		{
+			name: "front among artwork with keyword in album name",
+			covers: []string{
+				"folder.jpg",
+				"Pink Floyd_-_Wish You Were Here [Discovery #09]_-_00_-_Artwork-Back.jpg",
+				"Pink Floyd_-_Wish You Were Here [Discovery #09]_-_00_-_Artwork-Booklet01.jpg",
+				"Pink Floyd_-_Wish You Were Here [Discovery #09]_-_00_-_Artwork-CD.jpg",
+				"Pink Floyd_-_Wish You Were Here [Discovery #09]_-_00_-_Artwork-Digipak-Outside.jpg",
+				"Pink Floyd_-_Wish You Were Here [Discovery #09]_-_00_-_Artwork-Front.jpg",
+				"Pink Floyd_-_Wish You Were Here [Discovery #09]_-_00_-_Artwork-Inside01.jpg",
+			},
+			expected: "Pink Floyd_-_Wish You Were Here [Discovery #09]_-_00_-_Artwork-Front.jpg",
+		},
+		{
+			name: "scan vs back with keyword in album name",
+			covers: []string{
+				"Back - Discovery.jpg",
+				"Scan - Discovery.jpg",
+			},
+			expected: "Scan - Discovery.jpg",
+		},
 	}
 
 	for _, test := range cases {
