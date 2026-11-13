@@ -470,7 +470,7 @@ func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.No
 	if processErr != nil {
 		job.Status = StatusError
 		job.Error = processErr.Error()
-		if errors.Is(processErr, wrtag.ErrScoreTooLow) {
+		if errors.Is(processErr, wrtag.ErrScoreTooLow) || errors.Is(processErr, wrtag.ErrPartialRelease) {
 			job.Status = StatusNeedsInput
 		}
 	} else {

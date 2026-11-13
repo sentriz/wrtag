@@ -1,0 +1,25 @@
+# sync still knows a partial release is in place when the path-format root is a symlink
+exec mkdir real_music
+exec ln -s real_music music_link
+
+env WRTAG_PATH_FORMAT='music_link/albums/{{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
+
+exec tag write kat_moda/01.flac tracknumber 1 , title 'Alarms' , musicbrainz_releasetrackid '084e4019-8d64-4f9f-b1a3-d4459d8a5829'
+exec tag write kat_moda/03.flac tracknumber 3 , title 'The Bells (Festival mix)' , musicbrainz_releasetrackid '7ccbc644-014c-4c5a-9cb0-eb0bb895bf7a'
+exec tag write kat_moda/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+
+exec wrtag move -yes kat_moda
+
+exec wrtag sync
+stderr 'saw=1 processed=1 errors=0'
+
+exec find real_music
+cmp stdout exp-layout
+
+-- exp-layout --
+real_music
+real_music/albums
+real_music/albums/Kat Moda
+real_music/albums/Kat Moda/01 Alarms.flac
+real_music/albums/Kat Moda/03 The Bells (Festival mix).flac
+real_music/albums/Kat Moda/cover.jpg

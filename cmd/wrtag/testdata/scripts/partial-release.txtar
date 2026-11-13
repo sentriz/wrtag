@@ -1,0 +1,120 @@
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
+
+# complete releases are still paired by position, whatever their ids
+exec tag write full/01.flac tracknumber 1 , title 'Alarms' , musicbrainz_releasetrackid 'da9a42ca-27e0-4279-9473-23fb033c9fd8'
+exec tag write full/02.flac tracknumber 2 , title 'The Bells' , musicbrainz_releasetrackid '084e4019-8d64-4f9f-b1a3-d4459d8a5829'
+exec tag write full/03.flac tracknumber 3 , title 'The Bells (Festival mix)' , musicbrainz_releasetrackid '7ccbc644-014c-4c5a-9cb0-eb0bb895bf7a'
+exec tag write full/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1' , album 'Kat Moda' , albumartist 'Jeff Mills' , artist 'Jeff Mills'
+
+exec wrtag move full
+exec tag check 'albums/Kat Moda/01 Alarms.flac' musicbrainz_releasetrackid '084e4019-8d64-4f9f-b1a3-d4459d8a5829'
+rm albums
+
+# only keep the first and last tracks of the release
+exec tag write kat_moda/01.flac tracknumber 1 , title 'Alarms'
+exec tag write kat_moda/03.flac tracknumber 3 , title 'The Bells (Festival mix)'
+exec tag write kat_moda/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1' , artist 'Jeff Mills'
+
+# we can't tell which tracks these are, so even -yes isn't enough
+! exec wrtag move -yes kat_moda
+stderr 'track count mismatch: 3 remote / 2 local'
+
+# nor when their release track ids don't line up with the release
+# one missing
+exec tag write kat_moda/01.flac musicbrainz_releasetrackid '084e4019-8d64-4f9f-b1a3-d4459d8a5829'
+! exec wrtag move -yes kat_moda
+stderr 'track count mismatch: 3 remote / 2 local'
+
+# the same track twice
+exec tag write kat_moda/03.flac musicbrainz_releasetrackid '084e4019-8d64-4f9f-b1a3-d4459d8a5829'
+! exec wrtag move -yes kat_moda
+stderr 'track count mismatch: 3 remote / 2 local'
+
+# a track from another release
+exec tag write kat_moda/03.flac musicbrainz_releasetrackid 'ee25a020-1799-464b-bf39-cf5913a1dc7a'
+! exec wrtag move -yes kat_moda
+stderr 'track count mismatch: 3 remote / 2 local'
+
+# when they line up it's a partial release, but it could still be an incomplete download, so needs -yes
+exec tag write kat_moda/03.flac musicbrainz_releasetrackid '7ccbc644-014c-4c5a-9cb0-eb0bb895bf7a'
+! exec wrtag move kat_moda
+stderr 'score=100.00%'
+stderr 'partial release: 3 remote / 2 local'
+
+# sync won't bring it into the library either
+! exec wrtag sync kat_moda
+stderr 'partial release: 3 remote / 2 local'
+stderr 'saw=1 processed=0 errors=1'
+
+exists kat_moda/01.flac
+! exists albums
+
+# a weak match is refused for its score as usual, but says it's a partial release too
+exec tag write low/01.flac tracknumber 1 , title 'Track One' , musicbrainz_releasetrackid '084e4019-8d64-4f9f-b1a3-d4459d8a5829'
+exec tag write low/03.flac tracknumber 3 , title 'Track Three' , musicbrainz_releasetrackid '7ccbc644-014c-4c5a-9cb0-eb0bb895bf7a'
+exec tag write low/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+
+! exec wrtag move low
+stderr 'score too low, partial release: 3 remote / 2 local'
+
+# with -yes the files are paired with tracks 1 and 3 by id, not by position
+exec wrtag move -yes kat_moda
+stderr 'score=100.00%'
+! exists kat_moda
+
+exec find albums
+cmp stdout exp-layout
+
+exec tag check 'albums/Kat Moda/03 The Bells (Festival mix).flac' tracknumber 3 , tracktotal 3 , musicbrainz_trackid 'a5327233-aa63-4b25-9ac4-a18cf35704a8'
+
+exec mod-time 'albums/Kat Moda/*.flac'
+cp stdout before
+
+# once it's in place, re-tagging it doesn't ask again
+exec wrtag sync
+stderr 'processed dir.*albums/Kat Moda'
+stderr 'saw=1 processed=1 errors=0'
+
+exec wrtag move 'albums/Kat Moda'
+
+exec mod-time 'albums/Kat Moda/*.flac'
+cmp stdout before
+
+# but moving it does, even within the library
+env WRTAG_PATH_FORMAT='albums/{{ artistsString .Release.Artists | safepath }}/{{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
+! exec wrtag sync
+stderr 'partial release: 3 remote / 2 local'
+stderr 'saw=1 processed=0 errors=1'
+
+exec find albums
+cmp stdout exp-layout
+
+exec wrtag move -yes 'albums/Kat Moda'
+exec find albums
+cmp stdout exp-layout-moved
+rm albums
+
+# tracks aren't renamed onto ones that haven't moved yet, like after the release gains a track before them
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }}{{ .Ext }}'
+exec tag write 'albums/Kat Moda/01.flac' tracknumber 1 , title 'The Bells' , musicbrainz_releasetrackid 'da9a42ca-27e0-4279-9473-23fb033c9fd8'
+exec tag write 'albums/Kat Moda/02.flac' tracknumber 2 , title 'The Bells (Festival mix)' , musicbrainz_releasetrackid '7ccbc644-014c-4c5a-9cb0-eb0bb895bf7a'
+exec tag write 'albums/Kat Moda/*.flac' musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1' , artist 'Jeff Mills' , album 'Kat Moda'
+
+! exec wrtag sync
+stderr 'would overwrite another'
+exec tag check 'albums/Kat Moda/01.flac' title 'The Bells'
+exec tag check 'albums/Kat Moda/02.flac' title 'The Bells (Festival mix)'
+
+-- exp-layout --
+albums
+albums/Kat Moda
+albums/Kat Moda/01 Alarms.flac
+albums/Kat Moda/03 The Bells (Festival mix).flac
+albums/Kat Moda/cover.jpg
+-- exp-layout-moved --
+albums
+albums/Jeff Mills
+albums/Jeff Mills/Kat Moda
+albums/Jeff Mills/Kat Moda/01 Alarms.flac
+albums/Jeff Mills/Kat Moda/03 The Bells (Festival mix).flac
+albums/Jeff Mills/Kat Moda/cover.jpg

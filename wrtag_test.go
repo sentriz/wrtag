@@ -129,6 +129,7 @@ func TestIsNonFatalError(t *testing.T) {
 
 	assert.True(t, IsNonFatalError(ErrScoreTooLow))
 	assert.True(t, IsNonFatalError(ErrTrackCountMismatch))
+	assert.True(t, IsNonFatalError(ErrPartialRelease))
 	assert.False(t, IsNonFatalError(ErrNoTracks))
 	assert.False(t, IsNonFatalError(ErrNotSortable))
 	assert.False(t, IsNonFatalError(ErrSelfCopy))
