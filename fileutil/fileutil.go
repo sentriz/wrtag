@@ -7,6 +7,7 @@ import (
 	"io/fs"
 	"path/filepath"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/gosimple/unidecode"
 	"golang.org/x/text/unicode/norm"
@@ -57,22 +58,30 @@ func SafePath(path string) string {
 	return path
 }
 
-// TrimLength truncates the final component of p to at most max runes, preserving the file extension (if room).
+// TrimLength truncates the final component of p to at most max bytes, preserving the file extension (if room).
 func TrimLength(p string, mx int) string {
 	base := filepath.Base(p)
-	rs := []rune(base)
-	if len(rs) <= mx {
+	if len(base) <= mx {
 		return p
 	}
 	ext := filepath.Ext(base)
-	er := []rune(ext)
 	var truncated string
-	if len(er) >= mx {
-		truncated = string(rs[:mx])
+	if len(ext) >= mx {
+		truncated = truncateBytesToRuneBoundary(base, mx)
 	} else {
-		truncated = strings.TrimRight(string(rs[:mx-len(er)]), " ") + ext
+		truncated = strings.TrimRight(truncateBytesToRuneBoundary(base, mx-len(ext)), " ") + ext
 	}
 	return filepath.Join(filepath.Dir(p), truncated)
+}
+
+func truncateBytesToRuneBoundary(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n]
 }
 
 func SafePathUnicode(path string) string {

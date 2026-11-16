@@ -55,7 +55,14 @@ func TestTruncateFilename(t *testing.T) {
 	long := strings.Repeat("a", 300) + ".flac"
 	assert.Equal(t, strings.Repeat("a", 250)+".flac", fileutil.TrimLength(long, 255))
 
-	assert.Equal(t, "ähn", fileutil.TrimLength("ähnlich", 3)) // unicode-aware
+	assert.Equal(t, "äh", fileutil.TrimLength("ähnlich", 3)) // limit is bytes; ä is 2
+	assert.Equal(t, "ä", fileutil.TrimLength("ähnlich", 2))
+
+	// multi-byte runes count by their encoded size, as NAME_MAX does
+	longUnicode := strings.Repeat("“", 100) + ".flac" // 300 bytes + ext
+	trimmed := fileutil.TrimLength(longUnicode, 255)
+	assert.LessOrEqual(t, len(trimmed), 255)
+	assert.Equal(t, strings.Repeat("“", 83)+".flac", trimmed)
 
 	// only the basename gets truncated, leading directories are left alone
 	assert.Equal(t, "/very long dir name not truncated/hell.flac", fileutil.TrimLength("/very long dir name not truncated/hello.flac", 9))
