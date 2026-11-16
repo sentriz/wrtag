@@ -44,6 +44,7 @@ var (
 	ErrNoTracks           = errors.New("no tracks in dir")
 	ErrNotSortable        = errors.New("tracks in dir can't be sorted")
 	ErrSelfCopy           = errors.New("can't copy self to self")
+	ErrDuplicateDestPath  = errors.New("tracks have the same destination path")
 )
 
 func IsNonFatalError(err error) bool {
@@ -207,6 +208,7 @@ func ProcessDir(
 
 	// calculate new paths, rebasing to the resolved destDir if symlinks were involved
 	destPaths := make([]string, 0, len(pathTags))
+	seenDestPaths := make(map[string]struct{}, len(pathTags))
 	for i, pt := range pathTags {
 		trackMedia := releaseTracks[i]
 		destPath, err := cfg.PathFormat.Execute(*release, trackMedia.media, trackMedia.track, strings.ToLower(filepath.Ext(pt.Path)))
@@ -217,6 +219,10 @@ func ProcessDir(
 			destPath = filepath.Join(destDir, strings.TrimPrefix(destPath, origDestDir))
 		}
 		destPath = fileutil.TrimLength(destPath, 255)
+		if _, ok := seenDestPaths[destPath]; ok {
+			return nil, fmt.Errorf("%w: %q", ErrDuplicateDestPath, destPath)
+		}
+		seenDestPaths[destPath] = struct{}{}
 		destPaths = append(destPaths, destPath)
 	}
 
