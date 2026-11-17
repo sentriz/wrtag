@@ -44,6 +44,7 @@ var (
 	ErrNoTracks           = errors.New("no tracks in dir")
 	ErrNotSortable        = errors.New("tracks in dir can't be sorted")
 	ErrSelfCopy           = errors.New("can't copy self to self")
+	ErrDuplicateDestPath  = errors.New("tracks have the same destination path")
 )
 
 func IsNonFatalError(err error) bool {
@@ -218,6 +219,18 @@ func ProcessDir(
 		}
 		destPath = fileutil.TrimLength(destPath, 255)
 		destPaths = append(destPaths, destPath)
+	}
+
+	// check the final dest paths for problems pathformat validation can't catch from sample data, like trimming or real
+	// titles. prefer adding checks to pathformat validation where possible, so they fail at startup
+	{
+		var seen = map[string]struct{}{}
+		for _, destPath := range destPaths {
+			if _, ok := seen[destPath]; ok {
+				return nil, fmt.Errorf("%w: %q", ErrDuplicateDestPath, destPath)
+			}
+			seen[destPath] = struct{}{}
+		}
 	}
 
 	var coverTmp string

@@ -1,0 +1,14 @@
+# two discs with the same titles, and a format without the disc number
+exec tag write same/d1-01.flac title 'alarms'
+exec tag write same/d1-02.flac title 'the bells'
+exec tag write same/d2-01.flac title 'alarms'
+exec tag write same/d2-02.flac title 'the bells'
+exec tag write same/*.flac musicbrainz_albumid '0b1e7d2a-5c3f-4a8e-9d6b-2f4c8e1a7b93'
+
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
+
+! exec wrtag move -yes same
+stderr 'tracks have the same destination path'
+exists same/d1-01.flac
+exists same/d2-01.flac
+! exists albums
