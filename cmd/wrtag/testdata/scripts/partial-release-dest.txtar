@@ -1,0 +1,41 @@
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
+
+exec tag write kat_moda/01.flac tracknumber 1 , title 'Alarms' , musicbrainz_releasetrackid '084e4019-8d64-4f9f-b1a3-d4459d8a5829'
+exec tag write kat_moda/03.flac tracknumber 3 , title 'The Bells (Festival mix)' , musicbrainz_releasetrackid '7ccbc644-014c-4c5a-9cb0-eb0bb895bf7a'
+exec tag write kat_moda/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+
+exec wrtag copy -yes kat_moda
+
+# importing the same tracks again is fine
+exec wrtag copy -yes kat_moda
+exec find albums
+cmp stdout exp-layout
+
+# but not other tracks of the release, since trimming the dest dir would delete the ones there
+exec tag write bells/02.flac tracknumber 2 , title 'The Bells' , musicbrainz_releasetrackid 'da9a42ca-27e0-4279-9473-23fb033c9fd8'
+exec tag write bells/02.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+
+! exec wrtag move -yes bells
+stderr 'already has other tracks'
+exists bells/02.flac
+
+exec find albums
+cmp stdout exp-layout
+
+# nor from a disc dir inside the dest dir
+mv bells 'albums/Kat Moda/CD2'
+
+! exec wrtag sync
+stderr 'partial release: 3 remote / 1 local'
+stderr 'saw=1 processed=0 errors=1'
+
+! exec wrtag move -yes 'albums/Kat Moda/CD2'
+stderr 'inside its dest dir'
+exists 'albums/Kat Moda/CD2/02.flac'
+
+-- exp-layout --
+albums
+albums/Kat Moda
+albums/Kat Moda/01 Alarms.flac
+albums/Kat Moda/03 The Bells (Festival mix).flac
+albums/Kat Moda/cover.jpg

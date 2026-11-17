@@ -29,7 +29,7 @@
       {{ end }}
     {{ end }}
     {{ if eq .Status "needs-input" }}
-      <p><span class="text-red-500">low/no match</span> <button hx-put="/jobs/{{ .ID }}?confirm=1">[use anyway]</button></p>
+      <p><span class="text-red-500">{{ if eq .Error "score too low" }}low/no match{{ else }}{{ .Error }}{{ end }}</span> <button hx-put="/jobs/{{ .ID }}?confirm=1">[use anyway]</button></p>
       <p>use custom release <input type="text" name="mbid" class="px-2" placeholder="mbid/url" value="{{ .UseMBID }}"></p>
       <button>[retry]</button>
     {{ else if eq .Status "error" }}

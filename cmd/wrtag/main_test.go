@@ -3,6 +3,8 @@ package main
 import (
 	"crypto/rand"
 	"embed"
+	"encoding/binary"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -16,6 +18,7 @@ import (
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/rogpeppe/go-internal/testscript"
 	"go.senan.xyz/wrtag/fileutil"
@@ -47,6 +50,7 @@ func TestMain(m *testing.M) {
 		"file-mode": mainFileMode,
 		"mod-time":  mainModTime,
 		"rand":      mainRand,
+		"length":    mainLength,
 	})
 }
 
@@ -231,6 +235,46 @@ func mainRand() {
 
 	size, _ := strconv.Atoi(sizeStr)
 	_, _ = io.Copy(f, io.LimitReader(rand.Reader, int64(size)))
+}
+
+func mainLength() {
+	flag.Parse()
+
+	path, lengthStr := flag.Arg(0), flag.Arg(1)
+	length, err := time.ParseDuration(lengthStr)
+	if path == "" || err != nil {
+		log.Fatalf("bad args")
+	}
+
+	if err := setFLACLength(path, length); err != nil {
+		log.Fatalf("error setting length: %v", err)
+	}
+}
+
+func setFLACLength(path string, length time.Duration) error {
+	f, err := os.OpenFile(path, os.O_RDWR, 0)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// after the fLaC marker, the STREAMINFO block header, and its block and frame sizes, these 8 bytes start
+	// with the 20 bit sample rate and end with the 36 bit total samples
+	const offset = 4 + 4 + 10
+
+	var b [offset + 8]byte
+	if _, err := f.ReadAt(b[:], 0); err != nil {
+		return err
+	}
+	if string(b[:4]) != "fLaC" {
+		return errors.New("not a flac file")
+	}
+	info := binary.BigEndian.Uint64(b[offset:])
+	samples := uint64(length.Seconds() * float64(info>>44))
+	binary.BigEndian.PutUint64(b[offset:], info&^(1<<36-1)|samples)
+
+	_, err = f.WriteAt(b[offset:], offset)
+	return err
 }
 
 func parsePattern(pat string) []string {
