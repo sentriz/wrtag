@@ -208,7 +208,6 @@ func ProcessDir(
 
 	// calculate new paths, rebasing to the resolved destDir if symlinks were involved
 	destPaths := make([]string, 0, len(pathTags))
-	seenDestPaths := make(map[string]struct{}, len(pathTags))
 	for i, pt := range pathTags {
 		trackMedia := releaseTracks[i]
 		destPath, err := cfg.PathFormat.Execute(*release, trackMedia.media, trackMedia.track, strings.ToLower(filepath.Ext(pt.Path)))
@@ -219,11 +218,19 @@ func ProcessDir(
 			destPath = filepath.Join(destDir, strings.TrimPrefix(destPath, origDestDir))
 		}
 		destPath = fileutil.TrimLength(destPath, 255)
-		if _, ok := seenDestPaths[destPath]; ok {
-			return nil, fmt.Errorf("%w: %q", ErrDuplicateDestPath, destPath)
-		}
-		seenDestPaths[destPath] = struct{}{}
 		destPaths = append(destPaths, destPath)
+	}
+
+	// check the final dest paths for problems pathformat validation can't catch from sample data, like trimming or real
+	// titles. prefer adding checks to pathformat validation where possible, so they fail at startup
+	{
+		var seen = map[string]struct{}{}
+		for _, destPath := range destPaths {
+			if _, ok := seen[destPath]; ok {
+				return nil, fmt.Errorf("%w: %q", ErrDuplicateDestPath, destPath)
+			}
+			seen[destPath] = struct{}{}
+		}
 	}
 
 	var coverTmp string
