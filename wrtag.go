@@ -50,9 +50,6 @@ func IsNonFatalError(err error) bool {
 	return errors.Is(err, ErrScoreTooLow) || errors.Is(err, ErrTrackCountMismatch)
 }
 
-// The minimum score required for a MusicBrainz match to be considered valid.
-const minScore = 95
-
 const numTrackGenres = 6
 
 const (
@@ -85,6 +82,7 @@ type Config struct {
 	CoverArtArchiveClient musicbrainz.CAAClient
 	PathFormat            pathformat.Format
 	DiffWeights           DiffWeights
+	MinScore              float64
 	TagConfig             TagConfig
 	KeepFiles             map[string]struct{}
 	Addons                []addon.Addon
@@ -181,9 +179,9 @@ func ProcessDir(
 	var shouldImport bool
 	switch cond {
 	case HighScoreOrMBID:
-		shouldImport = score >= minScore || mbid != ""
+		shouldImport = score >= cfg.MinScore || mbid != ""
 	case HighScore:
-		shouldImport = score >= minScore
+		shouldImport = score >= cfg.MinScore
 	case Always:
 		shouldImport = true
 	}
