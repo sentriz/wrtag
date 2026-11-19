@@ -56,7 +56,7 @@ func (l *LRCLib) Search(ctx context.Context, artist, song string, duration time.
 		if err != nil {
 			return "", fmt.Errorf("lrclib returned invalid Retry-After: %v", h)
 		}
-		return "", &ErrRetryAfter{time.Duration(s) * time.Second}
+		return "", &RetryAfterError{time.Duration(s) * time.Second}
 	}
 	if resp.StatusCode/100 != 2 {
 		return "", fmt.Errorf("lrclib returned non 2xx: %d", resp.StatusCode)

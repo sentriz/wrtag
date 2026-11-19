@@ -40,11 +40,11 @@ func NewSource(name string) (Source, error) {
 
 var ErrTrackNotFound = errors.New("track not found")
 
-type ErrRetryAfter struct {
+type RetryAfterError struct {
 	RetryAfter time.Duration
 }
 
-func (e *ErrRetryAfter) Error() string {
+func (e *RetryAfterError) Error() string {
 	return fmt.Sprintf("retry after %v", e.RetryAfter)
 }
 
@@ -54,8 +54,9 @@ func (ms MultiSource) Search(ctx context.Context, artist, song string, duration 
 	for _, src := range ms {
 	Retry:
 		lyricData, err := src.Search(ctx, artist, song, duration)
-		if e, ok := err.(*ErrRetryAfter); ok {
-			jitter := e.RetryAfter * time.Duration(rand.Float64()*0.3)
+		var e *RetryAfterError
+		if errors.As(err, &e) {
+			jitter := e.RetryAfter * time.Duration(rand.Float64()*0.3) //nolint:gosec
 			time.Sleep(e.RetryAfter + jitter)
 			goto Retry
 		}
