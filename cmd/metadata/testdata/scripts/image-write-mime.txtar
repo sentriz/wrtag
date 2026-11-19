@@ -1,0 +1,19 @@
+exec create-audio-files a.flac a.mp3
+
+# no -mime-type given, so it's detected from the image data
+exec metadata image-write cover.gif -- a.flac a.mp3
+exec metadata read -properties image_mime_type -- a.flac a.mp3
+cmp stdout exp-detected
+
+# an explicit -mime-type is kept
+exec metadata image-write -mime-type image/png cover.gif -- a.flac
+exec metadata read -properties image_mime_type -- a.flac
+cmp stdout exp-explicit
+
+-- cover.gif --
+GIF89a
+-- exp-detected --
+a.flac	image_mime_type	image/gif
+a.mp3	image_mime_type	image/gif
+-- exp-explicit --
+a.flac	image_mime_type	image/png

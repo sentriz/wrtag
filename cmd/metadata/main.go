@@ -11,9 +11,11 @@ import (
 	"io/fs"
 	"log/slog"
 	"maps"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"time"
 
 	"go.senan.xyz/wrtag/cmd/internal/wrtaglog"
@@ -283,6 +285,11 @@ func cmdImageWrite(audioPath string, imagePath string, index int, imageType, des
 	data, err := os.ReadFile(imagePath) //nolint:gosec // path is from user's argument
 	if err != nil {
 		return fmt.Errorf("read image file: %w", err)
+	}
+	if imageMIMEType == "" {
+		if m := http.DetectContentType(data); strings.HasPrefix(m, "image/") {
+			imageMIMEType = m
+		}
 	}
 
 	if err := tags.WriteImageOptions(audioPath, data, index, imageType, description, imageMIMEType); err != nil {
