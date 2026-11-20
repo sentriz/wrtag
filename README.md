@@ -106,6 +106,14 @@ $ wrtag copy -yes "Example"      # copies and tags `Example` into the library, u
 $ wrtag copy -mbid "abc" -yes    # overwrite matched MusicBrainz release UUID even if low match
 ```
 
+#### Importing from a zip archive
+
+The source can also be a zip archive. It is extracted to a temporary directory (see `$TMPDIR`) and imported from there. A release wrapped in a single folder inside the archive is found too. The operation applies to the extracted files, and a `move` also deletes the archive once the import succeeds:
+
+```console
+$ wrtag move "Example.zip"
+```
+
 ### Re-tagging already imported music
 
 Re-tagging your music can be useful for a few reasons. For example, if your [path-format](#path-format) configuration has changed, or the metadata in the MusicBrainz database has changed.
@@ -168,7 +176,7 @@ flowchart LR
 
 ### API
 
-Jobs are added to the queue with an HTTP request like `POST <wrtag.host>/op/<copy|move|reflink>` with form value `path=<absolute path to directory>`. Optional form value `mbid=<musicbrainz release URL>` can be supplied if you know your release as well as `confirm` if you really know your release. All of the form values can be sent in the HTML form body along with the `Content-Type` set to `application/x-www-form-urlencoded`, or as URL query parameters.
+Jobs are added to the queue with an HTTP request like `POST <wrtag.host>/op/<copy|move|reflink>` with form value `path=<absolute path to directory or zip archive>`. Optional form value `mbid=<musicbrainz release URL>` can be supplied if you know your release as well as `confirm` if you really know your release. All of the form values can be sent in the HTML form body along with the `Content-Type` set to `application/x-www-form-urlencoded`, or as URL query parameters.
 
 The external API requires HTTP Basic authentication with `-web-api-key` as the password (no username). The web UI authentication is controlled by `-web-auth`: either `disabled`, or `basic-auth-from-api-key` (the default) which uses the same API key.
 

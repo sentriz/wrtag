@@ -25,10 +25,10 @@ stderr 'no command provided'
 stderr 'unknown command'
 
 ! exec wrtag move
-stderr 'please provide a single directory'
+stderr 'please provide a single path'
 
 ! exec wrtag copy
-stderr 'please provide a single directory'
+stderr 'please provide a single path'
 
 ! exec wrtag move no-exist
 stderr 'read dir: no tracks in dir'
