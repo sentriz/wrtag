@@ -28,6 +28,7 @@ import (
 	"go.senan.xyz/wrtag/fileutil"
 	"go.senan.xyz/wrtag/notifications"
 	"go.senan.xyz/wrtag/researchlink"
+	"go.senan.xyz/wrtag/ziputil"
 )
 
 func init() {
@@ -86,12 +87,12 @@ func main() {
 		}
 
 		if flag.NArg() != 1 {
-			slog.Error("please provide a single directory")
+			slog.Error("please provide a single path")
 			return
 		}
 
-		dir := flag.Arg(0)
-		dir, err := filepath.Abs(dir)
+		src := flag.Arg(0)
+		src, err := filepath.Abs(src)
 		if err != nil {
 			slog.Error("making path abs", "err", err)
 			return
@@ -106,9 +107,29 @@ func main() {
 			return
 		}
 
+		dir, isArchive := src, ziputil.IsArchive(src)
+		if isArchive {
+			var cleanup func()
+			dir, cleanup, err = ziputil.Extract(src)
+			if err != nil {
+				slog.Error("extracting archive", "err", err)
+				return
+			}
+			defer cleanup()
+		}
+
 		if err := runOperation(ctx, cfg, researchLinkQuerier, op, dir, importCondition, *useMBID); err != nil {
 			slog.Error("running", "command", command, "err", err)
 			return
+		}
+
+		// a move consumes its source
+		if isArchive && command == "move" && !*dryRun {
+			slog.InfoContext(ctx, "removing archive", "path", src)
+			if err := os.Remove(src); err != nil {
+				slog.Error("removing archive", "err", err)
+				return
+			}
 		}
 
 	case "sync":

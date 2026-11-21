@@ -1,6 +1,7 @@
 package main
 
 import (
+	"archive/zip"
 	"crypto/rand"
 	"embed"
 	"flag"
@@ -47,6 +48,7 @@ func TestMain(m *testing.M) {
 		"file-mode": mainFileMode,
 		"mod-time":  mainModTime,
 		"rand":      mainRand,
+		"zip":       mainZip,
 	})
 }
 
@@ -231,6 +233,31 @@ func mainRand() {
 
 	size, _ := strconv.Atoi(sizeStr)
 	_, _ = io.Copy(f, io.LimitReader(rand.Reader, int64(size)))
+}
+
+// mainZip writes the contents of dir to a new zip archive.
+func mainZip() {
+	flag.Parse()
+
+	path, dir := flag.Arg(0), flag.Arg(1)
+	if path == "" || dir == "" {
+		log.Fatalf("bad args")
+	}
+
+	f, err := os.Create(path)
+	if err != nil {
+		log.Fatalf("error creating: %v", err)
+	}
+	zw := zip.NewWriter(f)
+	if err := zw.AddFS(os.DirFS(dir)); err != nil {
+		log.Fatalf("add files: %v", err)
+	}
+	if err := zw.Close(); err != nil {
+		log.Fatalf("close zip: %v", err)
+	}
+	if err := f.Close(); err != nil {
+		log.Fatalf("close file: %v", err)
+	}
 }
 
 func parsePattern(pat string) []string {

@@ -1,0 +1,48 @@
+# a release zipped inside a folder of its own
+exec tag write src/kat_moda/01.flac title 'alarms'
+exec tag write src/kat_moda/02.flac title 'the bells'
+exec tag write src/kat_moda/03.flac title 'the bells fesitival mix'
+exec tag write src/kat_moda/*.flac musicbrainz_albumid 'e47d04a4-7460-427d-a731-cc82386d85f1'
+exec touch src/kat_moda/cover.jpg
+exec zip kat_moda.zip src
+cp kat_moda.zip kat_moda-backup.zip
+
+env WRTAG_PATH_FORMAT='albums/{{ .Release.Title | safepath }}/{{ pad0 2 .Track.Position }} {{ .Track.Title | safepath }}{{ .Ext }}'
+
+# dry run leaves everything alone
+exec wrtag copy -dry-run -yes kat_moda.zip
+stderr 'msg="extracting archive" path=.*kat_moda\.zip to=.*wrtag-zip-'
+! exists albums
+cmp kat_moda.zip kat_moda-backup.zip
+
+# copy imports and keeps the archive
+exec wrtag copy -yes kat_moda.zip
+exec find albums/
+cmp stdout exp-layout
+exec tag check 'albums/Kat Moda/02 The Bells.flac' title 'The Bells'
+cmp kat_moda.zip kat_moda-backup.zip
+
+# a release at the archive's root works too, and move removes the archive
+rm albums
+exec zip flat.zip src/kat_moda
+exec wrtag move -yes flat.zip
+stderr 'msg="removing archive" path=.*flat\.zip'
+exec find albums/
+cmp stdout exp-layout
+! exists flat.zip
+
+# the extracted files never touch the source folder
+exists src/kat_moda/01.flac
+
+# a failed import keeps the archive, even for a move
+! exec wrtag move kat_moda.zip
+stderr 'score too low'
+exists kat_moda.zip
+
+-- exp-layout --
+albums
+albums/Kat Moda
+albums/Kat Moda/01 Alarms.flac
+albums/Kat Moda/02 The Bells.flac
+albums/Kat Moda/03 The Bells (Festival mix).flac
+albums/Kat Moda/cover.jpg
