@@ -36,6 +36,7 @@ import (
 	"go.senan.xyz/wrtag/cmd/internal/wrtaglog"
 	"go.senan.xyz/wrtag/notifications"
 	"go.senan.xyz/wrtag/researchlink"
+	"go.senan.xyz/wrtag/ziputil"
 
 	_ "github.com/ncruces/go-sqlite3/driver"
 	"go.senan.xyz/sqlb"
@@ -264,7 +265,7 @@ func main() {
 		if entries, err := os.ReadDir(path); err == nil {
 			var dirs []string
 			for _, entry := range entries {
-				if entry.IsDir() {
+				if entry.IsDir() || ziputil.IsArchive(filepath.Join(path, entry.Name())) {
 					dirs = append(dirs, filepath.Join(path, entry.Name()))
 				}
 			}
@@ -275,7 +276,7 @@ func main() {
 		if matches, err := filepath.Glob(path + "*"); err == nil {
 			var dirs []string
 			for _, match := range matches {
-				if stat, err := os.Stat(match); err == nil && stat.IsDir() { //nolint:gosec // dir picker browses the filesystem by design
+				if stat, err := os.Stat(match); err == nil && (stat.IsDir() || ziputil.IsArchive(match)) { //nolint:gosec // dir picker browses the filesystem by design
 					dirs = append(dirs, match)
 				}
 			}
@@ -444,7 +445,29 @@ func processJob(ctx context.Context, cfg *wrtag.Config, notifs *notifications.No
 		ic = wrtag.Always
 	}
 
-	searchResult, processErr := wrtag.ProcessDir(ctx, cfg, op, job.SourcePath, ic, job.UseMBID)
+	var searchResult *wrtag.SearchResult
+	var processErr error
+
+	dir, isArchive := job.SourcePath, ziputil.IsArchive(job.SourcePath)
+	if isArchive {
+		var cleanup func()
+		dir, cleanup, processErr = ziputil.Extract(job.SourcePath)
+		if processErr == nil {
+			defer cleanup()
+		}
+	}
+
+	if processErr == nil {
+		searchResult, processErr = wrtag.ProcessDir(ctx, cfg, op, dir, ic, job.UseMBID)
+	}
+
+	// a move consumes its source
+	if processErr == nil && isArchive && job.Operation == OperationMove {
+		slog.InfoContext(ctx, "removing archive", "path", job.SourcePath)
+		if err := os.Remove(job.SourcePath); err != nil && !errors.Is(err, os.ErrNotExist) {
+			processErr = fmt.Errorf("remove archive: %w", err)
+		}
+	}
 
 	if searchResult != nil {
 		researchLinks, err := researchLinkQuerier.Build(wrtagflag.ResearchQuery(searchResult, processErr == nil))
