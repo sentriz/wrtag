@@ -72,6 +72,7 @@ func Config() *wrtag.Config {
 	var cfg wrtag.Config
 
 	flag.Var(&pathFormatParser{&cfg.PathFormat}, "path-format", "Path to root music directory including path format rules (see [Path format](#path-format))")
+
 	flag.Var(&addonsParser{&cfg.Addons}, "addon", "Define an addon for extra metadata writing (see [Addons](#addons)) (stackable)")
 
 	cfg.KeepFiles = map[string]struct{}{}
@@ -79,6 +80,8 @@ func Config() *wrtag.Config {
 
 	cfg.DiffWeights = wrtag.DiffWeights{}
 	flag.Var(&diffWeightsParser{cfg.DiffWeights}, "diff-weight", "Adjust distance weighting for a tag (0 to ignore) (stackable)")
+
+	flag.Float64Var(&cfg.MinScore, "score-min", 95, "The minimum score percentage (0-100) required for a MusicBrainz match to be considered valid")
 
 	cfg.TagConfig = wrtag.TagConfig{}
 	flag.Var(&tagConfigParser{&cfg.TagConfig}, "tag-config", "Specify tag keep and drop rules when writing new tag revisions (see [Tagging](#tagging)) (stackable)")

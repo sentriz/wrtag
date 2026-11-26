@@ -79,6 +79,9 @@ __complete_prefer_oldstyle -c wrtag -n "not __fish_seen_subcommand_from $command
     -o research-link -x -d "Define a helper URL to help find information about an unmatched release"
 
 __complete_prefer_oldstyle -c wrtag -n "not __fish_seen_subcommand_from $commands" \
+    -o score-min -x -d "The minimum score percentage (0-100) required for a MusicBrainz match to be considered valid"
+
+__complete_prefer_oldstyle -c wrtag -n "not __fish_seen_subcommand_from $commands" \
     -o tag-config -x -d "Specify tag keep and drop rules when writing new tag revisions" \
     -a "'keep <tag>' 'drop <tag>'"
 
